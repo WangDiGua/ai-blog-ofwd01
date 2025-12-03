@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/store';
-import { X, ChevronLeft, ChevronRight, ArrowUp, Type, Coffee, Search, Clock, Hash, Play, Pause, SkipBack, SkipForward, Maximize2, Minimize2, CheckCircle, AlertCircle, Info, Smile } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ArrowUp, Type, Coffee, Search, Clock, Hash, Play, Pause, SkipBack, SkipForward, Maximize2, Minimize2, CheckCircle, AlertCircle, Info, Smile, MoreVertical } from 'lucide-react';
 import { request, debounce } from '../utils/lib';
 import { Article } from '../types';
 
@@ -27,6 +27,11 @@ export const Card = ({ children, className = '', hover = false, ...props }: Card
     </div>
   );
 };
+
+// --- Skeleton Component ---
+export const Skeleton = ({ className = '' }: { className?: string }) => (
+  <div className={`animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg ${className}`} />
+);
 
 // --- Button Component ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -143,6 +148,18 @@ export const ThemeToggle = () => {
 
 // --- Pagination Component ---
 export const Pagination = ({ page, totalPages, onPageChange }: { page: number, totalPages: number, onPageChange: (p: number) => void }) => {
+  const getPageNumbers = () => {
+      const pages = [];
+      for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
+              pages.push(i);
+          } else if (pages[pages.length - 1] !== '...') {
+              pages.push('...');
+          }
+      }
+      return pages;
+  };
+
   return (
     <div className="flex items-center justify-center space-x-2 mt-8">
       <Button 
@@ -154,9 +171,25 @@ export const Pagination = ({ page, totalPages, onPageChange }: { page: number, t
         <ChevronLeft size={16} />
       </Button>
       
-      <span className="text-sm font-medium text-apple-subtext mx-2">
-        Page {page} of {totalPages}
-      </span>
+      <div className="flex space-x-1">
+          {getPageNumbers().map((p, idx) => (
+              <button
+                  key={idx}
+                  onClick={() => typeof p === 'number' && onPageChange(p)}
+                  disabled={typeof p !== 'number'}
+                  className={`
+                      w-8 h-8 rounded-full text-xs font-medium transition-all
+                      ${p === page 
+                          ? 'bg-apple-blue text-white shadow-md scale-110' 
+                          : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      }
+                      ${typeof p !== 'number' ? 'cursor-default' : ''}
+                  `}
+              >
+                  {p}
+              </button>
+          ))}
+      </div>
 
       <Button 
         variant="secondary" 
@@ -327,6 +360,7 @@ export const SearchModal = () => {
 export const FloatingMenu = () => {
     const { cycleFontSize } = useStore();
     const [showDonate, setShowDonate] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
 
     const scrollToTop = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -334,27 +368,39 @@ export const FloatingMenu = () => {
 
     return (
         <>
-            <div className="fixed right-4 bottom-24 z-40 flex flex-col space-y-3">
+            <div className="fixed right-4 bottom-24 z-40 flex flex-col items-end space-y-3">
+                {/* Expandable Options */}
+                <div className={`flex flex-col space-y-3 transition-all duration-300 origin-bottom ${isOpen ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-90 pointer-events-none'}`}>
+                    <button 
+                        onClick={cycleFontSize}
+                        className="w-10 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform text-apple-text dark:text-apple-dark-text"
+                        title="Adjust Font Size"
+                    >
+                        <Type size={18} />
+                    </button>
+                    <button 
+                        onClick={() => setShowDonate(true)}
+                        className="w-10 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform text-pink-500"
+                        title="Donate"
+                    >
+                        <Coffee size={18} />
+                    </button>
+                    <button 
+                        onClick={scrollToTop}
+                        className="w-10 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform text-apple-blue"
+                        title="Back to Top"
+                    >
+                        <ArrowUp size={18} />
+                    </button>
+                </div>
+
+                {/* Main Toggle Button */}
                 <button 
-                    onClick={cycleFontSize}
-                    className="w-10 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform text-apple-text dark:text-apple-dark-text"
-                    title="Adjust Font Size"
+                    onClick={() => setIsOpen(!isOpen)}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-all duration-300 ${isOpen ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rotate-45' : 'bg-apple-blue text-white'}`}
+                    title="Menu"
                 >
-                    <Type size={18} />
-                </button>
-                <button 
-                    onClick={() => setShowDonate(true)}
-                    className="w-10 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform text-pink-500"
-                    title="Donate"
-                >
-                    <Coffee size={18} />
-                </button>
-                <button 
-                    onClick={scrollToTop}
-                    className="w-10 h-10 bg-apple-blue text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-                    title="Back to Top"
-                >
-                    <ArrowUp size={18} />
+                    <MoreVertical size={24} />
                 </button>
             </div>
 

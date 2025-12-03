@@ -9,6 +9,11 @@ interface AppState {
   updateUser: (data: Partial<User>) => Promise<void>;
   logout: () => void;
   
+  // Auth Modal
+  isAuthModalOpen: boolean;
+  setAuthModalOpen: (open: boolean) => void;
+  requireAuth: (callback: () => void) => void;
+
   // Music Player State
   currentSong: Song | null;
   isPlaying: boolean;
@@ -37,6 +42,7 @@ const AppContext = createContext<AppState | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isFullPlayerOpen, setFullPlayerOpen] = useState(false);
@@ -107,6 +113,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     showToast('Logged out successfully', 'info');
   };
 
+  const requireAuth = useCallback((callback: () => void) => {
+    if (user) {
+        callback();
+    } else {
+        setAuthModalOpen(true);
+        showToast('Please login to continue', 'info');
+    }
+  }, [user, showToast]);
+
   const playSong = (song: Song) => {
     setCurrentSong(song);
     setIsPlaying(true);
@@ -137,6 +152,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     login,
     updateUser,
     logout,
+    isAuthModalOpen, 
+    setAuthModalOpen,
+    requireAuth,
     currentSong,
     isPlaying,
     playSong,
@@ -152,7 +170,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     toasts,
     showToast,
     removeToast
-  }), [user, currentSong, isPlaying, isFullPlayerOpen, darkMode, fontSize, isSearchOpen, toasts]);
+  }), [user, isAuthModalOpen, currentSong, isPlaying, isFullPlayerOpen, darkMode, fontSize, isSearchOpen, toasts]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

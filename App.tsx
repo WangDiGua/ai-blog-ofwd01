@@ -2,8 +2,13 @@ import React, { Suspense } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AppProvider } from './context/store';
 import { Navbar, Footer, MiniPlayer } from './components/layout';
-import { Home, Community, MusicPage, Tools, About, ArticleDetail, Profile } from './pages/views';
 import { Spinner } from './components/ui';
+
+// Page Imports
+import { Home } from './pages/home';
+import { ArticleDetail } from './pages/article-detail';
+import { Profile } from './pages/profile';
+import { Community, MusicPage, Tools, About } from './pages/extras';
 
 // Scroll to top on route change
 const ScrollToTop = () => {

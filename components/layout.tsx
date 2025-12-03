@@ -77,10 +77,9 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
 
 // --- Navbar Component ---
 export const Navbar = () => {
-  const { user, isLoggedIn, logout, setSearchOpen } = useStore();
+  const { user, isLoggedIn, logout, setSearchOpen, isAuthModalOpen, setAuthModalOpen } = useStore();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const navigate = useNavigate();
 
   // Handle Scroll Effect
@@ -153,7 +152,7 @@ export const Navbar = () => {
                    <Avatar src={user.avatar} alt={user.name} size="sm" />
                  </div>
               ) : (
-                <Button size="sm" onClick={() => setIsAuthModalOpen(true)}>
+                <Button size="sm" onClick={() => setAuthModalOpen(true)}>
                   Login
                 </Button>
               )}
@@ -199,15 +198,15 @@ export const Navbar = () => {
                     <span className="text-xs text-red-500 font-medium" onClick={() => {logout(); setIsMobileMenuOpen(false);}}>Log out</span>
                  </div>
               ) : (
-                <Button className="w-full" onClick={() => { setIsAuthModalOpen(true); setIsMobileMenuOpen(false); }}>Sign In</Button>
+                <Button className="w-full" onClick={() => { setAuthModalOpen(true); setIsMobileMenuOpen(false); }}>Sign In</Button>
               )}
             </div>
           </div>
         </div>
       </nav>
 
-      <Modal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)}>
-         <AuthForm onClose={() => setIsAuthModalOpen(false)} />
+      <Modal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)}>
+         <AuthForm onClose={() => setAuthModalOpen(false)} />
       </Modal>
 
       {/* Spacer for fixed navbar */}
