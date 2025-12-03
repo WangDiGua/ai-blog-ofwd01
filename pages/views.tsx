@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '../context/store';
-import { Card, Button, Spinner, Avatar, Pagination } from '../components/ui';
+import { Card, Button, Spinner, Avatar, Pagination, EmojiPicker } from '../components/ui';
 import { request } from '../utils/lib';
-import { Article, CommunityPost, Song } from '../types';
-import { Heart, MessageCircle, Share2, Play, Pause, Clock, Eye, Hash, Calendar, Bookmark, List, ThumbsUp } from 'lucide-react';
+import { Article, CommunityPost, Song, Comment } from '../types';
+import { Heart, MessageCircle, Share2, Play, Pause, Clock, Eye, Hash, Calendar, Bookmark, List, ThumbsUp, PenTool, Settings, FileText, Smile } from 'lucide-react';
 
 // --- HOME PAGE ---
 export const Home = () => {
@@ -14,11 +14,6 @@ export const Home = () => {
   const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
   
-  // Get query params
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const searchQuery = searchParams.get('q') || '';
-
   const LIMIT = 6;
 
   useEffect(() => {
@@ -27,8 +22,7 @@ export const Home = () => {
       try {
         const data = await request.get<{items: Article[], totalPages: number}>('/articles', { 
             page, 
-            limit: LIMIT,
-            q: searchQuery 
+            limit: LIMIT 
         });
         setArticles(data.items);
         setTotalPages(data.totalPages);
@@ -39,28 +33,20 @@ export const Home = () => {
       }
     };
     fetchArticles();
-  }, [page, searchQuery]);
+  }, [page]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       
       {/* Hero / Intro */}
-      {!searchQuery && (
-        <div className="text-center mb-16 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-apple-text dark:text-apple-dark-text">
-            Think Different.
-          </h1>
-          <p className="text-lg md:text-xl text-apple-subtext dark:text-apple-dark-subtext max-w-2xl mx-auto">
-            Exploring the intersection of design, technology, and lifestyle through a minimalist lens.
-          </p>
-        </div>
-      )}
-
-      {searchQuery && (
-        <div className="mb-8">
-            <h2 className="text-xl font-semibold text-apple-text dark:text-apple-dark-text">Search results for "{searchQuery}"</h2>
-        </div>
-      )}
+      <div className="text-center mb-16 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-apple-text dark:text-apple-dark-text">
+          Think Different.
+        </h1>
+        <p className="text-lg md:text-xl text-apple-subtext dark:text-apple-dark-subtext max-w-2xl mx-auto">
+          Exploring the intersection of design, technology, and lifestyle through a minimalist lens.
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Content */}
@@ -158,13 +144,55 @@ export const Home = () => {
 };
 
 // --- ARTICLE DETAIL PAGE ---
+
+// Recursive Comment Component
+const CommentItem = ({ comment, depth = 0 }: { comment: Comment, depth?: number }) => {
+    const [replyOpen, setReplyOpen] = useState(false);
+    
+    return (
+        <div className={`flex space-x-3 ${depth > 0 ? 'ml-8 md:ml-12 mt-4 border-l-2 border-gray-100 dark:border-gray-800 pl-4' : ''}`}>
+            <Avatar src={comment.user.avatar} alt={comment.user.name} />
+            <div className="flex-1">
+                <div className="flex items-center space-x-2 mb-1">
+                    <span className="font-semibold text-sm text-apple-text dark:text-apple-dark-text">{comment.user.name}</span>
+                    <span className="text-xs text-gray-400">{comment.date}</span>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{comment.content}</p>
+                
+                <div className="flex items-center space-x-4 mt-2">
+                    <button className="flex items-center text-xs text-gray-400 hover:text-apple-blue transition-colors">
+                        <ThumbsUp size={12} className="mr-1"/> Like
+                    </button>
+                    <button onClick={() => setReplyOpen(!replyOpen)} className="text-xs text-gray-400 hover:text-apple-text transition-colors">Reply</button>
+                </div>
+
+                {replyOpen && (
+                    <div className="mt-3">
+                         <textarea className="w-full p-2 text-sm bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-apple-blue dark:text-white" placeholder="Write a reply..." rows={2}/>
+                         <div className="flex justify-end mt-2">
+                             <Button size="sm" onClick={() => setReplyOpen(false)}>Post</Button>
+                         </div>
+                    </div>
+                )}
+
+                {comment.replies && comment.replies.map(reply => (
+                    <CommentItem key={reply.id} comment={reply} depth={depth + 1} />
+                ))}
+            </div>
+        </div>
+    );
+}
+
 export const ArticleDetail = () => {
   const { id } = useParams();
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const { user, isLoggedIn, login } = useStore();
+  const [commentText, setCommentText] = useState('');
+  const [showEmoji, setShowEmoji] = useState(false);
+  
+  const { user, isLoggedIn, login, showToast } = useStore();
 
   useEffect(() => {
     const fetch = async () => {
@@ -181,19 +209,29 @@ export const ArticleDetail = () => {
     fetch();
   }, [id]);
 
-  // Generate Table of Contents from content string
-  const getToc = (content: string) => {
-    const lines = content.split('\n');
-    const headers = lines
-        .filter(line => line.startsWith('## '))
-        .map(line => line.replace('## ', ''));
-    return headers;
+  const handleAction = (action: string) => {
+      if (!isLoggedIn) {
+          showToast('Please login first', 'error');
+          return;
+      }
+      if (action === 'like') {
+          setIsLiked(!isLiked);
+          showToast(isLiked ? 'Unliked' : 'Liked', 'info');
+      } else if (action === 'bookmark') {
+          setIsBookmarked(!isBookmarked);
+          showToast(isBookmarked ? 'Removed from bookmarks' : 'Bookmarked', 'info');
+      }
+  };
+
+  const insertEmoji = (emoji: string) => {
+      setCommentText(prev => prev + emoji);
+      setShowEmoji(false);
   };
 
   if (loading) return <div className="flex justify-center h-[50vh] items-center"><Spinner /></div>;
   if (!article) return <div className="text-center py-20">Article not found</div>;
 
-  const toc = getToc(article.content);
+  const toc = article.content.split('\n').filter(l => l.startsWith('## ')).map(l => l.replace('## ', ''));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -202,7 +240,7 @@ export const ArticleDetail = () => {
         {/* Left Sidebar (Interaction) - Desktop */}
         <div className="hidden lg:block lg:col-span-1 space-y-6 sticky top-24 h-fit">
            <button 
-             onClick={() => setIsLiked(!isLiked)} 
+             onClick={() => handleAction('like')} 
              className={`flex flex-col items-center p-3 rounded-full transition-colors ${isLiked ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
            >
               <Heart size={24} className={isLiked ? 'fill-current' : ''} />
@@ -213,7 +251,7 @@ export const ArticleDetail = () => {
               <span className="text-xs mt-1 font-medium">{article.comments?.length || 0}</span>
            </button>
            <button 
-             onClick={() => setIsBookmarked(!isBookmarked)}
+             onClick={() => handleAction('bookmark')}
              className={`flex flex-col items-center p-3 rounded-full transition-colors ${isBookmarked ? 'text-apple-blue bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
            >
               <Bookmark size={24} className={isBookmarked ? 'fill-current' : ''} />
@@ -243,8 +281,8 @@ export const ArticleDetail = () => {
                   </div>
                   {/* Mobile Actions Row */}
                   <div className="flex lg:hidden space-x-2">
-                     <button onClick={() => setIsLiked(!isLiked)}><Heart className={isLiked ? 'fill-red-500 text-red-500' : 'text-gray-400'}/></button>
-                     <button><Bookmark className="text-gray-400"/></button>
+                     <button onClick={() => handleAction('like')}><Heart className={isLiked ? 'fill-red-500 text-red-500' : 'text-gray-400'}/></button>
+                     <button onClick={() => handleAction('bookmark')}><Bookmark className={isBookmarked ? 'fill-apple-blue text-apple-blue' : 'text-gray-400'}/></button>
                   </div>
                </div>
             </div>
@@ -256,7 +294,7 @@ export const ArticleDetail = () => {
 
             {/* Content Body */}
             <article className="prose prose-lg dark:prose-invert max-w-none mb-16 text-apple-text dark:text-apple-dark-text">
-               {/* Simulating Markdown rendering by splitting paragraphs */}
+               {/* Simulating Markdown rendering */}
                {article.content.split('\n').map((line, idx) => {
                   if (line.startsWith('## ')) {
                       return <h2 key={idx} id={line.replace('## ', '')} className="text-2xl font-bold mt-8 mb-4">{line.replace('## ', '')}</h2>
@@ -278,10 +316,24 @@ export const ArticleDetail = () => {
                {isLoggedIn ? (
                    <div className="mb-8 flex space-x-4">
                       <Avatar src={user?.avatar || ''} alt="me" />
-                      <div className="flex-1">
-                          <textarea className="w-full rounded-xl p-3 border-none focus:ring-2 focus:ring-apple-blue bg-white dark:bg-gray-800 resize-none text-apple-text dark:text-apple-dark-text" rows={3} placeholder="Write a thoughtful comment..." />
+                      <div className="flex-1 relative">
+                          <textarea 
+                             className="w-full rounded-xl p-3 border-none focus:ring-2 focus:ring-apple-blue bg-white dark:bg-gray-800 resize-none text-apple-text dark:text-apple-dark-text" 
+                             rows={3} 
+                             placeholder="Write a thoughtful comment..." 
+                             value={commentText}
+                             onChange={(e) => setCommentText(e.target.value)}
+                          />
+                          <button onClick={() => setShowEmoji(!showEmoji)} className="absolute bottom-3 left-3 text-gray-400 hover:text-apple-blue">
+                              <Smile size={20} />
+                          </button>
+                          {showEmoji && (
+                              <div className="absolute top-full left-0 mt-2 z-10">
+                                  <EmojiPicker onSelect={insertEmoji} />
+                              </div>
+                          )}
                           <div className="flex justify-end mt-2">
-                             <Button size="sm">Post Comment</Button>
+                             <Button size="sm" onClick={() => { showToast('Comment posted', 'success'); setCommentText(''); }}>Post Comment</Button>
                           </div>
                       </div>
                    </div>
@@ -294,22 +346,7 @@ export const ArticleDetail = () => {
 
                <div className="space-y-6">
                   {article.comments?.map(comment => (
-                     <div key={comment.id} className="flex space-x-4">
-                        <Avatar src={comment.user.avatar} alt={comment.user.name} />
-                        <div>
-                           <div className="flex items-center space-x-2 mb-1">
-                              <span className="font-semibold text-sm text-apple-text dark:text-apple-dark-text">{comment.user.name}</span>
-                              <span className="text-xs text-gray-400">{comment.date}</span>
-                           </div>
-                           <p className="text-sm text-gray-600 dark:text-gray-300">{comment.content}</p>
-                           <div className="flex items-center space-x-4 mt-2">
-                              <button className="flex items-center text-xs text-gray-400 hover:text-apple-blue transition-colors">
-                                 <ThumbsUp size={12} className="mr-1"/> Like
-                              </button>
-                              <button className="text-xs text-gray-400 hover:text-apple-text transition-colors">Reply</button>
-                           </div>
-                        </div>
-                     </div>
+                     <CommentItem key={comment.id} comment={comment} />
                   ))}
                </div>
             </div>
@@ -343,6 +380,144 @@ export const ArticleDetail = () => {
       </div>
     </div>
   );
+};
+
+// --- PROFILE PAGE ---
+export const Profile = () => {
+    const { user, updateUser, isLoggedIn } = useStore();
+    const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState('articles');
+    const [isEditing, setIsEditing] = useState(false);
+    
+    // Edit Form State
+    const [name, setName] = useState('');
+    const [bio, setBio] = useState('');
+
+    // Writer State
+    const [newArticleTitle, setNewArticleTitle] = useState('');
+    const [newArticleContent, setNewArticleContent] = useState('');
+
+    useEffect(() => {
+        if (!isLoggedIn) {
+            navigate('/');
+            return;
+        }
+        if (user) {
+            setName(user.name);
+            setBio(user.bio || '');
+        }
+    }, [user, isLoggedIn, navigate]);
+
+    const handleUpdate = async () => {
+        await updateUser({ name, bio });
+        setIsEditing(false);
+    };
+
+    const handlePublish = async () => {
+        if (!newArticleTitle || !newArticleContent) return;
+        try {
+            await request.post('/articles/create', { title: newArticleTitle, content: newArticleContent });
+            // Reset and show success (handled in store/request mock)
+            setNewArticleTitle('');
+            setNewArticleContent('');
+            setActiveTab('articles');
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    if (!user) return null;
+
+    return (
+        <div className="max-w-5xl mx-auto px-4 py-10">
+            {/* Header Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-8 flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 shadow-sm">
+                <div className="relative group">
+                    <Avatar src={user.avatar} alt={user.name} size="xl" />
+                    <button className="absolute bottom-0 right-0 bg-apple-blue text-white p-1.5 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Settings size={14} />
+                    </button>
+                </div>
+                
+                <div className="flex-1 text-center md:text-left">
+                    {isEditing ? (
+                        <div className="space-y-3 max-w-md">
+                            <input className="w-full p-2 rounded bg-gray-100 dark:bg-gray-700" value={name} onChange={e => setName(e.target.value)} placeholder="Name"/>
+                            <textarea className="w-full p-2 rounded bg-gray-100 dark:bg-gray-700" value={bio} onChange={e => setBio(e.target.value)} placeholder="Bio" rows={2}/>
+                            <div className="flex space-x-2 justify-center md:justify-start">
+                                <Button size="sm" onClick={handleUpdate}>Save</Button>
+                                <Button size="sm" variant="secondary" onClick={() => setIsEditing(false)}>Cancel</Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <h1 className="text-3xl font-bold text-apple-text dark:text-apple-dark-text mb-2">{user.name}</h1>
+                            <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-lg">{user.bio || "No bio yet."}</p>
+                            <Button size="sm" variant="secondary" onClick={() => setIsEditing(true)}>Edit Profile</Button>
+                        </>
+                    )}
+                </div>
+                
+                <div className="flex space-x-8 text-center">
+                    <div>
+                        <div className="text-2xl font-bold text-apple-text dark:text-apple-dark-text">12</div>
+                        <div className="text-xs text-gray-500 uppercase">Articles</div>
+                    </div>
+                    <div>
+                        <div className="text-2xl font-bold text-apple-text dark:text-apple-dark-text">1.5k</div>
+                        <div className="text-xs text-gray-500 uppercase">Followers</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex space-x-1 mb-6 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-xl w-fit mx-auto md:mx-0">
+                {['articles', 'favorites', 'likes', 'write'].map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab ? 'bg-white dark:bg-gray-700 shadow-sm text-apple-blue' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                    >
+                        {tab === 'write' ? 'Write Article' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </button>
+                ))}
+            </div>
+
+            {/* Content Area */}
+            <div className="min-h-[400px]">
+                {activeTab === 'write' ? (
+                    <Card className="p-8">
+                        <div className="mb-6">
+                            <input 
+                                className="w-full text-3xl font-bold border-none outline-none bg-transparent placeholder-gray-300 text-apple-text dark:text-apple-dark-text" 
+                                placeholder="Article Title..." 
+                                value={newArticleTitle}
+                                onChange={e => setNewArticleTitle(e.target.value)}
+                            />
+                        </div>
+                        <div className="mb-6">
+                            <textarea 
+                                className="w-full h-96 resize-none border-none outline-none bg-transparent text-lg text-gray-600 dark:text-gray-300 placeholder-gray-300 leading-relaxed" 
+                                placeholder="Tell your story... (Markdown supported)" 
+                                value={newArticleContent}
+                                onChange={e => setNewArticleContent(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex justify-end">
+                            <Button onClick={handlePublish}>Publish</Button>
+                        </div>
+                    </Card>
+                ) : (
+                    <div className="grid gap-6">
+                        {/* Mock List for other tabs */}
+                        <div className="text-gray-500 text-center py-10">
+                            Showing {activeTab} (Mock Data)...
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 };
 
 // --- COMMUNITY PAGE (Unchanged but needs dark mode styling) ---
@@ -504,7 +679,7 @@ export const Tools = () => (
 
 export const About = () => (
     <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <Avatar src="https://picsum.photos/id/1005/200/200" alt="Me" size="lg" />
+        <Avatar src="https://picsum.photos/id/1005/200/200" alt="Me" size="xl" />
         <h1 className="text-4xl font-bold mt-6 mb-2 text-apple-text dark:text-apple-dark-text">John Developer</h1>
         <p className="text-xl text-apple-subtext dark:text-apple-dark-subtext mb-8">Building digital experiences with pixels and love.</p>
         

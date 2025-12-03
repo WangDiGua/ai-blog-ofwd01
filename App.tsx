@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AppProvider } from './context/store';
 import { Navbar, Footer, MiniPlayer } from './components/layout';
-import { Home, Community, MusicPage, Tools, About, ArticleDetail } from './pages/views';
+import { Home, Community, MusicPage, Tools, About, ArticleDetail, Profile } from './pages/views';
 import { Spinner } from './components/ui';
 
 // Scroll to top on route change
@@ -35,6 +35,7 @@ const App = () => {
                 <Route path="/music" element={<MusicPage />} />
                 <Route path="/tools" element={<Tools />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/profile" element={<Profile />} />
                 {/* Fallback */}
                 <Route path="*" element={<div className="text-center py-20 text-gray-400">404 - Page Not Found</div>} />
               </Routes>

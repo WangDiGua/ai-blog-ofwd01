@@ -1,4 +1,4 @@
-import { Article, CommunityPost, Song } from '../types';
+import { Article, CommunityPost, Song, User } from '../types';
 
 /**
  * Generic Debounce Function
@@ -31,7 +31,7 @@ export function throttle<T extends (...args: any[]) => void>(func: T, limit: num
  * Simulated Request Module (Mocking Axios)
  */
 class MockRequest {
-  private latency = 600; // ms
+  private latency = 400; // ms
 
   private async interceptor() {
     await new Promise(resolve => setTimeout(resolve, 200)); 
@@ -54,6 +54,16 @@ class MockRequest {
               a.title.toLowerCase().includes(lowerQ) || 
               a.summary.toLowerCase().includes(lowerQ)
             );
+          }
+          
+          if (params.userId) {
+             // Mock filtering by user (My Articles)
+             // For demo, just return a subset
+             data = data.slice(0, 3);
+          }
+          
+          if (params.favorites) {
+             data = data.slice(2, 5);
           }
 
           // Pagination
@@ -83,6 +93,8 @@ class MockRequest {
           resolve(MOCK_POSTS as unknown as T);
         } else if (endpoint === '/music') {
           resolve(MOCK_SONGS as unknown as T);
+        } else if (endpoint === '/search/hot') {
+            resolve(['React 19', 'Tailwind CSS', 'Apple Design', 'TypeScript', 'WebAssembly'] as unknown as T);
         } else {
           console.error(`[Mock 404] ${endpoint} not found`);
           reject({ status: 404, message: 'Not Found' });
@@ -102,11 +114,30 @@ class MockRequest {
                   id: 'u-123',
                   name: body.username,
                   avatar: `https://ui-avatars.com/api/?name=${body.username}&background=0071e3&color=fff`,
-                  email: `${body.username}@example.com`
+                  email: `${body.username}@example.com`,
+                  bio: 'Frontend enthusiast and pixel perfectionist.'
                } as unknown as T);
              } else {
                reject({message: 'Invalid credentials'});
              }
+          } else if (endpoint === '/user/update') {
+              resolve(body as unknown as T);
+          } else if (endpoint === '/articles/create') {
+              // Simulate creation
+              const newArticle: Article = {
+                  id: `new-${Date.now()}`,
+                  title: body.title,
+                  content: body.content,
+                  summary: body.content.substring(0, 100) + '...',
+                  date: new Date().toLocaleDateString(),
+                  cover: 'https://picsum.photos/seed/new/800/600',
+                  views: 0,
+                  likes: 0,
+                  category: 'Personal',
+                  comments: []
+              };
+              MOCK_ARTICLES.unshift(newArticle);
+              resolve(newArticle as unknown as T);
           } else {
              resolve({ success: true } as unknown as T);
           }
@@ -172,7 +203,20 @@ const MOCK_ARTICLES: Article[] = TITLES.map((title, i) => ({
   category: ["Tech", "Design", "Life"][Math.floor(Math.random() * 3)],
   date: "Oct 24, 2024",
   comments: [
-    { id: 'c1', user: { id: 'u1', name: 'Alice', avatar: 'https://picsum.photos/seed/u1/50' }, content: 'Great article!', date: '2 hours ago' },
+    { 
+        id: 'c1', 
+        user: { id: 'u1', name: 'Alice', avatar: 'https://picsum.photos/seed/u1/50' }, 
+        content: 'Great article!', 
+        date: '2 hours ago',
+        replies: [
+            {
+                id: 'c1-r1',
+                user: { id: 'u3', name: 'Charlie', avatar: 'https://picsum.photos/seed/u3/50' },
+                content: 'Totally agree with this point.',
+                date: '1 hour ago'
+            }
+        ]
+    },
     { id: 'c2', user: { id: 'u2', name: 'Bob', avatar: 'https://picsum.photos/seed/u2/50' }, content: 'Very insightful, thanks for sharing.', date: '1 day ago' }
   ]
 }));
@@ -190,9 +234,20 @@ const MOCK_POSTS: CommunityPost[] = Array.from({ length: 5 }).map((_, i) => ({
   timeAgo: `${i + 1}h ago`
 }));
 
+const LYRICS_DEMO = [
+    "[00:10.00]Waiting in the car",
+    "[00:15.00]Waiting for a ride in the dark",
+    "[00:20.00]The night city grows",
+    "[00:25.00]Look at the horizon glow",
+    "[00:30.00]Moving at the speed of light",
+    "[00:35.00]Into the future, into the night",
+    "[00:40.00]...",
+    "[00:45.00](Instrumental break)"
+];
+
 const MOCK_SONGS: Song[] = [
-  { id: '1', title: 'Midnight City', artist: 'M83', cover: 'https://picsum.photos/seed/m83/300/300', duration: 243 },
-  { id: '2', title: 'Instant Crush', artist: 'Daft Punk', cover: 'https://picsum.photos/seed/daft/300/300', duration: 337 },
-  { id: '3', title: 'The Less I Know', artist: 'Tame Impala', cover: 'https://picsum.photos/seed/tame/300/300', duration: 216 },
-  { id: '4', title: 'Blinding Lights', artist: 'The Weeknd', cover: 'https://picsum.photos/seed/week/300/300', duration: 200 },
+  { id: '1', title: 'Midnight City', artist: 'M83', cover: 'https://picsum.photos/seed/m83/300/300', duration: 243, lyrics: LYRICS_DEMO },
+  { id: '2', title: 'Instant Crush', artist: 'Daft Punk', cover: 'https://picsum.photos/seed/daft/300/300', duration: 337, lyrics: LYRICS_DEMO },
+  { id: '3', title: 'The Less I Know', artist: 'Tame Impala', cover: 'https://picsum.photos/seed/tame/300/300', duration: 216, lyrics: LYRICS_DEMO },
+  { id: '4', title: 'Blinding Lights', artist: 'The Weeknd', cover: 'https://picsum.photos/seed/week/300/300', duration: 200, lyrics: LYRICS_DEMO },
 ];

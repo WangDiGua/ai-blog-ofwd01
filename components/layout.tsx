@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Menu, X, Music, User as UserIcon, LogIn, Github, Twitter, Mail } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Search, Menu, X, Music, User as UserIcon, LogIn, Github, Twitter, Mail, Maximize2 } from 'lucide-react';
 import { useStore } from '../context/store';
-import { Button, Avatar, ThemeToggle, Modal } from './ui';
+import { Button, Avatar, ThemeToggle, Modal, ToastContainer, FloatingMenu, SearchModal, FullPlayerModal } from './ui';
 import { debounce, throttle } from '../utils/lib';
 
 // --- Auth Modal Content ---
@@ -23,7 +23,7 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
       await login(username);
       onClose();
     } catch(err) {
-      alert("Login failed");
+      // Toast handled in store
     } finally {
       setLoading(false);
     }
@@ -77,11 +77,10 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
 
 // --- Navbar Component ---
 export const Navbar = () => {
-  const { user, isLoggedIn, logout } = useStore();
+  const { user, isLoggedIn, logout, setSearchOpen } = useStore();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   // Handle Scroll Effect
@@ -90,25 +89,6 @@ export const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Debounced Search Handler
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleSearch = useCallback(
-    debounce((query: string) => {
-       if (query.trim()) {
-         navigate(`/?q=${query}`);
-       } else {
-         navigate('/');
-       }
-    }, 600),
-    [navigate]
-  );
-
-  const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setSearchQuery(val);
-    handleSearch(val);
-  };
 
   const navLinks = [
     { name: 'Blog', path: '/' },
@@ -120,6 +100,11 @@ export const Navbar = () => {
 
   return (
     <>
+      <ToastContainer />
+      <SearchModal />
+      <FloatingMenu />
+      <FullPlayerModal />
+
       <nav 
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-transparent
           ${isScrolled || isMobileMenuOpen ? 'bg-white/80 dark:bg-black/80 backdrop-blur-xl border-gray-200/50 dark:border-gray-800/50 shadow-sm' : 'bg-transparent py-2'}
@@ -129,7 +114,7 @@ export const Navbar = () => {
           <div className="flex justify-between items-center h-16">
             
             {/* Logo */}
-            <div className="flex-shrink-0 flex items-center">
+            <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => navigate('/')}>
               <span className="text-2xl font-semibold tracking-tight text-black dark:text-white">iBlog</span>
             </div>
 
@@ -155,21 +140,16 @@ export const Navbar = () => {
               {/* Theme Toggle */}
               <ThemeToggle />
 
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-4 w-4 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={onSearchChange}
-                  placeholder="Search..."
-                  className="block w-40 lg:w-52 pl-10 pr-3 py-1.5 border-none rounded-full leading-5 bg-gray-100 dark:bg-gray-800 text-apple-text dark:text-apple-dark-text placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-apple-blue/50 focus:bg-white dark:focus:bg-gray-700 transition-all duration-300 sm:text-sm"
-                />
-              </div>
+              {/* Search Trigger */}
+              <button 
+                onClick={() => setSearchOpen(true)}
+                className="p-2 text-gray-400 hover:text-apple-blue transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                <Search className="h-5 w-5" />
+              </button>
 
               {isLoggedIn && user ? (
-                 <div className="relative group cursor-pointer" onClick={logout} title="Click to logout">
+                 <div className="relative group cursor-pointer" onClick={() => navigate('/profile')} title="Go to Profile">
                    <Avatar src={user.avatar} alt={user.name} size="sm" />
                  </div>
               ) : (
@@ -181,6 +161,7 @@ export const Navbar = () => {
 
             {/* Mobile menu button */}
             <div className="md:hidden flex items-center space-x-4">
+              <button onClick={() => setSearchOpen(true)} className="text-gray-400"><Search className="h-5 w-5" /></button>
               <ThemeToggle />
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -195,14 +176,6 @@ export const Navbar = () => {
         {/* Mobile Menu */}
         <div className={`md:hidden absolute w-full bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
           <div className="px-4 pt-2 pb-6 space-y-2">
-            <div className="mb-4 mt-2">
-               <input
-                  type="text"
-                  placeholder="Search articles..."
-                  onChange={onSearchChange}
-                  className="block w-full pl-4 pr-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 focus:bg-white focus:ring-2 focus:ring-apple-blue/50 outline-none text-apple-text dark:text-apple-dark-text"
-                />
-            </div>
             {navLinks.map((link) => (
               <NavLink
                 key={link.name}
@@ -218,12 +191,12 @@ export const Navbar = () => {
             ))}
             <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
               {isLoggedIn ? (
-                 <div className="flex items-center justify-between px-3" onClick={() => {logout(); setIsMobileMenuOpen(false);}}>
-                    <div className="flex items-center space-x-3">
+                 <div className="flex items-center justify-between px-3">
+                    <div className="flex items-center space-x-3" onClick={() => {navigate('/profile'); setIsMobileMenuOpen(false);}}>
                        <Avatar src={user?.avatar || ''} alt="User" size="sm" />
                        <span className="font-medium text-apple-text dark:text-apple-dark-text">{user?.name}</span>
                     </div>
-                    <span className="text-xs text-red-500 font-medium">Log out</span>
+                    <span className="text-xs text-red-500 font-medium" onClick={() => {logout(); setIsMobileMenuOpen(false);}}>Log out</span>
                  </div>
               ) : (
                 <Button className="w-full" onClick={() => { setIsAuthModalOpen(true); setIsMobileMenuOpen(false); }}>Sign In</Button>
@@ -243,9 +216,9 @@ export const Navbar = () => {
   );
 };
 
-// --- Mini Player (Unchanged, just ensuring styling matches) ---
+// --- Mini Player ---
 export const MiniPlayer = () => {
-  const { currentSong, isPlaying, togglePlay } = useStore();
+  const { currentSong, isPlaying, togglePlay, setFullPlayerOpen } = useStore();
   const [progress, setProgress] = useState(0);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -268,9 +241,15 @@ export const MiniPlayer = () => {
 
   return (
     <div className="fixed bottom-4 right-4 left-4 md:left-auto md:w-96 bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg rounded-2xl p-3 z-40 flex items-center space-x-4 transition-all duration-500 animate-in slide-in-from-bottom-10">
-      <img src={currentSong.cover} alt="Cover" className="w-12 h-12 rounded-lg shadow-sm" />
-      <div className="flex-1 min-w-0">
-        <h4 className="text-sm font-semibold truncate text-apple-text dark:text-apple-dark-text">{currentSong.title}</h4>
+      <div onClick={() => setFullPlayerOpen(true)} className="relative group cursor-pointer">
+          <img src={currentSong.cover} alt="Cover" className="w-12 h-12 rounded-lg shadow-sm" />
+          <div className="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <Maximize2 size={16} className="text-white"/>
+          </div>
+      </div>
+      
+      <div className="flex-1 min-w-0" onClick={() => setFullPlayerOpen(true)}>
+        <h4 className="text-sm font-semibold truncate text-apple-text dark:text-apple-dark-text cursor-pointer hover:underline">{currentSong.title}</h4>
         <p className="text-xs text-apple-subtext dark:text-apple-dark-subtext truncate">{currentSong.artist}</p>
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-2">
           <div className="bg-apple-blue h-1 rounded-full transition-all duration-1000" style={{ width: `${progress}%` }}></div>
