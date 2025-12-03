@@ -1,0 +1,5 @@
+{
+  "name": "iBlog - Apple Style Blog",
+  "description": "A responsive, Apple UI inspired blog application featuring a frosted glass design, component-based architecture, and simulated backend integration.",
+  "requestFramePermissions": []
+}
