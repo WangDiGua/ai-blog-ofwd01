@@ -4,15 +4,27 @@ export interface User {
   id: string;
   name: string;
   avatar: string;
+  email?: string;
 }
 
 export interface Article {
   id: string;
   title: string;
   summary: string;
+  content: string; // Full markdown/html content
   cover: string;
   views: number;
+  likes: number;
   category: string;
+  date: string;
+  tags?: string[];
+  comments?: Comment[];
+}
+
+export interface Comment {
+  id: string;
+  user: User;
+  content: string;
   date: string;
 }
 

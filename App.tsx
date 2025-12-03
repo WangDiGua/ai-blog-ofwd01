@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AppProvider } from './context/store';
 import { Navbar, Footer, MiniPlayer } from './components/layout';
-import { Home, Community, MusicPage, Tools, About } from './pages/views';
+import { Home, Community, MusicPage, Tools, About, ArticleDetail } from './pages/views';
 import { Spinner } from './components/ui';
 
 // Scroll to top on route change
@@ -18,7 +18,7 @@ const App = () => {
   return (
     <AppProvider>
       <Router>
-        <div className="min-h-screen flex flex-col bg-apple-bg text-apple-text font-sans selection:bg-apple-blue selection:text-white">
+        <div className="min-h-screen flex flex-col bg-apple-bg text-apple-text dark:bg-apple-dark-bg dark:text-apple-dark-text font-sans selection:bg-apple-blue selection:text-white transition-colors duration-300">
           <ScrollToTop />
           <Navbar />
           
@@ -30,6 +30,7 @@ const App = () => {
             }>
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/article/:id" element={<ArticleDetail />} />
                 <Route path="/community" element={<Community />} />
                 <Route path="/music" element={<MusicPage />} />
                 <Route path="/tools" element={<Tools />} />

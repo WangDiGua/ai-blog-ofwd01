@@ -1,10 +1,11 @@
-import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect, ReactNode } from 'react';
 import { User, Song } from '../types';
+import { request } from '../utils/lib';
 
 interface AppState {
   user: User | null;
   isLoggedIn: boolean;
-  login: () => void;
+  login: (username: string) => Promise<void>;
   logout: () => void;
   
   // Music Player State
@@ -13,7 +14,7 @@ interface AppState {
   playSong: (song: Song) => void;
   togglePlay: () => void;
   
-  // Theme (simplified)
+  // Theme
   darkMode: boolean;
   toggleTheme: () => void;
 }
@@ -24,15 +25,35 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  
+  // Initialize dark mode from local storage or preference
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('theme');
+        return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    }
+    return false;
+  });
 
-  const login = () => {
-    // Simulate login
-    setUser({
-      id: 'me',
-      name: 'Guest User',
-      avatar: 'https://picsum.photos/id/64/100/100'
-    });
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (darkMode) {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [darkMode]);
+
+  const login = async (username: string) => {
+    try {
+        const userData = await request.post<User>('/login', { username });
+        setUser(userData);
+    } catch (e) {
+        console.error("Login failed", e);
+        throw e;
+    }
   };
 
   const logout = () => {
@@ -52,7 +73,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const toggleTheme = () => {
     setDarkMode(prev => !prev);
-    // In a real app, we would toggle a class on the html element here
   };
 
   const value = useMemo(() => ({

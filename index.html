@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
+        darkMode: 'class', // Enable class-based dark mode
         theme: {
           extend: {
             colors: {
@@ -16,11 +17,19 @@
                 blue: '#0071e3',
                 text: '#1d1d1f',
                 subtext: '#86868b',
-                gray: '#6e6e73'
+                gray: '#6e6e73',
+                // Dark mode variants
+                'dark-bg': '#000000',
+                'dark-card': '#1c1c1e',
+                'dark-text': '#f5f5f7',
+                'dark-subtext': '#a1a1a6',
               }
             },
             fontFamily: {
               sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
+            },
+            animation: {
+              'spin-slow': 'spin 12s linear infinite',
             }
           }
         }
@@ -36,6 +45,34 @@
           -ms-overflow-style: none;  /* IE and Edge */
           scrollbar-width: none;  /* Firefox */
       }
+
+      /* Theme Toggle Animation Styles */
+      .theme-toggle-sky {
+        transition: background-color 0.5s ease;
+      }
+      
+      .theme-sun {
+        transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      }
+      
+      .theme-moon {
+        transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      }
+      
+      .theme-star {
+        transition: opacity 0.4s ease;
+      }
+
+      /* Dark mode overrides for body */
+      body.dark {
+        background-color: #000000;
+        color: #f5f5f7;
+      }
+      
+      /* Smooth background transition for whole page */
+      body {
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
     </style>
   <script type="importmap">
 {
@@ -49,7 +86,7 @@
 }
 </script>
 </head>
-  <body class="bg-apple-bg text-apple-text antialiased selection:bg-apple-blue selection:text-white">
+  <body class="bg-apple-bg text-apple-text antialiased selection:bg-apple-blue selection:text-white dark:bg-apple-dark-bg dark:text-apple-dark-text">
     <div id="root"></div>
   </body>
 </html>
