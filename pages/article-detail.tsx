@@ -82,6 +82,14 @@ export const ArticleDetail = () => {
       });
   };
 
+  const handlePostComment = () => {
+      requireAuth(() => {
+          if (!commentText.trim()) return;
+          showToast('Comment posted', 'success');
+          setCommentText('');
+      });
+  };
+
   const insertEmoji = (emoji: string) => {
       setCommentText(prev => prev + emoji);
       setShowEmoji(false);
@@ -172,36 +180,30 @@ export const ArticleDetail = () => {
             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-3xl p-8">
                <h3 className="text-xl font-bold mb-6 text-apple-text dark:text-apple-dark-text">Comments ({article.comments?.length || 0})</h3>
                
-               {user ? (
-                   <div className="mb-8 flex space-x-4">
-                      <Avatar src={user?.avatar || ''} alt="me" />
-                      <div className="flex-1 relative">
-                          <textarea 
-                             className="w-full rounded-xl p-3 border-none focus:ring-2 focus:ring-apple-blue bg-white dark:bg-gray-800 resize-none text-apple-text dark:text-apple-dark-text" 
-                             rows={3} 
-                             placeholder="Write a thoughtful comment..." 
-                             value={commentText}
-                             onChange={(e) => setCommentText(e.target.value)}
-                          />
-                          <button onClick={() => setShowEmoji(!showEmoji)} className="absolute bottom-3 left-3 text-gray-400 hover:text-apple-blue">
-                              <Smile size={20} />
-                          </button>
-                          {showEmoji && (
-                              <div className="absolute top-full left-0 mt-2 z-10">
-                                  <EmojiPicker onSelect={insertEmoji} />
-                              </div>
-                          )}
-                          <div className="flex justify-end mt-2">
-                             <Button size="sm" onClick={() => { showToast('Comment posted', 'success'); setCommentText(''); }}>Post Comment</Button>
+               <div className="mb-8 flex space-x-4">
+                  <Avatar src={user?.avatar || 'https://ui-avatars.com/api/?name=Guest'} alt="me" />
+                  <div className="flex-1 relative">
+                      <textarea 
+                         className="w-full rounded-xl p-3 border-none focus:ring-2 focus:ring-apple-blue bg-white dark:bg-gray-800 resize-none text-apple-text dark:text-apple-dark-text" 
+                         rows={3} 
+                         placeholder="Write a thoughtful comment..." 
+                         value={commentText}
+                         onChange={(e) => setCommentText(e.target.value)}
+                         onFocus={() => { if(!user) requireAuth(()=>{}) }}
+                      />
+                      <button onClick={() => setShowEmoji(!showEmoji)} className="absolute bottom-3 left-3 text-gray-400 hover:text-apple-blue">
+                          <Smile size={20} />
+                      </button>
+                      {showEmoji && (
+                          <div className="absolute top-full left-0 mt-2 z-10">
+                              <EmojiPicker onSelect={insertEmoji} />
                           </div>
+                          )}
+                      <div className="flex justify-end mt-2">
+                         <Button size="sm" onClick={handlePostComment}>Post Comment</Button>
                       </div>
-                   </div>
-               ) : (
-                   <div className="mb-8 text-center p-6 bg-white dark:bg-gray-800 rounded-xl">
-                      <p className="text-gray-500 mb-3">Login to join the discussion</p>
-                      <Button onClick={() => requireAuth(() => {})}>Login</Button>
-                   </div>
-               )}
+                  </div>
+               </div>
 
                <div className="space-y-6">
                   {article.comments?.map(comment => (

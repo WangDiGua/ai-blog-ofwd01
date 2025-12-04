@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../context/store';
-import { Button, MarkdownRenderer, Spinner } from '../components/ui'; // Import MarkdownRenderer
+import { Button, MarkdownRenderer } from '../components/ui';
 import { GoogleGenAI } from "@google/genai";
-import { Bot, Send, User as UserIcon, Lock, Sparkles, Plus, ToggleLeft, ToggleRight, Clock } from 'lucide-react';
+import { Bot, Send, Sparkles, Plus, ToggleLeft, ToggleRight, Clock } from 'lucide-react';
 import { ChatMessage } from '../types';
 import { request } from '../utils/lib';
 
@@ -103,8 +103,10 @@ export const AIAssistant = () => {
         });
     };
 
+    // Layout adjustment: Removed pt-24, using h-[calc(100vh-7rem)] to fit within the main area
+    // 100vh - 4rem (header) - 1rem (main pt-4) - 2rem (bottom buffer)
     return (
-        <div className="max-w-7xl mx-auto px-4 py-6 h-[calc(100vh-64px)] flex gap-6">
+        <div className="max-w-7xl mx-auto px-4 h-[calc(100vh-7rem)] flex gap-6 box-border pb-4">
             {/* Sidebar (History/Info) - Hidden on mobile */}
             <div className="hidden md:flex flex-col w-72 flex-shrink-0 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm h-full">
                 <Button onClick={startNewChat} className="w-full mb-6 flex items-center justify-center bg-black dark:bg-white text-white dark:text-black hover:opacity-80 transition-opacity">

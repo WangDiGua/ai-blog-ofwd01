@@ -8,7 +8,7 @@ import { Spinner } from './components/ui';
 import { Home } from './pages/home';
 import { ArticleDetail } from './pages/article-detail';
 import { Profile } from './pages/profile';
-import { Community, MusicPage, Tools, About } from './pages/extras';
+import { Community, MusicPage, Tools, About, Contact } from './pages/extras';
 import { AIAssistant } from './pages/ai';
 
 // Scroll to top on route change
@@ -41,6 +41,7 @@ const App = () => {
                 <Route path="/music" element={<MusicPage />} />
                 <Route path="/tools" element={<Tools />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/ai" element={<AIAssistant />} />
                 {/* Fallback */}

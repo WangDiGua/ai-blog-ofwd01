@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, Spinner, Pagination, Avatar, Button, Skeleton, AnnouncementModal } from '../components/ui';
 import { request } from '../utils/lib';
 import { Article, Announcement } from '../types';
-import { Eye, Clock, Hash, Bell } from 'lucide-react';
+import { Eye, Clock, Hash, Bell, Github, FileCode, Video, MessageCircle, UserPlus } from 'lucide-react';
 
 const ArticleSkeleton = () => (
   <Card className="flex flex-col md:flex-row h-full md:h-64 p-0 overflow-hidden">
@@ -51,6 +51,37 @@ const Announcements = () => {
                  ))}
              </div>
              <AnnouncementModal isOpen={!!selected} onClose={() => setSelected(null)} data={selected} />
+        </Card>
+    );
+};
+
+// --- Recommended Authors Component ---
+const RecommendedAuthors = () => {
+    const authors = [
+        { id: 1, name: 'Alice Walker', avatar: 'https://ui-avatars.com/api/?name=Alice+Walker&background=FF5733&color=fff', articles: 42 },
+        { id: 2, name: 'David Chen', avatar: 'https://ui-avatars.com/api/?name=David+Chen&background=33FF57&color=fff', articles: 18 },
+        { id: 3, name: 'Elena G', avatar: 'https://ui-avatars.com/api/?name=Elena+G&background=3357FF&color=fff', articles: 35 }
+    ];
+
+    return (
+        <Card className="p-6">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
+                <UserPlus size={14} className="mr-2"/> Recommended Authors
+            </h3>
+            <div className="space-y-4">
+                {authors.map(author => (
+                    <div key={author.id} className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                            <Avatar src={author.avatar} alt={author.name} size="sm" />
+                            <div>
+                                <div className="text-sm font-semibold text-apple-text dark:text-apple-dark-text">{author.name}</div>
+                                <div className="text-xs text-gray-500">{author.articles} articles</div>
+                            </div>
+                        </div>
+                        <Button size="sm" variant="secondary" className="text-xs px-2 py-1">Follow</Button>
+                    </div>
+                ))}
+            </div>
         </Card>
     );
 };
@@ -105,16 +136,19 @@ export const Home = () => {
   const handleCategoryClick = (cat: string) => {
       setSearchParams({ category: cat });
       setPage(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleTagClick = (tag: string) => {
       setSearchParams({ tag: tag });
       setPage(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const clearFilters = () => {
       setSearchParams({});
       setPage(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -230,7 +264,23 @@ export const Home = () => {
               <p className="text-sm text-apple-subtext dark:text-apple-dark-subtext mb-4">
                 Passionate about creating clean, accessible, and high-performance user interfaces. 
               </p>
-              <Button variant="secondary" size="sm" className="w-full">Follow</Button>
+              
+              <div className="grid grid-cols-4 gap-2 mb-4">
+                  <a href="#" className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Github">
+                      <Github size={20} className="text-gray-600 dark:text-gray-300"/>
+                  </a>
+                  <a href="#" className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Gitee">
+                      <FileCode size={20} className="text-red-500"/>
+                  </a>
+                  <a href="#" className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Douyin">
+                      <Video size={20} className="text-black dark:text-white"/>
+                  </a>
+                  <a href="#" className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="QQ">
+                      <MessageCircle size={20} className="text-blue-500"/>
+                  </a>
+              </div>
+
+              <Button variant="secondary" size="sm" className="w-full">Full Profile</Button>
            </Card>
 
            <div className="sticky top-24 space-y-8">
@@ -254,6 +304,9 @@ export const Home = () => {
 
              {/* Announcements */}
              <Announcements />
+
+             {/* Recommended Authors */}
+             <RecommendedAuthors />
            </div>
         </div>
       </div>

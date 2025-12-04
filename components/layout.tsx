@@ -163,6 +163,7 @@ export const Navbar = () => {
     { name: 'Community', path: '/community' },
     { name: 'Music', path: '/music' },
     { name: 'Tools', path: '/tools' },
+    { name: 'Contact', path: '/contact' },
     { name: 'About', path: '/about' },
     { name: 'AI Assistant', path: '/ai' },
   ];
