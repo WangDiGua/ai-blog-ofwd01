@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/store';
-import { X, ChevronLeft, ChevronRight, ArrowUp, Type, Coffee, Search, Clock, Hash, Play, Pause, SkipBack, SkipForward, Maximize2, Minimize2, CheckCircle, AlertCircle, Info, Smile, MoreVertical } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ArrowUp, Type, Coffee, Search, Clock, Hash, Play, Pause, SkipBack, SkipForward, Maximize2, Minimize2, CheckCircle, AlertCircle, Info, Smile, Plus, Moon, Sun } from 'lucide-react';
 import { request, debounce } from '../utils/lib';
 import { Article } from '../types';
 
@@ -91,57 +91,40 @@ export const Spinner = () => (
   </svg>
 );
 
-// --- Theme Toggle Animation Component ---
+// --- Animated Theme Toggle (Sun Set / Moon Rise) ---
 export const ThemeToggle = () => {
   const { darkMode, toggleTheme } = useStore();
 
   return (
     <button
       onClick={toggleTheme}
-      className="relative w-14 h-8 rounded-full overflow-hidden shadow-inner focus:outline-none focus:ring-2 focus:ring-apple-blue/50 transition-colors duration-500"
-      style={{ backgroundColor: darkMode ? '#1a202c' : '#87CEEB' }} // Sky color
+      className="relative w-10 h-10 rounded-full overflow-hidden focus:outline-none transition-colors duration-500 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800"
       aria-label="Toggle Theme"
     >
-      {/* Sky Container */}
-      <div className="absolute inset-0 theme-toggle-sky">
-        
-        {/* Sun */}
-        <div 
-          className="absolute w-5 h-5 bg-yellow-400 rounded-full shadow-lg theme-sun"
-          style={{ 
-            top: darkMode ? '150%' : '50%', 
-            left: darkMode ? '50%' : '20%',
-            transform: 'translate(-50%, -50%)',
-            boxShadow: '0 0 10px rgba(255, 223, 0, 0.7)'
-          }}
-        />
+       {/* Container for Sun and Moon */}
+       <div className="absolute inset-0 flex items-center justify-center">
+          {/* Sun: visible in light mode (y=0), moves down in dark mode (y=100%) */}
+          <div 
+            className="absolute transition-all duration-500 ease-out"
+            style={{ 
+              transform: darkMode ? 'translateY(150%)' : 'translateY(0)',
+              opacity: darkMode ? 0 : 1
+            }}
+          >
+             <Sun className="text-orange-500 fill-orange-500" size={24} />
+          </div>
 
-        {/* Moon */}
-        <div 
-          className="absolute w-5 h-5 bg-gray-100 rounded-full shadow-lg theme-moon"
-          style={{ 
-            top: darkMode ? '50%' : '-50%', 
-            left: darkMode ? '80%' : '50%',
-            transform: 'translate(-50%, -50%)',
-             boxShadow: '0 0 8px rgba(255, 255, 255, 0.5)'
-          }}
-        >
-          {/* Craters */}
-          <div className="absolute top-1 left-1 w-1.5 h-1.5 bg-gray-300 rounded-full opacity-50"></div>
-          <div className="absolute bottom-1.5 right-1.5 w-1 h-1 bg-gray-300 rounded-full opacity-50"></div>
-        </div>
-
-        {/* Stars (Only in dark mode) */}
-        <div 
-          className="absolute inset-0 theme-star"
-          style={{ opacity: darkMode ? 1 : 0 }}
-        >
-           <div className="absolute top-1 left-2 w-0.5 h-0.5 bg-white rounded-full opacity-80 animate-pulse"></div>
-           <div className="absolute top-4 left-6 w-0.5 h-0.5 bg-white rounded-full opacity-60"></div>
-           <div className="absolute bottom-2 left-4 w-0.5 h-0.5 bg-white rounded-full opacity-70 animate-pulse" style={{ animationDelay: '1s' }}></div>
-        </div>
-
-      </div>
+          {/* Moon: hidden in light mode (y=100%), moves up in dark mode (y=0) */}
+          <div 
+            className="absolute transition-all duration-500 ease-out"
+            style={{ 
+              transform: darkMode ? 'translateY(0)' : 'translateY(150%)',
+              opacity: darkMode ? 1 : 0
+            }}
+          >
+             <Moon className="text-yellow-300 fill-yellow-300" size={24} />
+          </div>
+       </div>
     </button>
   );
 };
@@ -356,7 +339,7 @@ export const SearchModal = () => {
     );
 };
 
-// --- Floating Menu (Sticky Sidebar) ---
+// --- Floating Menu (Redesigned) ---
 export const FloatingMenu = () => {
     const { cycleFontSize } = useStore();
     const [showDonate, setShowDonate] = useState(false);
@@ -368,39 +351,39 @@ export const FloatingMenu = () => {
 
     return (
         <>
-            <div className="fixed right-4 bottom-24 z-40 flex flex-col items-end space-y-3">
-                {/* Expandable Options */}
-                <div className={`flex flex-col space-y-3 transition-all duration-300 origin-bottom ${isOpen ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-90 pointer-events-none'}`}>
+            <div className="fixed right-6 bottom-10 z-40 flex flex-col items-center group">
+                {/* Menu Items */}
+                <div className={`flex flex-col-reverse items-center space-y-reverse space-y-3 mb-4 transition-all duration-300 ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
                     <button 
-                        onClick={cycleFontSize}
-                        className="w-10 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform text-apple-text dark:text-apple-dark-text"
-                        title="Adjust Font Size"
+                        onClick={scrollToTop}
+                        className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-apple-blue dark:hover:text-white hover:scale-110 transition-all"
+                        title="Back to Top"
                     >
-                        <Type size={18} />
+                        <ArrowUp size={18} />
                     </button>
                     <button 
                         onClick={() => setShowDonate(true)}
-                        className="w-10 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform text-pink-500"
+                        className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center text-pink-500 hover:text-pink-600 hover:scale-110 transition-all"
                         title="Donate"
                     >
                         <Coffee size={18} />
                     </button>
                     <button 
-                        onClick={scrollToTop}
-                        className="w-10 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform text-apple-blue"
-                        title="Back to Top"
+                        onClick={cycleFontSize}
+                        className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-apple-blue dark:hover:text-white hover:scale-110 transition-all"
+                        title="Adjust Font Size"
                     >
-                        <ArrowUp size={18} />
+                        <Type size={18} />
                     </button>
                 </div>
 
-                {/* Main Toggle Button */}
+                {/* Main Trigger Button */}
                 <button 
                     onClick={() => setIsOpen(!isOpen)}
-                    className={`w-12 h-12 rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-all duration-300 ${isOpen ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rotate-45' : 'bg-apple-blue text-white'}`}
-                    title="Menu"
+                    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xl backdrop-blur-xl transition-all duration-300 hover:scale-105 border border-white/20 
+                    ${isOpen ? 'bg-gray-800 text-white rotate-45' : 'bg-apple-blue text-white'}`}
                 >
-                    <MoreVertical size={24} />
+                    <Plus size={24} className="transition-transform" />
                 </button>
             </div>
 
@@ -507,6 +490,92 @@ export const EmojiPicker = ({ onSelect }: { onSelect: (emoji: string) => void })
                     {e}
                 </button>
             ))}
+        </div>
+    );
+};
+
+// --- Captcha Component ---
+export const Captcha = ({ onValidate }: { onValidate: (isValid: boolean) => void }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [code, setCode] = useState('');
+    const [input, setInput] = useState('');
+
+    const generateCode = () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let newCode = '';
+        for(let i=0; i<4; i++) newCode += chars.charAt(Math.floor(Math.random() * chars.length));
+        setCode(newCode);
+        return newCode;
+    };
+
+    const drawCaptcha = (text: string) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.clearRect(0,0, canvas.width, canvas.height);
+        ctx.fillStyle = '#f3f4f6';
+        ctx.fillRect(0,0, canvas.width, canvas.height);
+        
+        ctx.font = '24px monospace';
+        ctx.fillStyle = '#1d1d1f';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        
+        // Add noise
+        for(let i=0; i<10; i++) {
+            ctx.beginPath();
+            ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+            ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+            ctx.strokeStyle = '#d1d5db';
+            ctx.stroke();
+        }
+        
+        ctx.save();
+        ctx.translate(canvas.width/2, canvas.height/2);
+        ctx.rotate((Math.random() - 0.5) * 0.4);
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
+    };
+
+    useEffect(() => {
+        const c = generateCode();
+        drawCaptcha(c);
+        onValidate(false);
+    }, []);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value.toUpperCase();
+        setInput(val);
+        onValidate(val === code);
+    };
+
+    const refresh = () => {
+        const c = generateCode();
+        drawCaptcha(c);
+        setInput('');
+        onValidate(false);
+    };
+
+    return (
+        <div className="flex space-x-2">
+            <input 
+                type="text" 
+                placeholder="Captcha" 
+                className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border-none outline-none text-apple-text dark:text-apple-dark-text"
+                value={input}
+                onChange={handleChange}
+                maxLength={4}
+            />
+            <canvas 
+                ref={canvasRef} 
+                width={100} 
+                height={40} 
+                className="rounded-xl cursor-pointer" 
+                onClick={refresh}
+                title="Click to refresh"
+            />
         </div>
     );
 };

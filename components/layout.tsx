@@ -1,21 +1,61 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Search, Menu, X, Music, User as UserIcon, LogIn, Github, Twitter, Mail, Maximize2 } from 'lucide-react';
+import { Search, Menu, X, Music, User as UserIcon, LogIn, Github, Twitter, Mail, Maximize2, RefreshCw } from 'lucide-react';
 import { useStore } from '../context/store';
-import { Button, Avatar, ThemeToggle, Modal, ToastContainer, FloatingMenu, SearchModal, FullPlayerModal } from './ui';
+import { Button, Avatar, ThemeToggle, Modal, ToastContainer, FloatingMenu, SearchModal, FullPlayerModal, Captcha } from './ui';
 import { debounce, throttle } from '../utils/lib';
 
 // --- Auth Modal Content ---
 const AuthForm = ({ onClose }: { onClose: () => void }) => {
-  const { login } = useStore();
+  const { login, showToast } = useStore();
   const [isRegister, setIsRegister] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Validation State
+  const [captchaValid, setCaptchaValid] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+  const [timer, setTimer] = useState(0);
+
+  // Countdown timer logic
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (timer > 0) {
+      interval = setInterval(() => setTimer(t => t - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  const handleSendCode = () => {
+      if (!email) {
+          showToast('Please enter your email', 'error');
+          return;
+      }
+      setCodeSent(true);
+      setTimer(60);
+      showToast('Verification code sent!', 'success');
+      // In real app, call API here
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) return;
+    if (!username || !password) {
+        showToast('Please fill all fields', 'error');
+        return;
+    }
+    
+    if (!captchaValid) {
+        showToast('Invalid Captcha', 'error');
+        return;
+    }
+
+    if (isRegister && (!email || !verificationCode)) {
+        showToast('Please verify your email', 'error');
+        return;
+    }
     
     setLoading(true);
     // Simulate API delay
@@ -29,8 +69,12 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
     }
   };
 
+  const socialLogin = (provider: string) => {
+      showToast(`${provider} login not implemented in demo`, 'info');
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-apple-text dark:text-apple-dark-text">{isRegister ? 'Create Account' : 'Welcome Back'}</h2>
         <p className="text-sm text-apple-subtext dark:text-apple-dark-subtext">Enter your details below</p>
@@ -43,9 +87,40 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
              placeholder="Username" 
              value={username}
              onChange={(e) => setUsername(e.target.value)}
-             className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
+             className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text transition-all"
            />
         </div>
+
+        {isRegister && (
+             <div className="space-y-4 animate-in slide-in-from-top-2">
+                <input 
+                    type="email" 
+                    placeholder="Email Address" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
+                />
+                <div className="flex space-x-2">
+                    <input 
+                        type="text" 
+                        placeholder="Email Code" 
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
+                    />
+                    <Button 
+                        type="button" 
+                        variant="secondary" 
+                        disabled={timer > 0 || !email}
+                        onClick={handleSendCode}
+                        className="w-24 whitespace-nowrap text-xs"
+                    >
+                        {timer > 0 ? `${timer}s` : 'Get Code'}
+                    </Button>
+                </div>
+             </div>
+        )}
+
         <div>
            <input 
              type="password" 
@@ -55,17 +130,36 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
              className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
            />
         </div>
+
+        {/* Captcha */}
+        <Captcha onValidate={setCaptchaValid} />
         
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" className="w-full shadow-lg shadow-blue-500/20" disabled={loading}>
           {loading ? 'Processing...' : (isRegister ? 'Sign Up' : 'Sign In')}
         </Button>
       </form>
+
+      <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white dark:bg-apple-dark-card text-gray-500">Or continue with</span>
+          </div>
+      </div>
+
+      <div className="grid grid-cols-4 gap-4">
+          <button onClick={() => socialLogin('Github')} className="flex items-center justify-center p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"><Github size={20}/></button>
+          <button onClick={() => socialLogin('WeChat')} className="flex items-center justify-center p-2 rounded-full bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors text-green-600"><span className="font-bold text-xs">WeChat</span></button>
+          <button onClick={() => socialLogin('QQ')} className="flex items-center justify-center p-2 rounded-full bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-blue-500"><span className="font-bold text-xs">QQ</span></button>
+          <button onClick={() => socialLogin('Gitee')} className="flex items-center justify-center p-2 rounded-full bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-red-500"><span className="font-bold text-xs">Gitee</span></button>
+      </div>
 
       <div className="text-center text-sm text-gray-500">
         {isRegister ? "Already have an account? " : "Don't have an account? "}
         <button 
           type="button"
-          onClick={() => setIsRegister(!isRegister)}
+          onClick={() => { setIsRegister(!isRegister); setCaptchaValid(false); }}
           className="text-apple-blue font-semibold hover:underline"
         >
           {isRegister ? 'Sign In' : 'Sign Up'}

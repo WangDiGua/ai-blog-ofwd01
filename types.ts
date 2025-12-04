@@ -6,6 +6,8 @@ export interface User {
   avatar: string;
   email?: string;
   bio?: string;
+  points?: number;
+  coverImage?: string;
 }
 
 export interface Article {

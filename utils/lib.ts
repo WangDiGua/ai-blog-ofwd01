@@ -115,11 +115,15 @@ class MockRequest {
                   name: body.username,
                   avatar: `https://ui-avatars.com/api/?name=${body.username}&background=0071e3&color=fff`,
                   email: `${body.username}@example.com`,
-                  bio: 'Frontend enthusiast and pixel perfectionist.'
+                  bio: 'Frontend enthusiast and pixel perfectionist.',
+                  points: 100,
+                  coverImage: 'https://picsum.photos/seed/cover/1200/400'
                } as unknown as T);
              } else {
                reject({message: 'Invalid credentials'});
              }
+          } else if (endpoint === '/user/checkin') {
+             resolve({ points: 10, total: 110 } as unknown as T);
           } else if (endpoint === '/user/update') {
               resolve(body as unknown as T);
           } else if (endpoint === '/articles/create') {

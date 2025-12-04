@@ -32,9 +32,9 @@ export const Home = () => {
   const navigate = useNavigate();
   
   const LIMIT = 5;
-  const ALL_TAGS = ['#React19', '#TailwindCSS', '#UXDesign', '#AppleEvent', '#CodingLife', '#WebAssembly', '#NextJS', '#Figma', '#Minimalism', '#Darkmode'];
+  const ALL_TAGS = ['#React19', '#TailwindCSS', '#UXDesign', '#AppleEvent', '#CodingLife', '#WebAssembly', '#NextJS', '#Figma', '#Minimalism', '#Darkmode', '#AI', '#ThreeJS', '#Rust', '#Cyberpunk'];
 
-  // Rotate Tags
+  // Rotate Tags with Animation
   useEffect(() => {
     const interval = setInterval(() => {
         // Simple shuffle for demo
@@ -158,9 +158,15 @@ export const Home = () => {
 
            <div className="sticky top-24">
              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Trending Topics</h3>
-             <div className="space-y-2 transition-all duration-500">
-               {trendingTags.map(tag => (
-                 <a key={tag} href="#" className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors animate-in fade-in duration-500">
+             {/* Key change triggers animation */}
+             <div className="space-y-2" key={trendingTags.join(',')}>
+               {trendingTags.map((tag, i) => (
+                 <a 
+                   key={tag} 
+                   href="#" 
+                   className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors animate-slide-up-fade"
+                   style={{ animationDelay: `${i * 100}ms` }}
+                 >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{tag}</span>
                     <Hash size={14} className="text-gray-400"/>
                  </a>
