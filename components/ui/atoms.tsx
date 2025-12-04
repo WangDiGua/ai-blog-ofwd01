@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Play, Code, Eye } from 'lucide-react';
 
 // --- Card Component ---
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -85,3 +86,58 @@ export const Spinner = () => (
     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
   </svg>
 );
+
+// --- Markdown/Code Renderer ---
+export const MarkdownRenderer = ({ content }: { content: string }) => {
+    const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
+    
+    // Simple detection for HTML code blocks to run
+    const hasHtmlBlock = content.includes('```html');
+    
+    const extractHtml = (md: string) => {
+        const match = md.match(/```html([\s\S]*?)```/);
+        return match ? match[1] : '';
+    };
+
+    const runCode = () => {
+        const html = extractHtml(content);
+        if (!html) return;
+        const newWindow = window.open();
+        if(newWindow) {
+            newWindow.document.write(html);
+            newWindow.document.close();
+        }
+    };
+
+    return (
+        <div className="w-full">
+            {hasHtmlBlock && (
+                <div className="flex justify-end space-x-2 mb-2">
+                     <button onClick={() => setViewMode(viewMode === 'preview' ? 'code' : 'preview')} className="text-xs flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-300">
+                         {viewMode === 'preview' ? <Code size={14} className="mr-1"/> : <Eye size={14} className="mr-1"/>}
+                         {viewMode === 'preview' ? 'View Code' : 'Preview'}
+                     </button>
+                     <button onClick={runCode} className="text-xs flex items-center bg-green-100 dark:bg-green-900 px-2 py-1 rounded text-green-600 dark:text-green-400 font-medium">
+                         <Play size={14} className="mr-1"/> Run
+                     </button>
+                </div>
+            )}
+            
+            {viewMode === 'code' ? (
+                <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm font-mono whitespace-pre-wrap">
+                    {content}
+                </pre>
+            ) : (
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                     {content.split('\n').map((line, i) => {
+                        if (line.startsWith('```')) return null; // Hide code fences in simple view for demo
+                        if (line.startsWith('# ')) return <h1 key={i} className="text-xl font-bold my-2">{line.substring(2)}</h1>;
+                        if (line.startsWith('## ')) return <h2 key={i} className="text-lg font-bold my-2">{line.substring(3)}</h2>;
+                        if (line.startsWith('* ')) return <li key={i} className="ml-4 list-disc">{line.substring(2)}</li>;
+                        return <p key={i} className="min-h-[1em]">{line}</p>;
+                     })}
+                </div>
+            )}
+        </div>
+    );
+};

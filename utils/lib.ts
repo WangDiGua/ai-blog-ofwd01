@@ -1,4 +1,4 @@
-import { Article, CommunityPost, Song, User } from '../types';
+import { Article, CommunityPost, Song, User, Announcement } from '../types';
 
 /**
  * Generic Debounce Function
@@ -107,10 +107,12 @@ class MockRequest {
         } else if (endpoint === '/search/hot') {
             resolve(['React 19', 'Tailwind CSS', 'Apple Design', 'TypeScript', 'WebAssembly'] as unknown as T);
         } else if (endpoint === '/announcements') {
+            resolve(MOCK_ANNOUNCEMENTS as unknown as T);
+        } else if (endpoint.startsWith('/ai/history')) {
             resolve([
-              { id: 1, text: "🎉 iBlog V2.0 is officially released!", type: "info" },
-              { id: 2, text: "⚠️ Maintenance scheduled for Sunday 2AM.", type: "warning" },
-              { id: 3, text: "🔥 New AI Assistant is now available for VIPs.", type: "success" }
+              { id: '1', title: 'Code Refactoring Help', date: 'Today' },
+              { id: '2', title: 'Explaining Quantum Physics', date: 'Yesterday' },
+              { id: '3', title: 'CSS Grid Layouts', date: 'Last Week' }
             ] as unknown as T);
         } else {
           console.error(`[Mock 404] ${endpoint} not found`);
@@ -127,8 +129,10 @@ class MockRequest {
        setTimeout(() => {
           if (endpoint === '/login') {
              if (body.username) {
-               // Demo: If username is "vip", give VIP role
-               const role = body.username.toLowerCase().includes('vip') ? 'vip' : 'user';
+               // Demo Role Logic
+               let role = 'user';
+               if (body.username.toLowerCase().includes('vip')) role = 'vip';
+               if (body.username.toLowerCase().includes('admin')) role = 'admin';
                
                resolve({
                   id: 'u-123',
@@ -148,6 +152,8 @@ class MockRequest {
              resolve({ points: 10, total: 110 } as unknown as T);
           } else if (endpoint === '/user/update') {
               resolve(body as unknown as T);
+          } else if (endpoint === '/user/feedback') {
+              resolve({ success: true } as unknown as T);
           } else if (endpoint === '/ai/usage') {
              const userId = body.userId;
              const current = this.aiUsageStore[userId] || 0;
@@ -196,13 +202,6 @@ Building scalable web applications requires a solid foundation.
 1.  **Atomic Design**: Breaking down interfaces into smallest parts.
 2.  **Compound Components**: Managing state within complex UI elements.
 3.  **Hooks Pattern**: Reusing logic across the application.
-
-## Performance Matters
-A beautiful site is useless if it's slow. Optimizing for Core Web Vitals is crucial.
-> "Speed is a feature." - Old web wisdom.
-
-## Conclusion
-Embrace the change. Keep learning.
 `;
 
 const TITLES = [
@@ -215,73 +214,104 @@ const TITLES = [
     "Building Accessible Web Apps",
     "CSS Grid vs Flexbox: The Ultimate Guide",
     "Optimizing Web Performance",
-    "Digital Detox for Developers",
-    "The Art of Code Refactoring",
-    "Next.js vs Remix: A Comparison",
-    "Understanding State Management",
-    "WebAssembly: The Next Frontier",
-    "Micro-interactions in UX"
+    "Digital Detox for Developers"
 ];
 
 const MOCK_ARTICLES: Article[] = TITLES.map((title, i) => ({
   id: `art-${i}`,
   title: title,
-  summary: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
+  summary: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
   content: LONG_CONTENT,
   cover: `https://picsum.photos/seed/art${i}/800/600`,
   views: Math.floor(Math.random() * 5000) + 100,
   likes: Math.floor(Math.random() * 500),
   category: ["Tech", "Design", "Life"][Math.floor(Math.random() * 3)],
-  tags: ["#React19", "#Design", "#WebDev", "#Apple", "#Minimalism"].sort(() => 0.5 - Math.random()).slice(0, 3),
+  tags: ["#React19", "#Design", "#WebDev", "#Apple"].sort(() => 0.5 - Math.random()).slice(0, 2),
   date: "Oct 24, 2024",
-  comments: [
-    { 
-        id: 'c1', 
-        user: { id: 'u1', name: 'Alice', avatar: 'https://picsum.photos/seed/u1/50', role: 'user', aiUsage: 0 }, 
-        content: 'Great article!', 
-        date: '2 hours ago',
-        replies: [
-            {
-                id: 'c1-r1',
-                user: { id: 'u3', name: 'Charlie', avatar: 'https://picsum.photos/seed/u3/50', role: 'vip', aiUsage: 0 },
-                content: 'Totally agree with this point.',
-                date: '1 hour ago'
-            }
-        ]
-    },
-    { id: 'c2', user: { id: 'u2', name: 'Bob', avatar: 'https://picsum.photos/seed/u2/50', role: 'user', aiUsage: 0 }, content: 'Very insightful, thanks for sharing.', date: '1 day ago' }
-  ]
+  comments: []
 }));
 
 const MOCK_POSTS: CommunityPost[] = Array.from({ length: 5 }).map((_, i) => ({
   id: `post-${i}`,
   author: {
     id: `u-${i}`,
-    name: ["Alex Doe", "Sarah Smith", "Mike Ross", "Emily Blunt", "John Snow"][i],
+    name: ["Alex Doe", "Sarah Smith", "Mike Ross"][i%3],
     avatar: `https://picsum.photos/seed/user${i}/100/100`,
     role: 'user',
     aiUsage: 0
   },
-  content: "Just checking out this new blog design. The frosted glass effect is really smooth! Has anyone tried implementing this with pure CSS backdrop-filter?",
+  content: "Just checking out this new blog design. The frosted glass effect is really smooth!",
   likes: Math.floor(Math.random() * 50),
   comments: Math.floor(Math.random() * 10),
   timeAgo: `${i + 1}h ago`
 }));
 
-const LYRICS_DEMO = [
-    "[00:10.00]Waiting in the car",
-    "[00:15.00]Waiting for a ride in the dark",
-    "[00:20.00]The night city grows",
-    "[00:25.00]Look at the horizon glow",
-    "[00:30.00]Moving at the speed of light",
-    "[00:35.00]Into the future, into the night",
-    "[00:40.00]...",
-    "[00:45.00](Instrumental break)"
+const MOCK_SONGS: Song[] = [
+  { id: '1', title: 'Midnight City', artist: 'M83', cover: 'https://picsum.photos/seed/m83/300/300', duration: 243, lyrics: [] },
+  { id: '2', title: 'Instant Crush', artist: 'Daft Punk', cover: 'https://picsum.photos/seed/daft/300/300', duration: 337, lyrics: [] },
+  { id: '3', title: 'The Less I Know', artist: 'Tame Impala', cover: 'https://picsum.photos/seed/tame/300/300', duration: 216, lyrics: [] },
 ];
 
-const MOCK_SONGS: Song[] = [
-  { id: '1', title: 'Midnight City', artist: 'M83', cover: 'https://picsum.photos/seed/m83/300/300', duration: 243, lyrics: LYRICS_DEMO },
-  { id: '2', title: 'Instant Crush', artist: 'Daft Punk', cover: 'https://picsum.photos/seed/daft/300/300', duration: 337, lyrics: LYRICS_DEMO },
-  { id: '3', title: 'The Less I Know', artist: 'Tame Impala', cover: 'https://picsum.photos/seed/tame/300/300', duration: 216, lyrics: LYRICS_DEMO },
-  { id: '4', title: 'Blinding Lights', artist: 'The Weeknd', cover: 'https://picsum.photos/seed/week/300/300', duration: 200, lyrics: LYRICS_DEMO },
+const MOCK_ANNOUNCEMENTS: Announcement[] = [
+    { 
+        id: 1, 
+        title: "iBlog V2.0 Released", 
+        summary: "iBlog V2.0 is officially released with a brand new UI!",
+        content: `
+# iBlog V2.0 is Here!
+
+We are excited to announce the immediate availability of iBlog V2.0. This update brings a complete overhaul of the user interface, embracing the **Glassmorphism** design language.
+
+### What's New?
+*   **New Design**: A fresh, modern look inspired by Apple.
+*   **AI Assistant**: Powered by Gemini, allowing for smarter interactions.
+*   **Music Player**: Integrated music experience.
+*   **Dark Mode**: A beautiful dark mode that is easy on the eyes.
+
+Enjoy the new experience!
+        `,
+        type: "info",
+        date: "2024-10-27",
+        publisher: "System Admin"
+    },
+    { 
+        id: 2, 
+        title: "Scheduled Maintenance", 
+        summary: "Maintenance scheduled for Sunday 2AM.",
+        content: `
+# Maintenance Notice
+
+We will be performing scheduled server maintenance on **Sunday at 2:00 AM UTC**.
+
+Expected downtime is approximately **30 minutes**. During this time, the following services may be unavailable:
+*   Login/Register
+*   Commenting
+*   AI Assistant
+
+We apologize for any inconvenience.
+        `,
+        type: "warning", 
+        date: "2024-10-28",
+        publisher: "DevOps Team"
+    },
+    { 
+        id: 3, 
+        title: "VIP AI Access", 
+        summary: "New AI Assistant is now available for VIPs.",
+        content: `
+# AI Assistant for VIPs
+
+We are rolling out the new AI Assistant feature to all **VIP members**.
+
+Unlock the power of AI to:
+*   Summarize articles
+*   Generate code snippets
+*   Translate content
+
+Upgrade today to get access!
+        `,
+        type: "success",
+        date: "2024-10-29",
+        publisher: "Product Team"
+    }
 ];

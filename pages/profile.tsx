@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/store';
-import { Button, Avatar, Card } from '../components/ui';
+import { Button, Avatar, Card, FeedbackModal } from '../components/ui';
 import { request } from '../utils/lib';
-import { Settings, Award, Edit3, Image as ImageIcon, Crown } from 'lucide-react';
+import { Settings, Award, Edit3, Image as ImageIcon, Crown, LogOut, MessageSquare } from 'lucide-react';
 
 export const Profile = () => {
-    const { user, updateUser, isLoggedIn, showToast } = useStore();
+    const { user, updateUser, isLoggedIn, showToast, logout } = useStore();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('articles');
     const [isEditing, setIsEditing] = useState(false);
+    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     
     // Edit Form State
     const [name, setName] = useState('');
@@ -59,7 +60,6 @@ export const Profile = () => {
         if (!newArticleTitle || !newArticleContent) return;
         try {
             await request.post('/articles/create', { title: newArticleTitle, content: newArticleContent });
-            // Reset and show success (handled in store/request mock)
             setNewArticleTitle('');
             setNewArticleContent('');
             setActiveTab('articles');
@@ -69,10 +69,17 @@ export const Profile = () => {
         }
     };
 
+    const handleLogout = () => {
+        logout();
+        navigate('/');
+    };
+
     if (!user) return null;
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-10">
+            <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
+            
             {/* Header / Cover Area */}
             <div className="relative mb-8 rounded-3xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-800">
                 <div className="h-48 md:h-64 relative bg-gray-200 dark:bg-gray-700">
@@ -101,8 +108,8 @@ export const Profile = () => {
                      <div className="relative -mt-16 mb-4 md:mb-0 md:mr-6 group">
                          <div className="p-1 bg-white dark:bg-gray-800 rounded-full relative">
                             <Avatar src={user.avatar} alt={user.name} size="xl" />
-                            {user.role === 'vip' && (
-                                <div className="absolute bottom-0 right-0 bg-yellow-400 text-white p-1 rounded-full shadow-md border-2 border-white dark:border-gray-800" title="VIP User">
+                            {(user.role === 'vip' || user.role === 'admin') && (
+                                <div className="absolute bottom-0 right-0 bg-yellow-400 text-white p-1 rounded-full shadow-md border-2 border-white dark:border-gray-800" title={user.role.toUpperCase()}>
                                     <Crown size={12} fill="currentColor" />
                                 </div>
                             )}
@@ -119,9 +126,9 @@ export const Profile = () => {
                             <>
                                 <div className="flex items-center justify-center md:justify-start space-x-2">
                                     <h1 className="text-3xl font-bold text-apple-text dark:text-apple-dark-text">{user.name}</h1>
-                                    {user.role === 'vip' && (
-                                        <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-sm">
-                                            VIP
+                                    {user.role !== 'user' && (
+                                        <span className={`text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-sm ${user.role === 'admin' ? 'bg-red-500' : 'bg-gradient-to-r from-yellow-400 to-orange-500'}`}>
+                                            {user.role}
                                         </span>
                                     )}
                                 </div>
@@ -151,6 +158,13 @@ export const Profile = () => {
                                 <Edit3 size={16} />
                             </Button>
                         )}
+                        
+                        <Button size="sm" variant="secondary" onClick={() => setIsFeedbackOpen(true)}>
+                            <MessageSquare size={16} />
+                        </Button>
+                        <Button size="sm" variant="danger" onClick={handleLogout}>
+                            <LogOut size={16} />
+                        </Button>
                      </div>
                 </div>
             </div>

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, Spinner, Pagination, Avatar, Button, Skeleton } from '../components/ui';
+import { Card, Spinner, Pagination, Avatar, Button, Skeleton, AnnouncementModal } from '../components/ui';
 import { request } from '../utils/lib';
-import { Article } from '../types';
+import { Article, Announcement } from '../types';
 import { Eye, Clock, Hash, Bell } from 'lucide-react';
 
 const ArticleSkeleton = () => (
@@ -25,10 +25,11 @@ const ArticleSkeleton = () => (
 
 // --- Announcements Component ---
 const Announcements = () => {
-    const [news, setNews] = useState<{id: number, text: string, type: string}[]>([]);
+    const [news, setNews] = useState<Announcement[]>([]);
+    const [selected, setSelected] = useState<Announcement | null>(null);
     
     useEffect(() => {
-        request.get<any[]>('/announcements').then(setNews);
+        request.get<Announcement[]>('/announcements').then(setNews);
     }, []);
 
     if (news.length === 0) return null;
@@ -40,11 +41,16 @@ const Announcements = () => {
              </h3>
              <div className="space-y-3">
                  {news.map(n => (
-                     <div key={n.id} className="text-sm p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
-                         {n.text}
+                     <div 
+                         key={n.id} 
+                         onClick={() => setSelected(n)}
+                         className="text-sm p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                     >
+                         {n.summary}
                      </div>
                  ))}
              </div>
+             <AnnouncementModal isOpen={!!selected} onClose={() => setSelected(null)} data={selected} />
         </Card>
     );
 };

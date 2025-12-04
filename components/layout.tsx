@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Search, Menu, X, Music, User as UserIcon, LogIn, Github, Twitter, Mail, Maximize2, RefreshCw, Bot } from 'lucide-react';
+import { Search, Menu, X, Music, User as UserIcon, LogIn, Github, Twitter, Mail, Maximize2, RefreshCw, Bot, ShieldAlert } from 'lucide-react';
 import { useStore } from '../context/store';
-import { Button, Avatar, ThemeToggle, Modal, ToastContainer, FloatingMenu, SearchModal, FullPlayerModal, Captcha } from './ui';
+import { Button, Avatar, ThemeToggle, Modal, ToastContainer, FloatingMenu, SearchModal, FullPlayerModal, Captcha, AdminLoginModal } from './ui';
 import { debounce, throttle } from '../utils/lib';
 
 // --- Auth Modal Content ---
@@ -17,7 +17,6 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
   // Validation State
   const [captchaValid, setCaptchaValid] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
-  const [codeSent, setCodeSent] = useState(false);
   const [timer, setTimer] = useState(0);
 
   // Countdown timer logic
@@ -34,10 +33,8 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
           showToast('Please enter your email', 'error');
           return;
       }
-      setCodeSent(true);
       setTimer(60);
       showToast('Verification code sent!', 'success');
-      // In real app, call API here
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,10 +66,6 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
     }
   };
 
-  const socialLogin = (provider: string) => {
-      showToast(`${provider} login not implemented in demo`, 'info');
-  };
-
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
@@ -84,7 +77,7 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
         <div>
            <input 
              type="text" 
-             placeholder="Username (Try 'vip' for VIP role)" 
+             placeholder="Username (Try 'admin', 'vip')" 
              value={username}
              onChange={(e) => setUsername(e.target.value)}
              className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text transition-all"
@@ -103,7 +96,7 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
                 <div className="flex space-x-2">
                     <input 
                         type="text" 
-                        placeholder="Email Code" 
+                        placeholder="Code" 
                         value={verificationCode}
                         onChange={(e) => setVerificationCode(e.target.value)}
                         className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
@@ -131,7 +124,6 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
            />
         </div>
 
-        {/* Captcha */}
         <Captcha onValidate={setCaptchaValid} />
         
         <Button type="submit" className="w-full shadow-lg shadow-blue-500/20" disabled={loading}>
@@ -139,30 +131,13 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
         </Button>
       </form>
 
-      <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white dark:bg-apple-dark-card text-gray-500">Or continue with</span>
-          </div>
-      </div>
-
-      <div className="grid grid-cols-4 gap-4">
-          <button onClick={() => socialLogin('Github')} className="flex items-center justify-center p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"><Github size={20}/></button>
-          <button onClick={() => socialLogin('WeChat')} className="flex items-center justify-center p-2 rounded-full bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors text-green-600"><span className="font-bold text-xs">WeChat</span></button>
-          <button onClick={() => socialLogin('QQ')} className="flex items-center justify-center p-2 rounded-full bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-blue-500"><span className="font-bold text-xs">QQ</span></button>
-          <button onClick={() => socialLogin('Gitee')} className="flex items-center justify-center p-2 rounded-full bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-red-500"><span className="font-bold text-xs">Gitee</span></button>
-      </div>
-
       <div className="text-center text-sm text-gray-500">
-        {isRegister ? "Already have an account? " : "Don't have an account? "}
         <button 
           type="button"
           onClick={() => { setIsRegister(!isRegister); setCaptchaValid(false); }}
           className="text-apple-blue font-semibold hover:underline"
         >
-          {isRegister ? 'Sign In' : 'Sign Up'}
+          {isRegister ? 'Switch to Sign In' : 'Switch to Sign Up'}
         </button>
       </div>
     </div>
@@ -174,9 +149,9 @@ export const Navbar = () => {
   const { user, isLoggedIn, logout, setSearchOpen, isAuthModalOpen, setAuthModalOpen } = useStore();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAdminModalOpen, setAdminModalOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Handle Scroll Effect
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
@@ -198,6 +173,7 @@ export const Navbar = () => {
       <SearchModal />
       <FloatingMenu />
       <FullPlayerModal />
+      <AdminLoginModal isOpen={isAdminModalOpen} onClose={() => setAdminModalOpen(false)} />
 
       <nav 
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-transparent
@@ -207,13 +183,11 @@ export const Navbar = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             
-            {/* Logo */}
             <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => navigate('/')}>
               <span className="text-2xl font-semibold tracking-tight text-black dark:text-white">iBlog</span>
             </div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex space-x-8 items-center">
+            <div className="hidden md:flex space-x-6 items-center">
               {navLinks.map((link) => (
                 <NavLink
                   key={link.name}
@@ -226,15 +200,18 @@ export const Navbar = () => {
                   {link.name}
                 </NavLink>
               ))}
+              {user?.role === 'admin' && (
+                  <button 
+                     onClick={() => setAdminModalOpen(true)}
+                     className="text-sm font-medium text-red-500 hover:text-red-600 flex items-center"
+                  >
+                      <ShieldAlert size={14} className="mr-1"/> System
+                  </button>
+              )}
             </div>
 
-            {/* Right Actions */}
             <div className="hidden md:flex items-center space-x-4">
-              
-              {/* Theme Toggle */}
               <ThemeToggle />
-
-              {/* Search Trigger */}
               <button 
                 onClick={() => setSearchOpen(true)}
                 className="p-2 text-gray-400 hover:text-apple-blue transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -253,9 +230,7 @@ export const Navbar = () => {
               )}
             </div>
 
-            {/* Mobile menu button */}
             <div className="md:hidden flex items-center space-x-4">
-              <button onClick={() => setSearchOpen(true)} className="text-gray-400"><Search className="h-5 w-5" /></button>
               <ThemeToggle />
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -267,7 +242,6 @@ export const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         <div className={`md:hidden absolute w-full bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
           <div className="px-4 pt-2 pb-6 space-y-2">
             {navLinks.map((link) => (
@@ -283,6 +257,14 @@ export const Navbar = () => {
                 {link.name}
               </NavLink>
             ))}
+             {user?.role === 'admin' && (
+                  <button 
+                     onClick={() => { setIsMobileMenuOpen(false); setAdminModalOpen(true); }}
+                     className="block w-full text-left px-3 py-2 rounded-lg text-base font-medium text-red-500 hover:bg-red-50"
+                  >
+                      System Backend
+                  </button>
+              )}
             <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
               {isLoggedIn ? (
                  <div className="flex items-center justify-between px-3">
@@ -304,7 +286,6 @@ export const Navbar = () => {
          <AuthForm onClose={() => setAuthModalOpen(false)} />
       </Modal>
 
-      {/* Spacer for fixed navbar */}
       <div className="h-16" />
     </>
   );
@@ -378,10 +359,6 @@ export const Footer = () => {
             <p className="text-center text-xs text-gray-500 dark:text-gray-400">
               &copy; 2025 iBlog. Designed with Apple Aesthetics.
             </p>
-            <div className="mt-2 text-center text-xs text-gray-400 dark:text-gray-600 space-x-4">
-              <a href="#" className="hover:text-gray-600 dark:hover:text-gray-300">Privacy Policy</a>
-              <a href="#" className="hover:text-gray-600 dark:hover:text-gray-300">Terms of Service</a>
-            </div>
           </div>
         </div>
       </div>

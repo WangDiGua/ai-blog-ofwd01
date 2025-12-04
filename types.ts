@@ -8,7 +8,7 @@ export interface User {
   bio?: string;
   points?: number;
   coverImage?: string;
-  role: 'user' | 'vip';
+  role: 'user' | 'vip' | 'admin';
   aiUsage: number;
 }
 
@@ -73,4 +73,21 @@ export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
   timestamp: number;
+  isThinking?: boolean; // For thinking process display
+}
+
+export interface Announcement {
+    id: number;
+    title: string;
+    summary: string;
+    content: string; // Markdown
+    type: 'info' | 'warning' | 'success';
+    date: string;
+    publisher: string;
+}
+
+export interface Feedback {
+    userId: string;
+    content: string;
+    type: 'bug' | 'suggestion';
 }
