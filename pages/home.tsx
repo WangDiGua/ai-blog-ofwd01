@@ -6,12 +6,12 @@ import { Article, Announcement } from '../types';
 import { Eye, Clock, Hash, Bell, Github, FileCode, Video, MessageCircle, UserPlus } from 'lucide-react';
 
 const ArticleSkeleton = () => (
-  <Card className="flex flex-col md:flex-row h-full md:h-64 p-0 overflow-hidden">
-    <div className="md:w-2/5 h-48 md:h-full bg-gray-200 dark:bg-gray-800 animate-pulse" />
-    <div className="p-6 md:w-3/5 flex flex-col justify-between space-y-4">
+  <Card className="flex flex-col md:flex-row h-auto md:h-64 p-0 overflow-hidden">
+    <div className="w-full md:w-2/5 h-48 md:h-full bg-gray-200 dark:bg-gray-800 animate-pulse" />
+    <div className="p-4 md:p-6 md:w-3/5 flex flex-col justify-between space-y-4">
       <div className="space-y-3">
         <Skeleton className="h-3 w-1/3" />
-        <Skeleton className="h-8 w-3/4" />
+        <Skeleton className="h-6 md:h-8 w-3/4" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full" />
       </div>
@@ -35,7 +35,7 @@ const Announcements = () => {
     if (news.length === 0) return null;
 
     return (
-        <Card className="p-6">
+        <Card className="p-4 md:p-6">
              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
                  <Bell size={14} className="mr-2"/> Announcements
              </h3>
@@ -64,7 +64,7 @@ const RecommendedAuthors = () => {
     ];
 
     return (
-        <Card className="p-6">
+        <Card className="p-4 md:p-6">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
                 <UserPlus size={14} className="mr-2"/> Recommended Authors
             </h3>
@@ -152,26 +152,26 @@ export const Home = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 mb-20">
       
       {/* Hero / Intro */}
-      <div className="text-center mb-16 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-apple-text dark:text-apple-dark-text">
+      <div className="text-center mb-10 md:mb-16 space-y-3 md:space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <h1 className="text-3xl md:text-6xl font-bold tracking-tight text-apple-text dark:text-apple-dark-text">
           Think Different.
         </h1>
-        <p className="text-lg md:text-xl text-apple-subtext dark:text-apple-dark-subtext max-w-2xl mx-auto">
+        <p className="text-base md:text-xl text-apple-subtext dark:text-apple-dark-subtext max-w-2xl mx-auto px-4">
           Exploring the intersection of design, technology, and lifestyle through a minimalist lens.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Content */}
-        <div className="lg:col-span-8 space-y-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-apple-text dark:text-apple-dark-text">
+        <div className="lg:col-span-8 space-y-6 md:space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 sm:gap-0">
+            <h2 className="text-xl md:text-2xl font-bold text-apple-text dark:text-apple-dark-text">
                 {currentTag ? `Tag: ${currentTag}` : 'Latest Stories'}
             </h2>
-            <div className="flex space-x-2">
+            <div className="flex flex-wrap gap-2">
                {['All', 'Tech', 'Design', 'Life'].map(cat => (
                  <button 
                     key={cat} 
@@ -197,15 +197,15 @@ export const Home = () => {
                     <div className="text-center py-10 text-gray-500">No articles found.</div>
                 ) : (
                     articles.map((article) => (
-                    <Card key={article.id} hover className="flex flex-col md:flex-row group cursor-pointer h-full md:h-64" onClick={() => navigate(`/article/${article.id}`)}>
-                        <div className="md:w-2/5 h-48 md:h-full overflow-hidden">
+                    <Card key={article.id} hover className="flex flex-col md:flex-row group cursor-pointer h-auto md:h-64" onClick={() => navigate(`/article/${article.id}`)}>
+                        <div className="w-full md:w-2/5 h-48 md:h-full overflow-hidden">
                         <img 
                             src={article.cover} 
                             alt={article.title} 
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         </div>
-                        <div className="p-6 md:w-3/5 flex flex-col justify-between">
+                        <div className="p-4 md:p-6 md:w-3/5 flex flex-col justify-between">
                         <div>
                             <div className="flex items-center space-x-2 mb-2">
                             <span 
@@ -217,7 +217,7 @@ export const Home = () => {
                             <span className="text-gray-300">•</span>
                             <span className="text-xs text-gray-500">{article.date}</span>
                             </div>
-                            <h3 className="text-xl md:text-2xl font-bold text-apple-text dark:text-apple-dark-text mb-2 leading-tight group-hover:text-apple-blue transition-colors">
+                            <h3 className="text-lg md:text-2xl font-bold text-apple-text dark:text-apple-dark-text mb-2 leading-tight group-hover:text-apple-blue transition-colors">
                             {article.title}
                             </h3>
                             <p className="text-apple-subtext dark:text-apple-dark-subtext line-clamp-2 text-sm leading-relaxed">
@@ -251,8 +251,8 @@ export const Home = () => {
         </div>
 
         {/* Sidebar */}
-        <div className="lg:col-span-4 space-y-8">
-           <Card className="p-6">
+        <div className="lg:col-span-4 space-y-6 md:space-y-8">
+           <Card className="p-4 md:p-6">
               <h3 className="text-lg font-bold mb-4 text-apple-text dark:text-apple-dark-text">About Me</h3>
               <div className="flex items-center space-x-4 mb-4">
                 <Avatar src="https://picsum.photos/id/1005/100/100" alt="Admin" size="lg" />
@@ -283,7 +283,7 @@ export const Home = () => {
               <Button variant="secondary" size="sm" className="w-full">Full Profile</Button>
            </Card>
 
-           <div className="sticky top-24 space-y-8">
+           <div className="sticky top-24 space-y-6 md:space-y-8">
              <div>
                 <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Trending Topics</h3>
                 {/* Key change triggers animation */}

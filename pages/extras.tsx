@@ -15,37 +15,37 @@ export const Community = () => {
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
-      <div className="flex justify-between items-end mb-8">
+    <div className="max-w-4xl mx-auto px-4 py-6 md:py-10 mb-20">
+      <div className="flex justify-between items-end mb-6 md:mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-apple-text dark:text-apple-dark-text">Community</h1>
-          <p className="text-apple-subtext dark:text-apple-dark-subtext mt-1">Join the conversation.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-apple-text dark:text-apple-dark-text">Community</h1>
+          <p className="text-apple-subtext dark:text-apple-dark-subtext mt-1 text-sm md:text-base">Join the conversation.</p>
         </div>
         <Button onClick={() => requireAuth(() => console.log('post'))}>
-          {isLoggedIn ? 'New Post' : 'Login to Post'}
+          {isLoggedIn ? 'New Post' : 'Login'}
         </Button>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         {posts.map((post) => (
-          <Card key={post.id} className="p-6">
-            <div className="flex items-start space-x-4">
+          <Card key={post.id} className="p-4 md:p-6">
+            <div className="flex items-start space-x-3 md:space-x-4">
               <Avatar src={post.author.avatar} alt={post.author.name} />
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-center mb-1">
-                  <h4 className="font-semibold text-apple-text dark:text-apple-dark-text">{post.author.name}</h4>
-                  <span className="text-xs text-gray-400">{post.timeAgo}</span>
+                  <h4 className="font-semibold text-sm md:text-base text-apple-text dark:text-apple-dark-text truncate">{post.author.name}</h4>
+                  <span className="text-xs text-gray-400 flex-shrink-0 ml-2">{post.timeAgo}</span>
                 </div>
-                <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">{post.content}</p>
+                <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-3 md:mb-4">{post.content}</p>
                 <div className="flex items-center space-x-6">
                   <button className="flex items-center space-x-1 text-gray-400 hover:text-red-500 transition-colors">
-                    <Heart size={18} /> <span className="text-xs">{post.likes}</span>
+                    <Heart size={16} /> <span className="text-xs">{post.likes}</span>
                   </button>
                   <button className="flex items-center space-x-1 text-gray-400 hover:text-blue-500 transition-colors">
-                    <MessageCircle size={18} /> <span className="text-xs">{post.comments}</span>
+                    <MessageCircle size={16} /> <span className="text-xs">{post.comments}</span>
                   </button>
                   <button className="flex items-center space-x-1 text-gray-400 hover:text-green-500 transition-colors">
-                    <Share2 size={18} />
+                    <Share2 size={16} />
                   </button>
                 </div>
               </div>
@@ -73,11 +73,11 @@ export const MusicPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+    <div className="max-w-7xl mx-auto px-4 py-6 md:py-10 mb-20">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
         {/* Left: Player Visual */}
-        <div className="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-900 dark:to-black rounded-3xl shadow-inner border border-white/20">
-           <div className={`w-64 h-64 md:w-80 md:h-80 rounded-2xl shadow-2xl overflow-hidden mb-8 transition-transform duration-700 ease-spring ${isPlaying ? 'scale-105' : 'scale-100'}`}>
+        <div className="flex flex-col items-center justify-center p-6 md:p-8 bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-900 dark:to-black rounded-3xl shadow-inner border border-white/20">
+           <div className={`w-48 h-48 md:w-80 md:h-80 rounded-2xl shadow-2xl overflow-hidden mb-6 md:mb-8 transition-transform duration-700 ease-spring ${isPlaying ? 'scale-105' : 'scale-100'}`}>
               <img 
                 src={currentSong ? currentSong.cover : "https://picsum.photos/seed/music/400/400"} 
                 alt="Album Art" 
@@ -85,39 +85,39 @@ export const MusicPage = () => {
               />
            </div>
            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-apple-text dark:text-apple-dark-text mb-1">{currentSong?.title || "No Song Selected"}</h2>
-              <p className="text-lg text-apple-subtext dark:text-apple-dark-subtext">{currentSong?.artist || "Select a song from the list"}</p>
+              <h2 className="text-xl md:text-2xl font-bold text-apple-text dark:text-apple-dark-text mb-1">{currentSong?.title || "No Song Selected"}</h2>
+              <p className="text-base md:text-lg text-apple-subtext dark:text-apple-dark-subtext">{currentSong?.artist || "Select a song from the list"}</p>
            </div>
            
-           <div className="flex items-center space-x-8">
-              <button className="p-4 rounded-full bg-white dark:bg-gray-800 shadow-sm hover:scale-105 transition-transform">
-                <Play className="fill-current rotate-180 text-gray-400" size={24}/>
+           <div className="flex items-center space-x-6 md:space-x-8">
+              <button className="p-3 md:p-4 rounded-full bg-white dark:bg-gray-800 shadow-sm hover:scale-105 transition-transform">
+                <Play className="fill-current rotate-180 text-gray-400" size={20} />
               </button>
               <button 
                 onClick={togglePlay}
-                className="p-6 rounded-full bg-apple-blue text-white shadow-lg hover:scale-105 transition-transform hover:shadow-blue-500/30"
+                className="p-5 md:p-6 rounded-full bg-apple-blue text-white shadow-lg hover:scale-105 transition-transform hover:shadow-blue-500/30"
               >
-                {isPlaying ? <Pause size={32} className="fill-current"/> : <Play size={32} className="fill-current ml-1"/>}
+                {isPlaying ? <Pause size={28} className="fill-current"/> : <Play size={28} className="fill-current ml-1"/>}
               </button>
-              <button className="p-4 rounded-full bg-white dark:bg-gray-800 shadow-sm hover:scale-105 transition-transform">
-                <Play className="fill-current text-gray-400" size={24}/>
+              <button className="p-3 md:p-4 rounded-full bg-white dark:bg-gray-800 shadow-sm hover:scale-105 transition-transform">
+                <Play className="fill-current text-gray-400" size={20} />
               </button>
            </div>
         </div>
 
         {/* Right: Playlist */}
-        <div className="space-y-4">
-           <h2 className="text-2xl font-bold mb-6 text-apple-text dark:text-apple-dark-text">Top Hits</h2>
+        <div className="space-y-3 md:space-y-4">
+           <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-apple-text dark:text-apple-dark-text">Top Hits</h2>
            {songs.map((song) => (
              <div 
                 key={song.id}
                 onClick={() => playSong(song)}
                 className={`
-                  flex items-center p-3 rounded-xl cursor-pointer transition-all duration-200 group
+                  flex items-center p-2 md:p-3 rounded-xl cursor-pointer transition-all duration-200 group
                   ${currentSong?.id === song.id ? 'bg-white dark:bg-gray-800 shadow-md scale-[1.02]' : 'hover:bg-white/50 dark:hover:bg-gray-800/50 hover:shadow-sm'}
                 `}
              >
-                <div className="w-8 text-center text-sm font-medium text-gray-400 mr-4">
+                <div className="w-8 text-center text-sm font-medium text-gray-400 mr-2 md:mr-4">
                    {currentSong?.id === song.id && isPlaying ? (
                      <span className="flex space-x-0.5 justify-center h-3 items-end">
                        <span className="w-0.5 bg-apple-blue h-full animate-pulse"/>
@@ -129,12 +129,12 @@ export const MusicPage = () => {
                    )}
                    <Play size={12} className="hidden group-hover:inline text-apple-blue mx-auto" />
                 </div>
-                <img src={song.cover} alt="art" className="w-10 h-10 rounded-md shadow-sm mr-4" />
-                <div className="flex-1">
-                   <h4 className={`text-sm font-semibold ${currentSong?.id === song.id ? 'text-apple-blue' : 'text-apple-text dark:text-apple-dark-text'}`}>{song.title}</h4>
-                   <p className="text-xs text-gray-500 dark:text-gray-400">{song.artist}</p>
+                <img src={song.cover} alt="art" className="w-10 h-10 rounded-md shadow-sm mr-3 md:mr-4" />
+                <div className="flex-1 min-w-0">
+                   <h4 className={`text-sm font-semibold truncate ${currentSong?.id === song.id ? 'text-apple-blue' : 'text-apple-text dark:text-apple-dark-text'}`}>{song.title}</h4>
+                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{song.artist}</p>
                 </div>
-                <div className="text-xs text-gray-400 font-medium">
+                <div className="text-xs text-gray-400 font-medium ml-2">
                   {formatTime(song.duration)}
                 </div>
              </div>
@@ -147,16 +147,16 @@ export const MusicPage = () => {
 
 // --- TOOLS PAGE ---
 export const Tools = () => (
-  <div className="max-w-7xl mx-auto px-4 py-10">
-    <h1 className="text-3xl font-bold mb-8 text-apple-text dark:text-apple-dark-text">Developer Tools</h1>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div className="max-w-7xl mx-auto px-4 py-6 md:py-10 mb-20">
+    <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-apple-text dark:text-apple-dark-text">Developer Tools</h1>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
        {['JSON Formatter', 'Timestamp Converter', 'Color Picker', 'Base64 Encoder', 'Lorem Ipsum Gen', 'Diff Checker'].map(tool => (
-         <Card key={tool} hover className="p-6 flex flex-col items-center justify-center text-center h-48 cursor-pointer border-dashed border-2 border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
-            <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-xl shadow-sm mb-4 flex items-center justify-center">
-               <Hash className="text-apple-blue" />
+         <Card key={tool} hover className="p-6 flex flex-col items-center justify-center text-center h-40 md:h-48 cursor-pointer border-dashed border-2 border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-white dark:bg-gray-800 rounded-xl shadow-sm mb-4 flex items-center justify-center">
+               <Hash className="text-apple-blue" size={20} />
             </div>
-            <h3 className="font-semibold text-apple-text dark:text-apple-dark-text">{tool}</h3>
-            <p className="text-xs text-gray-400 mt-2">Useful utility for daily tasks</p>
+            <h3 className="font-semibold text-sm md:text-base text-apple-text dark:text-apple-dark-text">{tool}</h3>
+            <p className="text-xs text-gray-400 mt-2">Useful utility</p>
          </Card>
        ))}
     </div>
@@ -255,18 +255,19 @@ export const Contact = () => {
         );
     }
 
+    // Use 100dvh for better mobile browser support (address bar handling)
     return (
-        <div className="max-w-6xl mx-auto px-4 py-4 h-[calc(100vh-6rem)]">
-            <div className="flex h-full bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="max-w-6xl mx-auto px-2 md:px-4 py-2 md:py-4 h-[calc(100dvh-5rem)] md:h-[calc(100vh-6rem)] mb-20 md:mb-0">
+            <div className="flex h-full bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
                 
                 {/* Sidebar (Contact List) */}
                 <div className={`w-full md:w-80 flex-shrink-0 border-r border-gray-100 dark:border-gray-800 flex flex-col bg-gray-50/50 dark:bg-gray-900/50 ${selectedContact ? 'hidden md:flex' : 'flex'}`}>
                     {/* Sidebar Header */}
-                    <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur">
-                        <div className="flex items-center space-x-3 mb-4">
+                    <div className="p-3 md:p-4 border-b border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur">
+                        <div className="flex items-center space-x-3 mb-3 md:mb-4">
                             <Avatar src={user.avatar} alt="Me" size="md" />
                             <div>
-                                <h3 className="font-semibold text-apple-text dark:text-apple-dark-text">{user.name}</h3>
+                                <h3 className="font-semibold text-sm md:text-base text-apple-text dark:text-apple-dark-text">{user.name}</h3>
                                 <div className="flex items-center text-xs text-green-500">
                                     <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span> Online
                                 </div>
@@ -313,12 +314,15 @@ export const Contact = () => {
                     {selectedContact ? (
                         <>
                             {/* Chat Header */}
-                            <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur sticky top-0 z-10">
+                            <div className="h-14 md:h-16 flex items-center justify-between px-3 md:px-4 border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur sticky top-0 z-10">
                                 <div className="flex items-center">
                                     <button onClick={() => setSelectedContact(null)} className="md:hidden mr-2 p-1 text-gray-500">
                                         <ChevronLeft size={24} />
                                     </button>
-                                    <h3 className="font-semibold text-apple-text dark:text-apple-dark-text">{selectedContact.name}</h3>
+                                    <div>
+                                        <h3 className="font-semibold text-sm md:text-base text-apple-text dark:text-apple-dark-text">{selectedContact.name}</h3>
+                                        <span className="text-[10px] text-gray-400 md:hidden">Online</span>
+                                    </div>
                                 </div>
                                 <button className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
                                     <MoreHorizontal size={20} />
@@ -326,10 +330,10 @@ export const Contact = () => {
                             </div>
 
                             {/* Chat Messages */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50 dark:bg-black/20">
+                            <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 bg-gray-50/50 dark:bg-black/20">
                                 {(messages[selectedContact.id] || []).map(msg => (
                                     <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
+                                        <div className={`max-w-[75%] md:max-w-[70%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
                                             msg.sender === 'me' 
                                             ? 'bg-apple-blue text-white rounded-br-none' 
                                             : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-bl-none'
@@ -343,7 +347,7 @@ export const Contact = () => {
                             </div>
 
                             {/* Input Area */}
-                            <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                            <div className="p-3 md:p-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
                                 <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
                                     <button type="button" className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                                         <Mic size={20} />
@@ -378,19 +382,19 @@ export const Contact = () => {
 
 // --- ABOUT PAGE ---
 export const About = () => (
-    <div className="max-w-3xl mx-auto px-4 py-16 text-center">
+    <div className="max-w-3xl mx-auto px-4 py-10 md:py-16 text-center mb-16">
         <Avatar src="https://picsum.photos/id/1005/200/200" alt="Me" size="xl" />
-        <h1 className="text-4xl font-bold mt-6 mb-2 text-apple-text dark:text-apple-dark-text">John Developer</h1>
-        <p className="text-xl text-apple-subtext dark:text-apple-dark-subtext mb-8">Building digital experiences with pixels and love.</p>
+        <h1 className="text-3xl md:text-4xl font-bold mt-6 mb-2 text-apple-text dark:text-apple-dark-text">John Developer</h1>
+        <p className="text-lg md:text-xl text-apple-subtext dark:text-apple-dark-subtext mb-8">Building digital experiences with pixels and love.</p>
         
         <div className="flex justify-center space-x-4 mb-12">
             <Button>Download Resume</Button>
             <Button variant="secondary">Contact Me</Button>
         </div>
 
-        <div className="text-left bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+        <div className="text-left bg-white dark:bg-gray-900 rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-800">
            <h3 className="text-lg font-bold mb-4 text-apple-text dark:text-apple-dark-text">Philosophy</h3>
-           <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+           <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed text-sm md:text-base">
              I believe that great software is not just about code, but about how it makes the user feel. 
              Adhering to principles of minimalism, clarity, and depth, I strive to create interfaces that are intuitive and delightful.
            </p>
@@ -398,7 +402,7 @@ export const About = () => (
            <h3 className="text-lg font-bold mb-4 text-apple-text dark:text-apple-dark-text">Tech Stack</h3>
            <div className="flex flex-wrap gap-2">
               {['React', 'TypeScript', 'Tailwind', 'Node.js', 'Next.js', 'Figma', 'GraphQL'].map(skill => (
-                  <span key={skill} className="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300">
+                  <span key={skill} className="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300">
                       {skill}
                   </span>
               ))}

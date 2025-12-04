@@ -11,12 +11,12 @@ const CommentItem = ({ comment, depth = 0 }: { comment: Comment, depth?: number 
     const [replyOpen, setReplyOpen] = useState(false);
     
     return (
-        <div className={`flex space-x-3 ${depth > 0 ? 'ml-8 md:ml-12 mt-4 border-l-2 border-gray-100 dark:border-gray-800 pl-4' : ''}`}>
+        <div className={`flex space-x-3 ${depth > 0 ? 'ml-3 md:ml-12 mt-4 border-l-2 border-gray-100 dark:border-gray-800 pl-3 md:pl-4' : ''}`}>
             <Avatar src={comment.user.avatar} alt={comment.user.name} />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
                 <div className="flex items-center space-x-2 mb-1">
-                    <span className="font-semibold text-sm text-apple-text dark:text-apple-dark-text">{comment.user.name}</span>
-                    <span className="text-xs text-gray-400">{comment.date}</span>
+                    <span className="font-semibold text-sm text-apple-text dark:text-apple-dark-text truncate">{comment.user.name}</span>
+                    <span className="text-xs text-gray-400 flex-shrink-0">{comment.date}</span>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{comment.content}</p>
                 
@@ -101,7 +101,7 @@ export const ArticleDetail = () => {
   const toc = article.content.split('\n').filter(l => l.startsWith('## ')).map(l => l.replace('## ', ''));
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 mb-20">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* Left Sidebar (Interaction) - Desktop */}
@@ -127,14 +127,14 @@ export const ArticleDetail = () => {
 
         {/* Main Article Content */}
         <div className="lg:col-span-8">
-            <div className="mb-8 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="mb-6 md:mb-8 animate-in slide-in-from-bottom-4 duration-700">
                <div className="flex items-center space-x-2 text-sm text-apple-blue font-semibold mb-3">
                   <span className="uppercase">{article.category}</span>
                </div>
-               <h1 className="text-3xl md:text-5xl font-bold text-apple-text dark:text-apple-dark-text mb-6 leading-tight">
+               <h1 className="text-2xl md:text-5xl font-bold text-apple-text dark:text-apple-dark-text mb-4 md:mb-6 leading-tight">
                  {article.title}
                </h1>
-               <div className="flex items-center justify-between pb-8 border-b border-gray-100 dark:border-gray-800">
+               <div className="flex items-center justify-between pb-6 md:pb-8 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex items-center space-x-3">
                      <Avatar src="https://picsum.photos/id/1005/50/50" alt="Author" />
                      <div>
@@ -147,24 +147,29 @@ export const ArticleDetail = () => {
                      </div>
                   </div>
                   {/* Mobile Actions Row */}
-                  <div className="flex lg:hidden space-x-2">
-                     <button onClick={() => handleAction('like')}><Heart className={isLiked ? 'fill-red-500 text-red-500' : 'text-gray-400'}/></button>
-                     <button onClick={() => handleAction('bookmark')}><Bookmark className={isBookmarked ? 'fill-apple-blue text-apple-blue' : 'text-gray-400'}/></button>
+                  <div className="flex lg:hidden space-x-4">
+                     <button onClick={() => handleAction('like')} className="flex items-center space-x-1">
+                         <Heart className={isLiked ? 'fill-red-500 text-red-500' : 'text-gray-400'} size={20}/>
+                         <span className="text-xs text-gray-500">{article.likes + (isLiked ? 1 : 0)}</span>
+                     </button>
+                     <button onClick={() => handleAction('bookmark')}>
+                         <Bookmark className={isBookmarked ? 'fill-apple-blue text-apple-blue' : 'text-gray-400'} size={20}/>
+                     </button>
                   </div>
                </div>
             </div>
 
             {/* Cover Image */}
-            <div className="rounded-3xl overflow-hidden mb-10 shadow-lg">
+            <div className="rounded-2xl md:rounded-3xl overflow-hidden mb-8 md:mb-10 shadow-lg">
                 <img src={article.cover} alt="Cover" className="w-full object-cover" />
             </div>
 
             {/* Content Body */}
-            <article className="prose prose-lg dark:prose-invert max-w-none mb-16 text-apple-text dark:text-apple-dark-text">
+            <article className="prose prose-base md:prose-lg dark:prose-invert max-w-none mb-12 md:mb-16 text-apple-text dark:text-apple-dark-text">
                {/* Simulating Markdown rendering */}
                {article.content.split('\n').map((line, idx) => {
                   if (line.startsWith('## ')) {
-                      return <h2 key={idx} id={line.replace('## ', '')} className="text-2xl font-bold mt-8 mb-4">{line.replace('## ', '')}</h2>
+                      return <h2 key={idx} id={line.replace('## ', '')} className="text-xl md:text-2xl font-bold mt-8 mb-4">{line.replace('## ', '')}</h2>
                   } else if (line.startsWith('* ')) {
                       return <li key={idx} className="ml-4 list-disc">{line.replace('* ', '')}</li>
                   } else if (line.startsWith('> ')) {
@@ -177,14 +182,14 @@ export const ArticleDetail = () => {
             </article>
 
             {/* Comments Section */}
-            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-3xl p-8">
-               <h3 className="text-xl font-bold mb-6 text-apple-text dark:text-apple-dark-text">Comments ({article.comments?.length || 0})</h3>
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl md:rounded-3xl p-4 md:p-8">
+               <h3 className="text-lg md:text-xl font-bold mb-6 text-apple-text dark:text-apple-dark-text">Comments ({article.comments?.length || 0})</h3>
                
-               <div className="mb-8 flex space-x-4">
+               <div className="mb-8 flex space-x-3 md:space-x-4">
                   <Avatar src={user?.avatar || 'https://ui-avatars.com/api/?name=Guest'} alt="me" />
                   <div className="flex-1 relative">
                       <textarea 
-                         className="w-full rounded-xl p-3 border-none focus:ring-2 focus:ring-apple-blue bg-white dark:bg-gray-800 resize-none text-apple-text dark:text-apple-dark-text" 
+                         className="w-full rounded-xl p-3 border-none focus:ring-2 focus:ring-apple-blue bg-white dark:bg-gray-800 resize-none text-apple-text dark:text-apple-dark-text text-sm" 
                          rows={3} 
                          placeholder="Write a thoughtful comment..." 
                          value={commentText}
@@ -200,7 +205,7 @@ export const ArticleDetail = () => {
                           </div>
                           )}
                       <div className="flex justify-end mt-2">
-                         <Button size="sm" onClick={handlePostComment}>Post Comment</Button>
+                         <Button size="sm" onClick={handlePostComment}>Post</Button>
                       </div>
                   </div>
                </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../context/store';
 import { Button, MarkdownRenderer } from '../components/ui';
 import { GoogleGenAI } from "@google/genai";
-import { Bot, Send, Sparkles, Plus, ToggleLeft, ToggleRight, Clock } from 'lucide-react';
+import { Bot, Send, Sparkles, Plus, ToggleLeft, ToggleRight, Clock, Menu, X } from 'lucide-react';
 import { ChatMessage } from '../types';
 import { request } from '../utils/lib';
 
@@ -13,6 +13,7 @@ export const AIAssistant = () => {
     const [loading, setLoading] = useState(false);
     const [showThinking, setShowThinking] = useState(false);
     const [history, setHistory] = useState<{id: string, title: string, date: string}[]>([]);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile sidebar state
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Limit Logic
@@ -35,6 +36,7 @@ export const AIAssistant = () => {
     const startNewChat = () => {
         setMessages([]);
         showToast('Started new conversation', 'info');
+        if (window.innerWidth < 768) setIsSidebarOpen(false);
     };
 
     const handleSend = async () => {
@@ -103,12 +105,31 @@ export const AIAssistant = () => {
         });
     };
 
-    // Layout adjustment: Removed pt-24, using h-[calc(100vh-7rem)] to fit within the main area
-    // 100vh - 4rem (header) - 1rem (main pt-4) - 2rem (bottom buffer)
+    // Use dvh for mobile browser height compatibility
     return (
-        <div className="max-w-7xl mx-auto px-4 h-[calc(100vh-7rem)] flex gap-6 box-border pb-4">
-            {/* Sidebar (History/Info) - Hidden on mobile */}
-            <div className="hidden md:flex flex-col w-72 flex-shrink-0 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm h-full">
+        <div className="max-w-7xl mx-auto px-2 md:px-4 h-[calc(100vh-7rem)] md:h-[calc(100vh-7rem)] flex gap-4 md:gap-6 box-border pb-2 md:pb-4 relative">
+            
+            {/* Mobile Sidebar Overlay */}
+            {isSidebarOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur-sm"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
+            {/* Sidebar (History/Info) - Responsive Drawer */}
+            <div className={`
+                fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 p-4 shadow-xl transform transition-transform duration-300 ease-in-out
+                md:relative md:transform-none md:flex md:flex-col md:w-72 md:flex-shrink-0 md:rounded-2xl md:border md:shadow-sm md:h-full md:z-0
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            `}>
+                <div className="flex justify-between items-center md:hidden mb-4">
+                    <h2 className="font-bold text-lg">History</h2>
+                    <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full">
+                        <X size={20} />
+                    </button>
+                </div>
+
                 <Button onClick={startNewChat} className="w-full mb-6 flex items-center justify-center bg-black dark:bg-white text-white dark:text-black hover:opacity-80 transition-opacity">
                     <Plus size={16} className="mr-2" /> New Chat
                 </Button>
@@ -156,18 +177,24 @@ export const AIAssistant = () => {
             {/* Chat Area */}
             <div className="flex-1 flex flex-col bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden relative h-full">
                 {/* Header */}
-                <div className="h-16 flex-shrink-0 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between px-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-10">
+                <div className="h-16 flex-shrink-0 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between px-4 md:px-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-10">
                      <div className="flex items-center space-x-3">
+                         <button 
+                            onClick={() => setIsSidebarOpen(true)} 
+                            className="md:hidden p-2 -ml-2 text-gray-500 hover:text-apple-blue"
+                         >
+                            <Menu size={24} />
+                         </button>
                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
                              <Sparkles size={16} />
                          </div>
                          <div>
-                             <h2 className="font-semibold text-apple-text dark:text-apple-dark-text leading-tight">Gemini Assistant</h2>
+                             <h2 className="font-semibold text-apple-text dark:text-apple-dark-text leading-tight text-sm md:text-base">Gemini Assistant</h2>
                              <div className="text-[10px] text-green-500 flex items-center"><span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></span>Online</div>
                          </div>
                      </div>
                      <div className="flex items-center space-x-2">
-                         <span className="text-xs text-gray-500 mr-1">Show Thinking</span>
+                         <span className="text-[10px] md:text-xs text-gray-500 mr-1 hidden sm:inline">Show Thinking</span>
                          <button onClick={() => setShowThinking(!showThinking)} className="text-apple-blue">
                              {showThinking ? <ToggleRight size={24} /> : <ToggleLeft size={24} className="text-gray-300" />}
                          </button>
@@ -175,7 +202,7 @@ export const AIAssistant = () => {
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30 dark:bg-black/20">
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6 bg-gray-50/30 dark:bg-black/20">
                     {messages.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 opacity-50 animate-in fade-in duration-700">
                              <Bot size={48} className="mb-4 text-apple-blue" />
@@ -187,12 +214,12 @@ export const AIAssistant = () => {
                     {messages.map((msg) => (
                         <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                             {msg.role === 'model' && (
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs mr-2 mt-1 shadow-md">
-                                    <Sparkles size={14} />
+                                <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs mr-2 mt-1 shadow-md flex-shrink-0">
+                                    <Sparkles size={12} />
                                 </div>
                             )}
                             <div className={`
-                                max-w-[85%] rounded-2xl px-5 py-4 text-sm leading-relaxed shadow-sm
+                                max-w-[90%] md:max-w-[85%] rounded-2xl px-4 py-3 md:px-5 md:py-4 text-sm leading-relaxed shadow-sm
                                 ${msg.role === 'user' 
                                     ? 'bg-apple-blue text-white rounded-br-none' 
                                     : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-bl-none'}
@@ -208,10 +235,10 @@ export const AIAssistant = () => {
                     
                     {loading && (
                         <div className="flex justify-start">
-                             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs mr-2 mt-1 shadow-md">
-                                <Sparkles size={14} />
+                             <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs mr-2 mt-1 shadow-md flex-shrink-0">
+                                <Sparkles size={12} />
                              </div>
-                             <div className="bg-white dark:bg-gray-800 rounded-2xl px-5 py-4 border border-gray-100 dark:border-gray-700 shadow-sm rounded-bl-none">
+                             <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 border border-gray-100 dark:border-gray-700 shadow-sm rounded-bl-none">
                                  {showThinking && (
                                      <div className="text-xs text-gray-400 mb-2 font-mono flex items-center">
                                          <span className="w-2 h-2 bg-orange-400 rounded-full mr-2 animate-pulse"></span> Thinking...
@@ -229,7 +256,7 @@ export const AIAssistant = () => {
                 </div>
 
                 {/* Input Area */}
-                <div className="flex-shrink-0 p-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+                <div className="flex-shrink-0 p-3 md:p-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
                     <div className="relative flex items-center max-w-4xl mx-auto">
                         <textarea 
                             value={input}
@@ -242,7 +269,7 @@ export const AIAssistant = () => {
                             }}
                             placeholder={user ? "Message Gemini..." : "Login to chat"}
                             disabled={!user || remaining <= 0 || loading}
-                            className="w-full bg-gray-100 dark:bg-gray-800 rounded-2xl py-3 pl-4 pr-12 resize-none focus:outline-none focus:ring-2 focus:ring-apple-blue/50 text-apple-text dark:text-apple-dark-text max-h-32 min-h-[48px]"
+                            className="w-full bg-gray-100 dark:bg-gray-800 rounded-2xl py-3 pl-4 pr-12 resize-none focus:outline-none focus:ring-2 focus:ring-apple-blue/50 text-apple-text dark:text-apple-dark-text max-h-32 min-h-[48px] text-sm"
                             rows={1}
                         />
                         <button 
@@ -253,9 +280,6 @@ export const AIAssistant = () => {
                             <Send size={18} />
                         </button>
                     </div>
-                    <p className="text-center text-[10px] text-gray-400 mt-2">
-                        AI can make mistakes. Check important info.
-                    </p>
                 </div>
             </div>
         </div>
