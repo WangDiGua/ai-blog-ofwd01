@@ -8,6 +8,7 @@ interface AppState {
   login: (username: string) => Promise<void>;
   updateUser: (data: Partial<User>) => Promise<void>;
   logout: () => void;
+  incrementAiUsage: () => Promise<void>;
   
   // Auth Modal
   isAuthModalOpen: boolean;
@@ -108,6 +109,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
   };
 
+  const incrementAiUsage = async () => {
+    if (!user) return;
+    try {
+      const res = await request.post<{usage: number}>('/ai/usage', { userId: user.id });
+      setUser(prev => prev ? { ...prev, aiUsage: res.usage } : null);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     showToast('Logged out successfully', 'info');
@@ -152,6 +163,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     login,
     updateUser,
     logout,
+    incrementAiUsage,
     isAuthModalOpen, 
     setAuthModalOpen,
     requireAuth,

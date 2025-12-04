@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/store';
 import { Button, Avatar, Card } from '../components/ui';
 import { request } from '../utils/lib';
-import { Settings, Award, Edit3, Image as ImageIcon } from 'lucide-react';
+import { Settings, Award, Edit3, Image as ImageIcon, Crown } from 'lucide-react';
 
 export const Profile = () => {
     const { user, updateUser, isLoggedIn, showToast } = useStore();
@@ -99,8 +99,13 @@ export const Profile = () => {
 
                 <div className="px-8 pb-8 pt-0 relative flex flex-col md:flex-row items-center md:items-end">
                      <div className="relative -mt-16 mb-4 md:mb-0 md:mr-6 group">
-                         <div className="p-1 bg-white dark:bg-gray-800 rounded-full">
+                         <div className="p-1 bg-white dark:bg-gray-800 rounded-full relative">
                             <Avatar src={user.avatar} alt={user.name} size="xl" />
+                            {user.role === 'vip' && (
+                                <div className="absolute bottom-0 right-0 bg-yellow-400 text-white p-1 rounded-full shadow-md border-2 border-white dark:border-gray-800" title="VIP User">
+                                    <Crown size={12} fill="currentColor" />
+                                </div>
+                            )}
                          </div>
                      </div>
                      
@@ -112,7 +117,14 @@ export const Profile = () => {
                             </div>
                         ) : (
                             <>
-                                <h1 className="text-3xl font-bold text-apple-text dark:text-apple-dark-text">{user.name}</h1>
+                                <div className="flex items-center justify-center md:justify-start space-x-2">
+                                    <h1 className="text-3xl font-bold text-apple-text dark:text-apple-dark-text">{user.name}</h1>
+                                    {user.role === 'vip' && (
+                                        <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-sm">
+                                            VIP
+                                        </span>
+                                    )}
+                                </div>
                                 <p className="text-gray-500 dark:text-gray-400 max-w-lg">{user.bio || "No bio yet."}</p>
                             </>
                         )}

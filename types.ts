@@ -8,6 +8,8 @@ export interface User {
   bio?: string;
   points?: number;
   coverImage?: string;
+  role: 'user' | 'vip';
+  aiUsage: number;
 }
 
 export interface Article {
@@ -64,4 +66,11 @@ export interface ToastMessage {
   id: string;
   message: string;
   type: ToastType;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'model';
+  text: string;
+  timestamp: number;
 }

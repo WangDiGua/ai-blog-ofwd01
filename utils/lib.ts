@@ -32,6 +32,8 @@ export function throttle<T extends (...args: any[]) => void>(func: T, limit: num
  */
 class MockRequest {
   private latency = 400; // ms
+  // Simulating database state for the session
+  private aiUsageStore: Record<string, number> = {}; 
 
   private async interceptor() {
     await new Promise(resolve => setTimeout(resolve, 200)); 
@@ -52,13 +54,22 @@ class MockRequest {
             const lowerQ = params.q.toLowerCase();
             data = data.filter(a => 
               a.title.toLowerCase().includes(lowerQ) || 
-              a.summary.toLowerCase().includes(lowerQ)
+              a.summary.toLowerCase().includes(lowerQ) ||
+              a.tags?.some(t => t.toLowerCase().includes(lowerQ))
             );
+          }
+
+          // Category Filter
+          if (params.category && params.category !== 'All') {
+            data = data.filter(a => a.category === params.category);
+          }
+
+          // Tag Filter
+          if (params.tag) {
+             data = data.filter(a => a.tags?.includes(params.tag) || a.tags?.includes(`#${params.tag}`));
           }
           
           if (params.userId) {
-             // Mock filtering by user (My Articles)
-             // For demo, just return a subset
              data = data.slice(0, 3);
           }
           
@@ -95,6 +106,12 @@ class MockRequest {
           resolve(MOCK_SONGS as unknown as T);
         } else if (endpoint === '/search/hot') {
             resolve(['React 19', 'Tailwind CSS', 'Apple Design', 'TypeScript', 'WebAssembly'] as unknown as T);
+        } else if (endpoint === '/announcements') {
+            resolve([
+              { id: 1, text: "🎉 iBlog V2.0 is officially released!", type: "info" },
+              { id: 2, text: "⚠️ Maintenance scheduled for Sunday 2AM.", type: "warning" },
+              { id: 3, text: "🔥 New AI Assistant is now available for VIPs.", type: "success" }
+            ] as unknown as T);
         } else {
           console.error(`[Mock 404] ${endpoint} not found`);
           reject({ status: 404, message: 'Not Found' });
@@ -110,6 +127,9 @@ class MockRequest {
        setTimeout(() => {
           if (endpoint === '/login') {
              if (body.username) {
+               // Demo: If username is "vip", give VIP role
+               const role = body.username.toLowerCase().includes('vip') ? 'vip' : 'user';
+               
                resolve({
                   id: 'u-123',
                   name: body.username,
@@ -117,7 +137,9 @@ class MockRequest {
                   email: `${body.username}@example.com`,
                   bio: 'Frontend enthusiast and pixel perfectionist.',
                   points: 100,
-                  coverImage: 'https://picsum.photos/seed/cover/1200/400'
+                  coverImage: 'https://picsum.photos/seed/cover/1200/400',
+                  role: role,
+                  aiUsage: this.aiUsageStore['u-123'] || 0
                } as unknown as T);
              } else {
                reject({message: 'Invalid credentials'});
@@ -126,8 +148,12 @@ class MockRequest {
              resolve({ points: 10, total: 110 } as unknown as T);
           } else if (endpoint === '/user/update') {
               resolve(body as unknown as T);
+          } else if (endpoint === '/ai/usage') {
+             const userId = body.userId;
+             const current = this.aiUsageStore[userId] || 0;
+             this.aiUsageStore[userId] = current + 1;
+             resolve({ usage: this.aiUsageStore[userId] } as unknown as T);
           } else if (endpoint === '/articles/create') {
-              // Simulate creation
               const newArticle: Article = {
                   id: `new-${Date.now()}`,
                   title: body.title,
@@ -138,6 +164,7 @@ class MockRequest {
                   views: 0,
                   likes: 0,
                   category: 'Personal',
+                  tags: ['#New'],
                   comments: []
               };
               MOCK_ARTICLES.unshift(newArticle);
@@ -205,23 +232,24 @@ const MOCK_ARTICLES: Article[] = TITLES.map((title, i) => ({
   views: Math.floor(Math.random() * 5000) + 100,
   likes: Math.floor(Math.random() * 500),
   category: ["Tech", "Design", "Life"][Math.floor(Math.random() * 3)],
+  tags: ["#React19", "#Design", "#WebDev", "#Apple", "#Minimalism"].sort(() => 0.5 - Math.random()).slice(0, 3),
   date: "Oct 24, 2024",
   comments: [
     { 
         id: 'c1', 
-        user: { id: 'u1', name: 'Alice', avatar: 'https://picsum.photos/seed/u1/50' }, 
+        user: { id: 'u1', name: 'Alice', avatar: 'https://picsum.photos/seed/u1/50', role: 'user', aiUsage: 0 }, 
         content: 'Great article!', 
         date: '2 hours ago',
         replies: [
             {
                 id: 'c1-r1',
-                user: { id: 'u3', name: 'Charlie', avatar: 'https://picsum.photos/seed/u3/50' },
+                user: { id: 'u3', name: 'Charlie', avatar: 'https://picsum.photos/seed/u3/50', role: 'vip', aiUsage: 0 },
                 content: 'Totally agree with this point.',
                 date: '1 hour ago'
             }
         ]
     },
-    { id: 'c2', user: { id: 'u2', name: 'Bob', avatar: 'https://picsum.photos/seed/u2/50' }, content: 'Very insightful, thanks for sharing.', date: '1 day ago' }
+    { id: 'c2', user: { id: 'u2', name: 'Bob', avatar: 'https://picsum.photos/seed/u2/50', role: 'user', aiUsage: 0 }, content: 'Very insightful, thanks for sharing.', date: '1 day ago' }
   ]
 }));
 
@@ -230,7 +258,9 @@ const MOCK_POSTS: CommunityPost[] = Array.from({ length: 5 }).map((_, i) => ({
   author: {
     id: `u-${i}`,
     name: ["Alex Doe", "Sarah Smith", "Mike Ross", "Emily Blunt", "John Snow"][i],
-    avatar: `https://picsum.photos/seed/user${i}/100/100`
+    avatar: `https://picsum.photos/seed/user${i}/100/100`,
+    role: 'user',
+    aiUsage: 0
   },
   content: "Just checking out this new blog design. The frosted glass effect is really smooth! Has anyone tried implementing this with pure CSS backdrop-filter?",
   likes: Math.floor(Math.random() * 50),

@@ -9,6 +9,7 @@ import { Home } from './pages/home';
 import { ArticleDetail } from './pages/article-detail';
 import { Profile } from './pages/profile';
 import { Community, MusicPage, Tools, About } from './pages/extras';
+import { AIAssistant } from './pages/ai';
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -41,6 +42,7 @@ const App = () => {
                 <Route path="/tools" element={<Tools />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/ai" element={<AIAssistant />} />
                 {/* Fallback */}
                 <Route path="*" element={<div className="text-center py-20 text-gray-400">404 - Page Not Found</div>} />
               </Routes>

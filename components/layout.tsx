@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Search, Menu, X, Music, User as UserIcon, LogIn, Github, Twitter, Mail, Maximize2, RefreshCw } from 'lucide-react';
+import { Search, Menu, X, Music, User as UserIcon, LogIn, Github, Twitter, Mail, Maximize2, RefreshCw, Bot } from 'lucide-react';
 import { useStore } from '../context/store';
 import { Button, Avatar, ThemeToggle, Modal, ToastContainer, FloatingMenu, SearchModal, FullPlayerModal, Captcha } from './ui';
 import { debounce, throttle } from '../utils/lib';
@@ -84,7 +84,7 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
         <div>
            <input 
              type="text" 
-             placeholder="Username" 
+             placeholder="Username (Try 'vip' for VIP role)" 
              value={username}
              onChange={(e) => setUsername(e.target.value)}
              className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text transition-all"
@@ -189,6 +189,7 @@ export const Navbar = () => {
     { name: 'Music', path: '/music' },
     { name: 'Tools', path: '/tools' },
     { name: 'About', path: '/about' },
+    { name: 'AI Assistant', path: '/ai' },
   ];
 
   return (
@@ -333,7 +334,7 @@ export const MiniPlayer = () => {
   if (!currentSong) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 left-4 md:left-auto md:w-96 bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg rounded-2xl p-3 z-40 flex items-center space-x-4 transition-all duration-500 animate-in slide-in-from-bottom-10">
+    <div className="fixed bottom-4 right-4 left-4 md:left-auto md:w-96 bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg rounded-2xl p-3 z-[40] flex items-center space-x-4 transition-all duration-500 animate-in slide-in-from-bottom-10">
       <div onClick={() => setFullPlayerOpen(true)} className="relative group cursor-pointer">
           <img src={currentSong.cover} alt="Cover" className="w-12 h-12 rounded-lg shadow-sm" />
           <div className="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
@@ -343,7 +344,7 @@ export const MiniPlayer = () => {
       
       <div className="flex-1 min-w-0" onClick={() => setFullPlayerOpen(true)}>
         <h4 className="text-sm font-semibold truncate text-apple-text dark:text-apple-dark-text cursor-pointer hover:underline">{currentSong.title}</h4>
-        <p className="text-xs text-apple-subtext dark:text-apple-dark-subtext truncate">{currentSong.artist}</p>
+        <p className="text-xs text-apple-subtext dark:text-apple-dark-text truncate">{currentSong.artist}</p>
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-2">
           <div className="bg-apple-blue h-1 rounded-full transition-all duration-1000" style={{ width: `${progress}%` }}></div>
         </div>
