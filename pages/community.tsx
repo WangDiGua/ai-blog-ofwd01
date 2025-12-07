@@ -101,9 +101,12 @@ export const Community = () => {
   };
 
   const submitComment = (postId: string) => {
+      if (!commentInput.trim()) {
+          showToast('评论内容不能为空', 'error');
+          return;
+      }
+
       requireAuth(() => {
-          if (!commentInput.trim()) return;
-          
           const newComment: CommentMock = {
               id: Date.now(),
               user: user?.name || '我',

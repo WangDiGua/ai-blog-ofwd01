@@ -107,10 +107,31 @@ export const ImageViewer = ({ src, onClose }: { src: string | null, onClose: () 
     );
 };
 
-// --- Helper: Parse inline markdown (bold, italic, code, link) ---
+// --- Helper: URL Sanitization (Prevent XSS) ---
+const sanitizeUrl = (url: string) => {
+    try {
+        const lower = url.toLowerCase().trim();
+        // Prevent javascript: vbscript: data: protocols
+        if (lower.startsWith('javascript:') || lower.startsWith('vbscript:') || lower.startsWith('data:')) {
+            return '#';
+        }
+        return url;
+    } catch (e) {
+        return '#';
+    }
+};
+
+// --- Helper: Parse inline markdown (bold, italic, code, link) with Security ---
 const parseInline = (text: string) => {
-    // Escape HTML to prevent XSS (very basic)
-    let safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    // 1. Strictly Escape HTML characters first to prevent injection
+    let safeText = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    // 2. Apply Markdown syntax replacements
 
     // Code: `code`
     safeText = safeText.replace(/`([^`]+)`/g, '<code class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono text-pink-500">$1</code>');
@@ -121,8 +142,11 @@ const parseInline = (text: string) => {
     // Italic: *italic*
     safeText = safeText.replace(/\*([^*]+)\*/g, '<em>$1</em>');
 
-    // Link: [text](url)
-    safeText = safeText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-apple-blue hover:underline">$1</a>');
+    // Link: [text](url) - Sanitized
+    safeText = safeText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, txt, url) => {
+        const cleanUrl = sanitizeUrl(url);
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-apple-blue hover:underline">${txt}</a>`;
+    });
 
     return <span dangerouslySetInnerHTML={{ __html: safeText }} />;
 };
@@ -132,7 +156,7 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
     const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     
-    // 简单检测 HTML 代码块以运行
+    // 简单检测 HTML 代码块以运行 (Run functionality intentionally executes code, but separated from preview)
     const hasHtmlBlock = content.includes('```html');
     
     const extractHtml = (md: string) => {
@@ -175,15 +199,15 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
                         
                         if (line.startsWith('# ')) {
                             const text = line.substring(2).trim();
-                            return <h1 key={i} id={text} className="text-xl font-bold my-4 text-apple-text dark:text-apple-dark-text scroll-mt-24">{text}</h1>;
+                            return <h1 key={i} id={text} className="text-xl font-bold my-4 text-apple-text dark:text-apple-dark-text scroll-mt-24">{parseInline(text)}</h1>;
                         }
                         if (line.startsWith('## ')) {
                             const text = line.substring(3).trim();
-                            return <h2 key={i} id={text} className="text-lg font-bold my-3 text-apple-text dark:text-apple-dark-text scroll-mt-24">{text}</h2>;
+                            return <h2 key={i} id={text} className="text-lg font-bold my-3 text-apple-text dark:text-apple-dark-text scroll-mt-24">{parseInline(text)}</h2>;
                         }
                         if (line.startsWith('### ')) {
                             const text = line.substring(4).trim();
-                            return <h3 key={i} id={text} className="text-base font-bold my-2 text-apple-text dark:text-apple-dark-text scroll-mt-24">{text}</h3>;
+                            return <h3 key={i} id={text} className="text-base font-bold my-2 text-apple-text dark:text-apple-dark-text scroll-mt-24">{parseInline(text)}</h3>;
                         }
                         if (line.startsWith('* ') || line.startsWith('- ')) {
                             return <li key={i} className="ml-4 list-disc my-1">{parseInline(line.substring(2))}</li>;
@@ -195,13 +219,14 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
                         // 图片检测: ![alt](url)
                         const imgMatch = line.match(/!\[(.*?)\]\((.*?)\)/);
                         if (imgMatch) {
+                            const cleanSrc = sanitizeUrl(imgMatch[2]);
                             return (
                                 <div key={i} className="my-4 group">
                                     <img 
-                                        src={imgMatch[2]} 
+                                        src={cleanSrc} 
                                         alt={imgMatch[1]} 
                                         className="rounded-xl shadow-md cursor-zoom-in max-h-96 w-auto mx-auto hover:opacity-90 transition-opacity"
-                                        onClick={() => setPreviewImage(imgMatch[2])}
+                                        onClick={() => setPreviewImage(cleanSrc)}
                                     />
                                     {imgMatch[1] && <p className="text-center text-xs text-gray-500 mt-2">{imgMatch[1]}</p>}
                                 </div>

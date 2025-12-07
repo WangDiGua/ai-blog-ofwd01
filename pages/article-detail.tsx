@@ -87,8 +87,11 @@ export const ArticleDetail = () => {
   };
 
   const handlePostComment = () => {
+      if (!commentText.trim()) {
+          showToast('评论内容不能为空', 'error');
+          return;
+      }
       requireAuth(() => {
-          if (!commentText.trim()) return;
           showToast('评论已发布', 'success');
           setCommentText('');
       });
@@ -206,7 +209,7 @@ export const ArticleDetail = () => {
                          <button onClick={() => setShowEmoji(!showEmoji)} className="text-gray-400 hover:text-apple-blue p-2">
                               <Smile size={20} />
                          </button>
-                         <Button size="sm" onClick={handlePostComment}>发表评论</Button>
+                         <Button size="sm" onClick={handlePostComment} disabled={!commentText.trim()}>发表评论</Button>
                       </div>
 
                       {showEmoji && (
