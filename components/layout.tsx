@@ -19,6 +19,10 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
   const [verificationCode, setVerificationCode] = useState('');
   const [timer, setTimer] = useState(0);
   const [captchaKey, setCaptchaKey] = useState(0); // 用于强制刷新验证码
+  
+  // 安全限制状态
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
 
   // 倒计时逻辑
   useEffect(() => {
@@ -40,15 +44,39 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 检查是否被锁定
+    if (lockoutUntil) {
+        const now = Date.now();
+        if (now < lockoutUntil) {
+            const remainingSeconds = Math.ceil((lockoutUntil - now) / 1000);
+            showToast(`操作过于频繁，请 ${remainingSeconds} 秒后再试`, 'error');
+            return;
+        } else {
+            // 锁定时间已过，重置状态
+            setLockoutUntil(null);
+            setFailedAttempts(0);
+        }
+    }
+
     if (!username || !password) {
         showToast('请填写所有字段', 'error');
         return;
     }
     
-    // 如果验证码错误，刷新验证码
+    // 如果验证码错误，刷新验证码并增加错误计数
     if (!captchaValid) {
-        showToast('验证码无效，请重试', 'error');
-        setCaptchaKey(prev => prev + 1); // 强制刷新组件
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        
+        if (newAttempts >= 5) {
+            const lockTime = Date.now() + 60000; // 锁定 1 分钟
+            setLockoutUntil(lockTime);
+            showToast('验证码错误次数过多，请 1 分钟后再试', 'error');
+        } else {
+            showToast(`验证码无效，还剩 ${5 - newAttempts} 次机会`, 'error');
+            setCaptchaKey(prev => prev + 1); // 强制刷新组件
+        }
         return;
     }
 
@@ -61,6 +89,9 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
     // 模拟 API 延迟
     try {
       await login(username);
+      // 登录成功清空错误计数
+      setFailedAttempts(0);
+      setLockoutUntil(null);
       onClose();
     } catch(err) {
       // Toast 已在 store 中处理
@@ -68,6 +99,8 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
       setLoading(false);
     }
   };
+
+  const isLocked = lockoutUntil && Date.now() < lockoutUntil;
 
   return (
     <div className="space-y-6">
@@ -83,7 +116,8 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
              placeholder="用户名 (尝试 'admin', 'vip')" 
              value={username}
              onChange={(e) => setUsername(e.target.value)}
-             className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text transition-all"
+             disabled={!!isLocked}
+             className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text transition-all disabled:opacity-50"
            />
         </div>
 
@@ -94,7 +128,8 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
                     placeholder="邮箱地址" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
+                    disabled={!!isLocked}
+                    className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text disabled:opacity-50"
                 />
                 <div className="flex space-x-2">
                     <input 
@@ -102,12 +137,13 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
                         placeholder="验证码" 
                         value={verificationCode}
                         onChange={(e) => setVerificationCode(e.target.value)}
-                        className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
+                        disabled={!!isLocked}
+                        className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text disabled:opacity-50"
                     />
                     <Button 
                         type="button" 
                         variant="secondary" 
-                        disabled={timer > 0 || !email}
+                        disabled={timer > 0 || !email || !!isLocked}
                         onClick={handleSendCode}
                         className="w-24 whitespace-nowrap text-xs"
                     >
@@ -123,22 +159,25 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
              placeholder="密码" 
              value={password}
              onChange={(e) => setPassword(e.target.value)}
-             className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
+             disabled={!!isLocked}
+             className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text disabled:opacity-50"
            />
         </div>
 
         {/* 使用 key 属性强制重新渲染以刷新验证码 */}
-        <Captcha key={captchaKey} onValidate={setCaptchaValid} />
+        <div className={isLocked ? 'opacity-50 pointer-events-none' : ''}>
+            <Captcha key={captchaKey} onValidate={setCaptchaValid} />
+        </div>
         
-        <Button type="submit" className="w-full shadow-lg shadow-blue-500/20" disabled={loading}>
-          {loading ? '处理中...' : (isRegister ? '注册' : '登录')}
+        <Button type="submit" className="w-full shadow-lg shadow-blue-500/20" disabled={loading || !!isLocked}>
+          {loading ? '处理中...' : (isLocked ? '已锁定 (1分钟)' : (isRegister ? '注册' : '登录'))}
         </Button>
       </form>
 
       <div className="text-center text-sm text-gray-500">
         <button 
           type="button"
-          onClick={() => { setIsRegister(!isRegister); setCaptchaValid(false); }}
+          onClick={() => { setIsRegister(!isRegister); setCaptchaValid(false); setFailedAttempts(0); setLockoutUntil(null); }}
           className="text-apple-blue font-semibold hover:underline"
         >
           {isRegister ? '切换到登录' : '切换到注册'}

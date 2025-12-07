@@ -132,8 +132,14 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
                 <div className="prose prose-sm dark:prose-invert max-w-none text-apple-text dark:text-apple-dark-text">
                      {content.split('\n').map((line, i) => {
                         if (line.startsWith('```')) return null; // 演示中隐藏代码块
-                        if (line.startsWith('# ')) return <h1 key={i} className="text-xl font-bold my-4 text-apple-text dark:text-apple-dark-text">{line.substring(2)}</h1>;
-                        if (line.startsWith('## ')) return <h2 key={i} className="text-lg font-bold my-3 text-apple-text dark:text-apple-dark-text">{line.substring(3)}</h2>;
+                        if (line.startsWith('# ')) {
+                            const text = line.substring(2).trim();
+                            return <h1 key={i} id={text} className="text-xl font-bold my-4 text-apple-text dark:text-apple-dark-text scroll-mt-24">{text}</h1>;
+                        }
+                        if (line.startsWith('## ')) {
+                            const text = line.substring(3).trim();
+                            return <h2 key={i} id={text} className="text-lg font-bold my-3 text-apple-text dark:text-apple-dark-text scroll-mt-24">{text}</h2>;
+                        }
                         if (line.startsWith('* ')) return <li key={i} className="ml-4 list-disc my-1">{line.substring(2)}</li>;
                         if (line.startsWith('> ')) {
                             return <blockquote key={i} className="border-l-4 border-apple-blue pl-4 italic my-4 text-gray-600 dark:text-gray-400">{line.replace('> ', '')}</blockquote>

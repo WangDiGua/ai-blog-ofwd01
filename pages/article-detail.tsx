@@ -98,7 +98,10 @@ export const ArticleDetail = () => {
   if (loading) return <div className="flex justify-center h-[50vh] items-center"><Spinner /></div>;
   if (!article) return <div className="text-center py-20">文章未找到</div>;
 
-  const toc = article.content.split('\n').filter(l => l.startsWith('## ')).map(l => l.replace('## ', ''));
+  // 提取目录 (## Heading)
+  const toc = article.content.split('\n')
+    .filter(l => l.startsWith('## '))
+    .map(l => l.replace('## ', '').trim());
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 mb-20">
@@ -113,7 +116,10 @@ export const ArticleDetail = () => {
               <Heart size={24} className={isLiked ? 'fill-current' : ''} />
               <span className="text-xs mt-1 font-medium">{article.likes + (isLiked ? 1 : 0)}</span>
            </button>
-           <button className="flex flex-col items-center p-3 rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+           <button 
+                onClick={() => document.getElementById('comments-section')?.scrollIntoView({ behavior: 'smooth' })}
+                className="flex flex-col items-center p-3 rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+           >
               <MessageCircle size={24} />
               <span className="text-xs mt-1 font-medium">{article.comments?.length || 0}</span>
            </button>
@@ -169,8 +175,8 @@ export const ArticleDetail = () => {
                <MarkdownRenderer content={article.content} />
             </article>
 
-            {/* 评论区 */}
-            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl md:rounded-3xl p-4 md:p-8">
+            {/* 评论区 - 添加 ID 用于跳转 */}
+            <div id="comments-section" className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl md:rounded-3xl p-4 md:p-8 scroll-mt-24">
                <h3 className="text-lg md:text-xl font-bold mb-6 text-apple-text dark:text-apple-dark-text">评论 ({article.comments?.length || 0})</h3>
                
                <div className="mb-8 flex space-x-3 md:space-x-4">
@@ -220,6 +226,7 @@ export const ArticleDetail = () => {
                          className="text-sm text-gray-500 dark:text-gray-400 hover:text-apple-blue transition-colors block"
                          onClick={(e) => {
                              e.preventDefault();
+                             // 现在 header 直接对应了 MarkdownRenderer 中生成的 id
                              document.getElementById(header)?.scrollIntoView({ behavior: 'smooth' });
                          }}
                        >
