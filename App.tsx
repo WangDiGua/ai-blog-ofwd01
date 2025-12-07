@@ -43,6 +43,7 @@ const App = () => {
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/user/:id" element={<Profile />} />
                 <Route path="/ai" element={<AIAssistant />} />
                 {/* Fallback */}
                 <Route path="*" element={<div className="text-center py-20 text-gray-400">404 - Page Not Found</div>} />

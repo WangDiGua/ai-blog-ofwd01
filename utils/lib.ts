@@ -100,6 +100,40 @@ class MockRequest {
           if (article) resolve(article as unknown as T);
           else reject({ status: 404, message: '文章未找到' });
 
+        } else if (endpoint.startsWith('/users/')) {
+           // 获取用户信息 /users/:id
+           const id = endpoint.split('/')[2];
+           // 如果是简单数字ID，返回模拟用户
+           if (id === 'u-123') {
+               // 当前登录用户
+               resolve(null as unknown as T); // Should be handled by local state usually, but let's mock response
+           } else {
+               // 模拟其他用户
+               resolve({
+                   id: id,
+                   name: `用户 ${id}`,
+                   avatar: `https://ui-avatars.com/api/?name=User+${id}&background=random&color=fff`,
+                   bio: '这位用户很懒，什么也没写。',
+                   role: 'user',
+                   aiUsage: 0,
+                   followersCount: Math.floor(Math.random() * 1000),
+                   followingCount: Math.floor(Math.random() * 100),
+                   totalLikes: Math.floor(Math.random() * 5000),
+                   coverImage: `https://picsum.photos/seed/${id}/1200/400`,
+                   isFollowing: false
+               } as unknown as T);
+           }
+        } else if (endpoint === '/user/followers' || endpoint === '/user/following') {
+            // 返回模拟的用户列表
+            const list = Array.from({ length: 8 }).map((_, i) => ({
+                id: `${endpoint}-${i}`,
+                name: `粉丝/关注者 ${i}`,
+                avatar: `https://ui-avatars.com/api/?name=User+${i}&background=random`,
+                bio: '前端开发爱好者',
+                isFollowing: i % 2 === 0
+            }));
+            resolve(list as unknown as T);
+
         } else if (endpoint === '/community') {
           resolve(MOCK_POSTS as unknown as T);
         } else if (endpoint === '/music') {
@@ -143,7 +177,10 @@ class MockRequest {
                   points: 100,
                   coverImage: 'https://picsum.photos/seed/cover/1200/400',
                   role: role,
-                  aiUsage: this.aiUsageStore['u-123'] || 0
+                  aiUsage: this.aiUsageStore['u-123'] || 0,
+                  followersCount: 128,
+                  followingCount: 42,
+                  totalLikes: 3560
                } as unknown as T);
              } else {
                reject({message: '凭证无效'});
@@ -154,6 +191,8 @@ class MockRequest {
               resolve(body as unknown as T);
           } else if (endpoint === '/user/feedback') {
               resolve({ success: true } as unknown as T);
+          } else if (endpoint === '/user/follow') {
+              resolve({ success: true, isFollowing: body.isFollowing } as unknown as T);
           } else if (endpoint === '/ai/usage') {
              const userId = body.userId;
              const current = this.aiUsageStore[userId] || 0;
@@ -228,7 +267,10 @@ const MOCK_ARTICLES: Article[] = TITLES.map((title, i) => ({
   category: ["Tech", "Design", "Life"][Math.floor(Math.random() * 3)],
   tags: ["#React19", "#Design", "#WebDev", "#Apple"].sort(() => 0.5 - Math.random()).slice(0, 2),
   date: "2024年10月24日",
-  comments: []
+  comments: [],
+  authorId: `u-${i}`,
+  authorName: ["Alice Walker", "David Chen", "Elena G"][i % 3],
+  authorAvatar: `https://ui-avatars.com/api/?name=${["Alice Walker", "David Chen", "Elena G"][i % 3]}&background=random`
 }));
 
 const MOCK_POSTS: CommunityPost[] = Array.from({ length: 5 }).map((_, i) => ({

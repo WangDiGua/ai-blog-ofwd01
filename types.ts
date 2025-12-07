@@ -1,3 +1,4 @@
+
 // Global Type Definitions
 
 export interface User {
@@ -10,6 +11,11 @@ export interface User {
   coverImage?: string;
   role: 'user' | 'vip' | 'admin';
   aiUsage: number;
+  // 新增统计字段
+  followersCount?: number;
+  followingCount?: number;
+  totalLikes?: number;
+  isFollowing?: boolean; // 当前登录用户是否关注了该用户
 }
 
 export interface Article {
@@ -25,6 +31,8 @@ export interface Article {
   tags?: string[];
   comments?: Comment[];
   authorId?: string;
+  authorName?: string; // 方便显示
+  authorAvatar?: string;
 }
 
 export interface Comment {

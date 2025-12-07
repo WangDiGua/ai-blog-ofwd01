@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, Spinner, Pagination, Avatar, Button, Skeleton, AnnouncementModal } from '../components/ui';
 import { request } from '../utils/lib';
-import { Article, Announcement } from '../types';
-import { Eye, Clock, Hash, Bell, Github, FileCode, Video, MessageCircle, UserPlus } from 'lucide-react';
+import { Article, Announcement, User } from '../types';
+import { Eye, Clock, Hash, Bell, Github, FileCode, Video, MessageCircle, UserPlus, X, Gift, Snowflake } from 'lucide-react';
+import { useStore } from '../context/store';
 
 const ArticleSkeleton = () => (
   <Card className="flex flex-col md:flex-row h-auto md:h-64 p-0 overflow-hidden">
@@ -22,6 +23,77 @@ const ArticleSkeleton = () => (
     </div>
   </Card>
 );
+
+// --- 节日挂件组件 ---
+const FestiveSidebars = () => {
+    const [theme, setTheme] = useState<'none' | 'christmas' | 'spring'>('spring');
+    const [visible, setVisible] = useState(true);
+
+    // 可以在这里根据日期自动切换
+    useEffect(() => {
+        const month = new Date().getMonth();
+        if (month === 11) setTheme('christmas');
+        else if (month === 0 || month === 1) setTheme('spring');
+    }, []);
+
+    if (!visible || theme === 'none') return null;
+
+    return (
+        <div className="hidden 2xl:block pointer-events-none">
+            {/* 左侧挂件 */}
+            <div className="fixed left-6 top-1/4 z-10 pointer-events-auto group animate-in slide-in-from-left-10 duration-1000">
+                <button 
+                    onClick={() => setVisible(false)} 
+                    className="absolute -top-2 -right-2 bg-gray-200 dark:bg-gray-700 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="关闭节日装饰"
+                >
+                    <X size={12} />
+                </button>
+                {theme === 'christmas' ? (
+                    <div className="flex flex-col items-center">
+                        <Snowflake size={64} className="text-blue-200 animate-spin-slow" />
+                        <div className="w-2 h-32 bg-gradient-to-b from-gray-300 to-transparent mt-[-10px]"></div>
+                        <Gift size={48} className="text-red-500 -mt-2" />
+                    </div>
+                ) : (
+                    <div className="bg-red-600 w-16 pt-6 pb-12 rounded-b-full shadow-lg border-2 border-yellow-400 flex flex-col items-center space-y-4">
+                        <div className="w-10 h-10 border-2 border-yellow-400 rounded-full flex items-center justify-center text-yellow-400 font-bold text-xl bg-red-700">春</div>
+                        <div className="text-yellow-100 font-serif text-2xl space-y-2 flex flex-col">
+                            <span>欢</span><span>度</span><span>佳</span><span>节</span>
+                        </div>
+                        <div className="w-2 h-20 bg-yellow-400/50 mt-2"></div>
+                    </div>
+                )}
+            </div>
+
+            {/* 右侧挂件 */}
+            <div className="fixed right-6 top-1/4 z-10 pointer-events-auto group animate-in slide-in-from-right-10 duration-1000">
+                <button 
+                    onClick={() => setVisible(false)} 
+                    className="absolute -top-2 -left-2 bg-gray-200 dark:bg-gray-700 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="关闭节日装饰"
+                >
+                    <X size={12} />
+                </button>
+                {theme === 'christmas' ? (
+                    <div className="flex flex-col items-center">
+                        <Snowflake size={64} className="text-blue-200 animate-spin-slow" />
+                        <div className="w-2 h-32 bg-gradient-to-b from-gray-300 to-transparent mt-[-10px]"></div>
+                        <Gift size={48} className="text-green-500 -mt-2" />
+                    </div>
+                ) : (
+                    <div className="bg-red-600 w-16 pt-6 pb-12 rounded-b-full shadow-lg border-2 border-yellow-400 flex flex-col items-center space-y-4">
+                        <div className="w-10 h-10 border-2 border-yellow-400 rounded-full flex items-center justify-center text-yellow-400 font-bold text-xl bg-red-700">福</div>
+                        <div className="text-yellow-100 font-serif text-2xl space-y-2 flex flex-col">
+                            <span>恭</span><span>喜</span><span>发</span><span>财</span>
+                        </div>
+                        <div className="w-2 h-20 bg-yellow-400/50 mt-2"></div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 // --- 公告组件 ---
 const Announcements = () => {
@@ -57,11 +129,27 @@ const Announcements = () => {
 
 // --- 推荐作者组件 ---
 const RecommendedAuthors = () => {
-    const authors = [
-        { id: 1, name: 'Alice Walker', avatar: 'https://ui-avatars.com/api/?name=Alice+Walker&background=FF5733&color=fff', articles: 42 },
-        { id: 2, name: 'David Chen', avatar: 'https://ui-avatars.com/api/?name=David+Chen&background=33FF57&color=fff', articles: 18 },
-        { id: 3, name: 'Elena G', avatar: 'https://ui-avatars.com/api/?name=Elena+G&background=3357FF&color=fff', articles: 35 }
-    ];
+    const navigate = useNavigate();
+    const { requireAuth, showToast } = useStore();
+    const [authors, setAuthors] = useState<(User & { articles: number })[]>([
+        { id: 'u-1', name: 'Alice Walker', avatar: 'https://ui-avatars.com/api/?name=Alice+Walker&background=FF5733&color=fff', articles: 42, role: 'user', aiUsage: 0, isFollowing: false },
+        { id: 'u-2', name: 'David Chen', avatar: 'https://ui-avatars.com/api/?name=David+Chen&background=33FF57&color=fff', articles: 18, role: 'user', aiUsage: 0, isFollowing: false },
+        { id: 'u-3', name: 'Elena G', avatar: 'https://ui-avatars.com/api/?name=Elena+G&background=3357FF&color=fff', articles: 35, role: 'vip', aiUsage: 0, isFollowing: false }
+    ]);
+
+    const handleFollow = (e: React.MouseEvent, index: number) => {
+        e.stopPropagation();
+        requireAuth(async () => {
+            const newAuthors = [...authors];
+            const author = newAuthors[index];
+            author.isFollowing = !author.isFollowing;
+            setAuthors(newAuthors);
+            
+            // Call mock API
+            await request.post('/user/follow', { userId: author.id, isFollowing: author.isFollowing });
+            showToast(author.isFollowing ? `已关注 ${author.name}` : `已取消关注 ${author.name}`, 'success');
+        });
+    };
 
     return (
         <Card className="p-4 md:p-6">
@@ -69,16 +157,27 @@ const RecommendedAuthors = () => {
                 <UserPlus size={14} className="mr-2"/> 推荐作者
             </h3>
             <div className="space-y-4">
-                {authors.map(author => (
-                    <div key={author.id} className="flex items-center justify-between">
+                {authors.map((author, idx) => (
+                    <div 
+                        key={author.id} 
+                        className="flex items-center justify-between group cursor-pointer"
+                        onClick={() => navigate(`/user/${author.id}`)}
+                    >
                         <div className="flex items-center space-x-3">
                             <Avatar src={author.avatar} alt={author.name} size="sm" />
                             <div>
-                                <div className="text-sm font-semibold text-apple-text dark:text-apple-dark-text">{author.name}</div>
+                                <div className="text-sm font-semibold text-apple-text dark:text-apple-dark-text group-hover:text-apple-blue transition-colors">{author.name}</div>
                                 <div className="text-xs text-gray-500">{author.articles} 篇文章</div>
                             </div>
                         </div>
-                        <Button size="sm" variant="secondary" className="text-xs px-2 py-1">关注</Button>
+                        <Button 
+                            size="sm" 
+                            variant={author.isFollowing ? "secondary" : "primary"} 
+                            className={`text-xs px-2 py-1 ${author.isFollowing ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+                            onClick={(e) => handleFollow(e, idx)}
+                        >
+                            {author.isFollowing ? '已关注' : '关注'}
+                        </Button>
                     </div>
                 ))}
             </div>
@@ -152,8 +251,9 @@ export const Home = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 mb-20">
-      
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 mb-20 relative">
+      <FestiveSidebars />
+
       {/* 英雄 / 介绍区域 */}
       <div className="text-center mb-10 md:mb-16 space-y-3 md:space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <h1 className="text-3xl md:text-6xl font-bold tracking-tight text-apple-text dark:text-apple-dark-text">
