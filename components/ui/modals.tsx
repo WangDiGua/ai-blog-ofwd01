@@ -9,6 +9,18 @@ import { Button, Spinner, MarkdownRenderer } from './atoms';
 
 // --- 基础模态框组件 ---
 export const Modal = ({ isOpen, onClose, title, children, className = '' }: { isOpen: boolean, onClose: () => void, title?: string, children: React.ReactNode, className?: string }) => {
+  // 禁止背景滚动
+  useEffect(() => {
+    if (isOpen) {
+        document.body.style.overflow = 'hidden';
+    } else {
+        document.body.style.overflow = '';
+    }
+    return () => {
+        document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -43,11 +55,16 @@ export const SearchModal = () => {
     const navigate = useNavigate();
     const inputRef = useRef<HTMLInputElement>(null);
 
+    // 禁止背景滚动
     useEffect(() => {
         if (isSearchOpen) {
             request.get<string[]>('/search/hot').then(setHotSearches);
             setTimeout(() => inputRef.current?.focus(), 100);
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
         }
+        return () => { document.body.style.overflow = ''; };
     }, [isSearchOpen]);
 
     const performSearch = async (q: string) => {

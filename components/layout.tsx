@@ -18,6 +18,7 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
   const [captchaValid, setCaptchaValid] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [timer, setTimer] = useState(0);
+  const [captchaKey, setCaptchaKey] = useState(0); // 用于强制刷新验证码
 
   // 倒计时逻辑
   useEffect(() => {
@@ -44,8 +45,10 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
         return;
     }
     
+    // 如果验证码错误，刷新验证码
     if (!captchaValid) {
-        showToast('验证码无效', 'error');
+        showToast('验证码无效，请重试', 'error');
+        setCaptchaKey(prev => prev + 1); // 强制刷新组件
         return;
     }
 
@@ -124,7 +127,8 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
            />
         </div>
 
-        <Captcha onValidate={setCaptchaValid} />
+        {/* 使用 key 属性强制重新渲染以刷新验证码 */}
+        <Captcha key={captchaKey} onValidate={setCaptchaValid} />
         
         <Button type="submit" className="w-full shadow-lg shadow-blue-500/20" disabled={loading}>
           {loading ? '处理中...' : (isRegister ? '注册' : '登录')}
@@ -294,7 +298,7 @@ export const Navbar = () => {
 
 // --- 迷你播放器 ---
 export const MiniPlayer = () => {
-  const { currentSong, isPlaying, togglePlay, setFullPlayerOpen } = useStore();
+  const { currentSong, isPlaying, togglePlay, setFullPlayerOpen, closePlayer } = useStore();
   const [progress, setProgress] = useState(0);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -316,7 +320,7 @@ export const MiniPlayer = () => {
   if (!currentSong) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 left-4 md:left-auto md:w-96 bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg rounded-2xl p-3 z-[40] flex items-center space-x-4 transition-all duration-500 animate-in slide-in-from-bottom-10">
+    <div className="fixed bottom-4 right-4 left-4 md:left-auto md:w-96 bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg rounded-2xl p-3 z-[40] flex items-center space-x-4 transition-all duration-500 animate-in slide-in-from-bottom-10 group">
       <div onClick={() => setFullPlayerOpen(true)} className="relative group cursor-pointer">
           <img src={currentSong.cover} alt="Cover" className="w-12 h-12 rounded-lg shadow-sm" />
           <div className="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
@@ -331,16 +335,27 @@ export const MiniPlayer = () => {
           <div className="bg-apple-blue h-1 rounded-full transition-all duration-1000" style={{ width: `${progress}%` }}></div>
         </div>
       </div>
-      <button 
-        onClick={togglePlay}
-        className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-      >
-        {isPlaying ? (
-           <span className="w-3 h-3 bg-apple-text dark:bg-apple-dark-text rounded-sm" /> 
-        ) : (
-           <Music className="w-5 h-5 text-apple-text dark:text-apple-dark-text ml-0.5" />
-        )}
-      </button>
+      
+      <div className="flex items-center space-x-2">
+          <button 
+            onClick={togglePlay}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            {isPlaying ? (
+               <span className="w-3 h-3 bg-apple-text dark:bg-apple-dark-text rounded-sm" /> 
+            ) : (
+               <Music className="w-5 h-5 text-apple-text dark:text-apple-dark-text ml-0.5" />
+            )}
+          </button>
+          
+          <button 
+            onClick={(e) => { e.stopPropagation(); closePlayer(); }}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-500"
+            title="关闭播放器"
+          >
+            <X size={16} />
+          </button>
+      </div>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AppProvider } from './context/store';
 import { Navbar, Footer, MiniPlayer } from './components/layout';
@@ -21,6 +21,13 @@ const ScrollToTop = () => {
 };
 
 const App = () => {
+  // 禁止整个 App 的右键菜单
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+    document.addEventListener('contextmenu', handleContextMenu);
+    return () => document.removeEventListener('contextmenu', handleContextMenu);
+  }, []);
+
   return (
     <AppProvider>
       <Router>

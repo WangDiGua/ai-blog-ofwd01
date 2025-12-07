@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStore } from '../context/store';
-import { Button, Spinner, Avatar, EmojiPicker } from '../components/ui';
+import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer } from '../components/ui';
 import { request } from '../utils/lib';
 import { Article, Comment } from '../types';
 import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock } from 'lucide-react';
@@ -164,21 +164,9 @@ export const ArticleDetail = () => {
                 <img src={article.cover} alt="Cover" className="w-full object-cover" />
             </div>
 
-            {/* 内容主体 */}
-            <article className="prose prose-base md:prose-lg dark:prose-invert max-w-none mb-12 md:mb-16 text-apple-text dark:text-apple-dark-text">
-               {/* 模拟 Markdown 渲染 */}
-               {article.content.split('\n').map((line, idx) => {
-                  if (line.startsWith('## ')) {
-                      return <h2 key={idx} id={line.replace('## ', '')} className="text-xl md:text-2xl font-bold mt-8 mb-4">{line.replace('## ', '')}</h2>
-                  } else if (line.startsWith('* ')) {
-                      return <li key={idx} className="ml-4 list-disc">{line.replace('* ', '')}</li>
-                  } else if (line.startsWith('> ')) {
-                      return <blockquote key={idx} className="border-l-4 border-apple-blue pl-4 italic my-4 text-gray-600 dark:text-gray-400">{line.replace('> ', '')}</blockquote>
-                  } else if (line.trim() === '') {
-                      return <br key={idx}/>
-                  }
-                  return <p key={idx} className="mb-4 leading-relaxed text-gray-700 dark:text-gray-300">{line}</p>
-               })}
+            {/* 内容主体 (使用 MarkdownRenderer 替代手动循环) */}
+            <article className="mb-12 md:mb-16">
+               <MarkdownRenderer content={article.content} />
             </article>
 
             {/* 评论区 */}

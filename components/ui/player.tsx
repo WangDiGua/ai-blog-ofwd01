@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useStore } from '../../context/store';
 import { ChevronLeft, SkipBack, SkipForward, Play, Pause, X } from 'lucide-react';
 
@@ -6,6 +6,16 @@ import { ChevronLeft, SkipBack, SkipForward, Play, Pause, X } from 'lucide-react
 export const FullPlayerModal = () => {
     const { currentSong, isPlaying, togglePlay, isFullPlayerOpen, setFullPlayerOpen } = useStore();
     
+    // 禁止背景滚动
+    useEffect(() => {
+        if (isFullPlayerOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [isFullPlayerOpen]);
+
     if (!isFullPlayerOpen || !currentSong) return null;
 
     return (

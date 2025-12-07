@@ -20,6 +20,7 @@ interface AppState {
   isPlaying: boolean;
   playSong: (song: Song) => void;
   togglePlay: () => void;
+  closePlayer: () => void; // 新增关闭播放器方法
   isFullPlayerOpen: boolean;
   setFullPlayerOpen: (open: boolean) => void;
   
@@ -144,6 +145,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // 关闭播放器逻辑
+  const closePlayer = () => {
+    setCurrentSong(null);
+    setIsPlaying(false);
+    setFullPlayerOpen(false);
+  };
+
   const toggleTheme = () => {
     setDarkMode(prev => !prev);
   };
@@ -171,6 +179,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     isPlaying,
     playSong,
     togglePlay,
+    closePlayer,
     isFullPlayerOpen,
     setFullPlayerOpen,
     darkMode,

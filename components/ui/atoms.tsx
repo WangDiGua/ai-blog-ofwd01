@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Code, Eye } from 'lucide-react';
+import { Play, Code, Eye, X } from 'lucide-react';
 
 // --- 卡片组件 ---
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -90,6 +90,7 @@ export const Spinner = () => (
 // --- Markdown/代码渲染器 ---
 export const MarkdownRenderer = ({ content }: { content: string }) => {
     const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
     
     // 简单检测 HTML 代码块以运行
     const hasHtmlBlock = content.includes('```html');
@@ -128,14 +129,53 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
                     {content}
                 </pre>
             ) : (
-                <div className="prose prose-sm dark:prose-invert max-w-none">
+                <div className="prose prose-sm dark:prose-invert max-w-none text-apple-text dark:text-apple-dark-text">
                      {content.split('\n').map((line, i) => {
                         if (line.startsWith('```')) return null; // 演示中隐藏代码块
-                        if (line.startsWith('# ')) return <h1 key={i} className="text-xl font-bold my-2">{line.substring(2)}</h1>;
-                        if (line.startsWith('## ')) return <h2 key={i} className="text-lg font-bold my-2">{line.substring(3)}</h2>;
-                        if (line.startsWith('* ')) return <li key={i} className="ml-4 list-disc">{line.substring(2)}</li>;
-                        return <p key={i} className="min-h-[1em]">{line}</p>;
+                        if (line.startsWith('# ')) return <h1 key={i} className="text-xl font-bold my-4 text-apple-text dark:text-apple-dark-text">{line.substring(2)}</h1>;
+                        if (line.startsWith('## ')) return <h2 key={i} className="text-lg font-bold my-3 text-apple-text dark:text-apple-dark-text">{line.substring(3)}</h2>;
+                        if (line.startsWith('* ')) return <li key={i} className="ml-4 list-disc my-1">{line.substring(2)}</li>;
+                        if (line.startsWith('> ')) {
+                            return <blockquote key={i} className="border-l-4 border-apple-blue pl-4 italic my-4 text-gray-600 dark:text-gray-400">{line.replace('> ', '')}</blockquote>
+                        }
+                        
+                        // 图片检测: ![alt](url)
+                        const imgMatch = line.match(/!\[(.*?)\]\((.*?)\)/);
+                        if (imgMatch) {
+                            return (
+                                <div key={i} className="my-4 group">
+                                    <img 
+                                        src={imgMatch[2]} 
+                                        alt={imgMatch[1]} 
+                                        className="rounded-xl shadow-md cursor-zoom-in max-h-96 w-auto mx-auto hover:opacity-90 transition-opacity"
+                                        onClick={() => setPreviewImage(imgMatch[2])}
+                                    />
+                                    {imgMatch[1] && <p className="text-center text-xs text-gray-500 mt-2">{imgMatch[1]}</p>}
+                                </div>
+                            );
+                        }
+
+                        if (line.trim() === '') return <br key={i} />;
+
+                        return <p key={i} className="my-2 leading-relaxed text-gray-700 dark:text-gray-300">{line}</p>;
                      })}
+                </div>
+            )}
+
+            {/* 图片预览弹窗 */}
+            {previewImage && (
+                <div 
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={() => setPreviewImage(null)}
+                >
+                    <button className="absolute top-4 right-4 text-white/70 hover:text-white p-2 transition-colors">
+                        <X size={32} />
+                    </button>
+                    <img 
+                        src={previewImage} 
+                        className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl object-contain animate-in zoom-in-95 duration-200" 
+                        onClick={(e) => e.stopPropagation()} 
+                    />
                 </div>
             )}
         </div>
