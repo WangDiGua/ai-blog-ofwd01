@@ -3,3 +3,4 @@ export * from './ui/atoms';
 export * from './ui/interactions';
 export * from './ui/modals';
 export * from './ui/player';
+export * from './ui/festive';

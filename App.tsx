@@ -8,7 +8,11 @@ import { Spinner } from './components/ui';
 import { Home } from './pages/home';
 import { ArticleDetail } from './pages/article-detail';
 import { Profile } from './pages/profile';
-import { Community, MusicPage, Tools, About, Contact } from './pages/extras';
+import { Community } from './pages/community';
+import { MusicPage } from './pages/music';
+import { Tools } from './pages/tools';
+import { About } from './pages/about';
+import { Contact } from './pages/contact';
 import { AIAssistant } from './pages/ai';
 
 // Scroll to top on route change

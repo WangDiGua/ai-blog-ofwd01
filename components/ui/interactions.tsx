@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../../context/store';
 import { Button } from './atoms';
 import { Modal } from './modals';
-import { ChevronLeft, ChevronRight, ArrowUp, Type, Coffee, Sun, Moon, CheckCircle, AlertCircle, Info, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowUp, Type, Coffee, Sun, Moon, CheckCircle, AlertCircle, Info, Plus, Gift } from 'lucide-react';
 
 // --- 动画主题切换 (日落 / 月升) ---
 export const ThemeToggle = () => {
@@ -127,7 +127,7 @@ export const ToastContainer = () => {
 
 // --- 悬浮菜单 (重新设计) ---
 export const FloatingMenu = () => {
-    const { cycleFontSize } = useStore();
+    const { cycleFontSize, showFestive, toggleFestive } = useStore();
     const [showDonate, setShowDonate] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
@@ -160,6 +160,13 @@ export const FloatingMenu = () => {
                         title="调整字号"
                     >
                         <Type size={18} />
+                    </button>
+                    <button 
+                        onClick={toggleFestive}
+                        className={`w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all ${showFestive ? 'text-red-500' : 'text-gray-600 dark:text-gray-300'}`}
+                        title="切换节日氛围"
+                    >
+                        <Gift size={18} />
                     </button>
                 </div>
 

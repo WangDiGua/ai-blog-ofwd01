@@ -29,6 +29,8 @@ interface AppState {
   toggleTheme: () => void;
   fontSize: number; // 百分比，例如 100, 110, 120
   cycleFontSize: () => void;
+  showFestive: boolean; // 节日氛围开关
+  toggleFestive: () => void;
 
   // 搜索模态框
   isSearchOpen: boolean;
@@ -50,6 +52,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isFullPlayerOpen, setFullPlayerOpen] = useState(false);
   const [isSearchOpen, setSearchOpen] = useState(false);
   const [fontSize, setFontSize] = useState(100);
+  const [showFestive, setShowFestive] = useState(false); // 默认关闭
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   
   // 从本地存储或首选项初始化深色模式
@@ -156,6 +159,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setDarkMode(prev => !prev);
   };
 
+  const toggleFestive = () => {
+      setShowFestive(prev => {
+          const next = !prev;
+          showToast(next ? '节日氛围已开启' : '节日氛围已关闭', 'success');
+          return next;
+      });
+  };
+
   const cycleFontSize = () => {
       setFontSize(prev => {
           if (prev >= 125) return 100;
@@ -186,12 +197,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     toggleTheme,
     fontSize,
     cycleFontSize,
+    showFestive,
+    toggleFestive,
     isSearchOpen,
     setSearchOpen,
     toasts,
     showToast,
     removeToast
-  }), [user, isAuthModalOpen, currentSong, isPlaying, isFullPlayerOpen, darkMode, fontSize, isSearchOpen, toasts]);
+  }), [user, isAuthModalOpen, currentSong, isPlaying, isFullPlayerOpen, darkMode, fontSize, showFestive, isSearchOpen, toasts]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

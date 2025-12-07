@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/store';
@@ -207,29 +206,35 @@ export const AdminLoginModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
 export const AnnouncementModal = ({ isOpen, onClose, data }: { isOpen: boolean, onClose: () => void, data: Announcement | null }) => {
     if (!data) return null;
     
+    // 使用固定比例高度和 flex 布局，确保内容区域可滚动且页脚固定
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="公告" className="max-w-2xl">
-            <div className="space-y-6">
-                 <div className="flex items-center space-x-2 text-sm text-gray-500">
-                     <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase text-white
-                        ${data.type === 'info' ? 'bg-blue-500' : data.type === 'warning' ? 'bg-orange-500' : 'bg-green-500'}
-                     `}>
-                        {data.type}
-                     </span>
-                     <span>•</span>
-                     <span className="flex items-center"><Clock size={14} className="mr-1"/> {data.date}</span>
-                     <span>•</span>
-                     <span className="flex items-center"><User size={14} className="mr-1"/> {data.publisher}</span>
-                 </div>
+        <Modal isOpen={isOpen} onClose={onClose} title="公告" className="w-[90vw] md:w-[700px] h-[80vh] flex flex-col p-0 overflow-hidden">
+            <div className="flex flex-col h-full">
+                {/* 头部信息 */}
+                <div className="px-6 pt-2 pb-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
+                     <div className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
+                         <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase text-white
+                            ${data.type === 'info' ? 'bg-blue-500' : data.type === 'warning' ? 'bg-orange-500' : 'bg-green-500'}
+                         `}>
+                            {data.type}
+                         </span>
+                         <span>•</span>
+                         <span className="flex items-center"><Clock size={14} className="mr-1"/> {data.date}</span>
+                         <span>•</span>
+                         <span className="flex items-center"><User size={14} className="mr-1"/> {data.publisher}</span>
+                     </div>
+                     <h2 className="text-2xl font-bold text-apple-text dark:text-apple-dark-text">{data.title}</h2>
+                </div>
                  
-                 <div>
-                     <h2 className="text-2xl font-bold text-apple-text dark:text-apple-dark-text mb-4">{data.title}</h2>
-                     <div className="prose prose-sm dark:prose-invert max-w-none bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl">
+                 {/* 滚动内容区 */}
+                 <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900/50">
+                     <div className="prose prose-sm dark:prose-invert max-w-none">
                          <MarkdownRenderer content={data.content} />
                      </div>
                  </div>
 
-                 <div className="flex justify-end">
+                 {/* 底部操作区 */}
+                 <div className="p-4 border-t border-gray-100 dark:border-gray-800 flex justify-end shrink-0 bg-white dark:bg-gray-900">
                      <Button onClick={onClose}>关闭</Button>
                  </div>
             </div>

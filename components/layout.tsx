@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Search, Menu, X, Music, User as UserIcon, LogIn, Github, Twitter, Mail, Maximize2, RefreshCw, Bot, ShieldAlert } from 'lucide-react';
 import { useStore } from '../context/store';
-import { Button, Avatar, ThemeToggle, Modal, ToastContainer, FloatingMenu, SearchModal, FullPlayerModal, Captcha, AdminLoginModal } from './ui';
+import { Button, Avatar, ThemeToggle, Modal, ToastContainer, FloatingMenu, SearchModal, FullPlayerModal, Captcha, AdminLoginModal, FestiveWidget } from './ui';
 import { debounce, throttle } from '../utils/lib';
 
 // --- 认证表单内容 ---
@@ -216,6 +216,7 @@ export const Navbar = () => {
       <ToastContainer />
       <SearchModal />
       <FloatingMenu />
+      <FestiveWidget />
       <FullPlayerModal />
       <AdminLoginModal isOpen={isAdminModalOpen} onClose={() => setAdminModalOpen(false)} />
 
