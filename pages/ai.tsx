@@ -66,12 +66,15 @@ export const AIAssistant = () => {
 
             try {
                 // 初始化 Google GenAI
-                const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'DEMO_KEY' });
+                // 优先使用 Vite 环境变量，回退到 process.env.API_KEY
+                const apiKey = process.env.API_KEY || 'DEMO_KEY';
+                const ai = new GoogleGenAI({ apiKey });
                 
                 let text = '';
-                if (!process.env.API_KEY) {
+                // 检查是否为 Demo Key 或空
+                if (!apiKey || apiKey === 'DEMO_KEY') {
                     await new Promise(r => setTimeout(r, 1000));
-                    text = `这是一个包含代码的示例响应：\n\n您询问了：${userMsg.text}\n\n\`\`\`html\n<h1>来自 AI 的问候</h1>\n<button onclick="alert('点击了！')">点我</button>\n\`\`\``;
+                    text = `(演示模式) 这是一个模拟响应，因为未检测到有效的 API_KEY。\n\n您询问了：${userMsg.text}\n\n请在本地 .env 文件中配置 VITE_API_KEY 以使用真实模型。`;
                 } else {
                     const response = await ai.models.generateContent({
                         model: 'gemini-2.5-flash',
@@ -92,11 +95,11 @@ export const AIAssistant = () => {
 
             } catch (error) {
                 console.error("AI Error:", error);
-                showToast('无法连接到 AI 助手', 'error');
+                showToast('无法连接到 AI 助手，请检查 API Key 配置', 'error');
                 setMessages(prev => [...prev, {
                     id: Date.now().toString(),
                     role: 'model',
-                    text: "抱歉，我遇到了错误。请稍后再试。",
+                    text: "抱歉，连接 AI 服务失败。请检查网络或 API 密钥。",
                     timestamp: Date.now()
                 }]);
             } finally {
