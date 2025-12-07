@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Code, Eye, X } from 'lucide-react';
+import { Play, Code, Eye, X, Bold, Italic, List, Link as LinkIcon, Image as ImageIcon, Heading, Quote } from 'lucide-react';
 
 // --- 卡片组件 ---
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -87,6 +87,26 @@ export const Spinner = () => (
   </svg>
 );
 
+// --- 图片查看器组件 ---
+export const ImageViewer = ({ src, onClose }: { src: string | null, onClose: () => void }) => {
+    if (!src) return null;
+    return (
+        <div 
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={onClose}
+        >
+            <button className="absolute top-4 right-4 text-white/70 hover:text-white p-2 transition-colors">
+                <X size={32} />
+            </button>
+            <img 
+                src={src} 
+                className="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl object-contain animate-in zoom-in-95 duration-200" 
+                onClick={(e) => e.stopPropagation()} 
+            />
+        </div>
+    );
+};
+
 // --- Markdown/代码渲染器 ---
 export const MarkdownRenderer = ({ content }: { content: string }) => {
     const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
@@ -168,22 +188,88 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
                 </div>
             )}
 
-            {/* 图片预览弹窗 */}
-            {previewImage && (
-                <div 
-                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-200"
-                    onClick={() => setPreviewImage(null)}
-                >
-                    <button className="absolute top-4 right-4 text-white/70 hover:text-white p-2 transition-colors">
-                        <X size={32} />
-                    </button>
-                    <img 
-                        src={previewImage} 
-                        className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl object-contain animate-in zoom-in-95 duration-200" 
-                        onClick={(e) => e.stopPropagation()} 
-                    />
+            <ImageViewer src={previewImage} onClose={() => setPreviewImage(null)} />
+        </div>
+    );
+};
+
+// --- Markdown 编辑器组件 (React版 v-md-editor 替代品) ---
+interface MarkdownEditorProps {
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+    height?: string;
+}
+
+export const MarkdownEditor = ({ value, onChange, placeholder, height = "300px" }: MarkdownEditorProps) => {
+    const [preview, setPreview] = useState(false);
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+    const insertText = (before: string, after: string = '') => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        const beforeText = text.substring(0, start);
+        const afterText = text.substring(end);
+        const selection = text.substring(start, end);
+
+        const newText = beforeText + before + selection + after + afterText;
+        onChange(newText);
+        
+        // Restore focus and cursor
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + before.length, end + before.length);
+        }, 0);
+    };
+
+    return (
+        <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-800 transition-colors">
+            {/* 工具栏 */}
+            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex items-center space-x-1">
+                    <button onClick={() => insertText('**', '**')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="加粗"><Bold size={16}/></button>
+                    <button onClick={() => insertText('*', '*')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="斜体"><Italic size={16}/></button>
+                    <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+                    <button onClick={() => insertText('## ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="标题"><Heading size={16}/></button>
+                    <button onClick={() => insertText('> ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="引用"><Quote size={16}/></button>
+                    <button onClick={() => insertText('* ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="列表"><List size={16}/></button>
+                    <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+                    <button onClick={() => insertText('[](url)')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="链接"><LinkIcon size={16}/></button>
+                    <button onClick={() => insertText('![alt](url)')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="图片"><ImageIcon size={16}/></button>
                 </div>
-            )}
+                <div className="flex items-center">
+                    <button 
+                        onClick={() => setPreview(!preview)} 
+                        className={`flex items-center px-3 py-1 text-xs font-medium rounded-full transition-colors ${preview ? 'bg-apple-blue text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                    >
+                        {preview ? <Eye size={14} className="mr-1"/> : <Code size={14} className="mr-1"/>}
+                        {preview ? '预览中' : '编辑中'}
+                    </button>
+                </div>
+            </div>
+
+            {/* 编辑区域 */}
+            <div className="relative" style={{ height }}>
+                {preview ? (
+                    <div className="w-full h-full p-4 overflow-y-auto bg-white dark:bg-gray-800">
+                         <div className="prose prose-sm dark:prose-invert max-w-none">
+                             <MarkdownRenderer content={value || '无内容预览'} />
+                         </div>
+                    </div>
+                ) : (
+                    <textarea 
+                        ref={textareaRef}
+                        className="w-full h-full p-4 bg-transparent border-none outline-none resize-none text-apple-text dark:text-apple-dark-text font-mono text-sm leading-relaxed"
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        placeholder={placeholder}
+                    />
+                )}
+            </div>
         </div>
     );
 };

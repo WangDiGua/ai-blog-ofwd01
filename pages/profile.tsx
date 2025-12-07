@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '../context/store';
-import { Button, Avatar, Card, FeedbackModal, Modal, Spinner } from '../components/ui';
+import { Button, Avatar, Card, FeedbackModal, Modal, Spinner, MarkdownEditor } from '../components/ui';
 import { request } from '../utils/lib';
-import { Settings, Award, Edit3, Image as ImageIcon, Crown, LogOut, MessageSquare, Users, Heart } from 'lucide-react';
+import { Settings, Award, Edit3, Image as ImageIcon, Crown, LogOut, MessageSquare, Users, Heart, AlertTriangle } from 'lucide-react';
 import { User } from '../types';
 
 // --- 用户列表模态框 ---
@@ -62,6 +62,7 @@ export const Profile = () => {
     const [activeTab, setActiveTab] = useState('articles');
     const [isEditing, setIsEditing] = useState(false);
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false); // 登出确认框
     
     // 模态框状态
     const [showFollowers, setShowFollowers] = useState(false);
@@ -167,8 +168,9 @@ export const Profile = () => {
         }
     };
 
-    const handleLogout = () => {
+    const confirmLogout = () => {
         logout();
+        setIsLogoutModalOpen(false);
         navigate('/');
     };
 
@@ -181,6 +183,20 @@ export const Profile = () => {
             <UserListModal isOpen={showFollowers} onClose={() => setShowFollowers(false)} title="粉丝列表" type="followers" />
             <UserListModal isOpen={showFollowing} onClose={() => setShowFollowing(false)} title="关注列表" type="following" />
             
+            {/* 登出确认弹窗 */}
+            <Modal isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} title="确认退出">
+                <div className="flex flex-col items-center text-center p-4">
+                    <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-4">
+                        <AlertTriangle className="text-red-500" size={32} />
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-300 mb-6">您确定要退出登录吗？</p>
+                    <div className="flex space-x-4 w-full">
+                        <Button variant="secondary" className="flex-1" onClick={() => setIsLogoutModalOpen(false)}>取消</Button>
+                        <Button variant="danger" className="flex-1" onClick={confirmLogout}>确认退出</Button>
+                    </div>
+                </div>
+            </Modal>
+
             {/* 头部 / 封面区域 */}
             <div className="relative mb-8 rounded-3xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-800">
                 <div className="h-48 md:h-64 relative bg-gray-200 dark:bg-gray-700">
@@ -282,7 +298,7 @@ export const Profile = () => {
                                 <Button size="sm" variant="secondary" onClick={() => setIsFeedbackOpen(true)}>
                                     <MessageSquare size={16} />
                                 </Button>
-                                <Button size="sm" variant="danger" onClick={handleLogout}>
+                                <Button size="sm" variant="danger" onClick={() => setIsLogoutModalOpen(true)}>
                                     <LogOut size={16} />
                                 </Button>
                             </>
@@ -325,11 +341,12 @@ export const Profile = () => {
                             />
                         </div>
                         <div className="mb-6">
-                            <textarea 
-                                className="w-full h-96 resize-none border-none outline-none bg-transparent text-lg text-gray-600 dark:text-gray-300 placeholder-gray-300 leading-relaxed" 
-                                placeholder="讲述你的故事... (支持 Markdown)" 
+                            {/* 使用 Markdown 编辑器替代 Textarea */}
+                            <MarkdownEditor
                                 value={newArticleContent}
-                                onChange={e => setNewArticleContent(e.target.value)}
+                                onChange={setNewArticleContent}
+                                placeholder="讲述你的故事... (支持 Markdown)"
+                                height="400px"
                             />
                         </div>
                         <div className="flex justify-end">

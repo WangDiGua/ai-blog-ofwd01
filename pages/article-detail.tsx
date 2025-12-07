@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStore } from '../context/store';
-import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer } from '../components/ui';
+import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, MarkdownEditor, ImageViewer } from '../components/ui';
 import { request } from '../utils/lib';
 import { Article, Comment } from '../types';
 import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock } from 'lucide-react';
@@ -52,6 +52,7 @@ export const ArticleDetail = () => {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
+  const [previewCover, setPreviewCover] = useState(false); // 封面预览状态
   
   const { user, requireAuth, showToast } = useStore();
 
@@ -166,8 +167,14 @@ export const ArticleDetail = () => {
             </div>
 
             {/* 封面图片 */}
-            <div className="rounded-2xl md:rounded-3xl overflow-hidden mb-8 md:mb-10 shadow-lg">
-                <img src={article.cover} alt="Cover" className="w-full object-cover" />
+            <div 
+                className="rounded-2xl md:rounded-3xl overflow-hidden mb-8 md:mb-10 shadow-lg cursor-zoom-in relative group"
+                onClick={() => setPreviewCover(true)}
+            >
+                <img src={article.cover} alt="Cover" className="w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 transition-opacity pointer-events-none">
+                     <span className="text-white text-sm bg-black/50 px-3 py-1 rounded-full backdrop-blur-sm">查看大图</span>
+                </div>
             </div>
 
             {/* 内容主体 (使用 MarkdownRenderer 替代手动循环) */}
@@ -182,25 +189,28 @@ export const ArticleDetail = () => {
                <div className="mb-8 flex space-x-3 md:space-x-4">
                   <Avatar src={user?.avatar || 'https://ui-avatars.com/api/?name=Guest'} alt="me" />
                   <div className="flex-1 relative">
-                      <textarea 
-                         className="w-full rounded-xl p-3 border-none focus:ring-2 focus:ring-apple-blue bg-white dark:bg-gray-800 resize-none text-apple-text dark:text-apple-dark-text text-sm" 
-                         rows={3} 
-                         placeholder="写下一条友善的评论..." 
-                         value={commentText}
-                         onChange={(e) => setCommentText(e.target.value)}
-                         onFocus={() => { if(!user) requireAuth(()=>{}) }}
-                      />
-                      <button onClick={() => setShowEmoji(!showEmoji)} className="absolute bottom-3 left-3 text-gray-400 hover:text-apple-blue">
-                          <Smile size={20} />
-                      </button>
+                      {/* 使用 MarkdownEditor 替代简单文本框 */}
+                      <div onClick={() => { if(!user) requireAuth(()=>{}) }}>
+                          <MarkdownEditor 
+                            value={commentText} 
+                            onChange={setCommentText} 
+                            placeholder="写下一条友善的评论... (支持 Markdown)"
+                            height="150px"
+                          />
+                      </div>
+
+                      <div className="flex justify-between mt-2">
+                         <button onClick={() => setShowEmoji(!showEmoji)} className="text-gray-400 hover:text-apple-blue p-2">
+                              <Smile size={20} />
+                         </button>
+                         <Button size="sm" onClick={handlePostComment}>发表评论</Button>
+                      </div>
+
                       {showEmoji && (
                           <div className="absolute top-full left-0 mt-2 z-10">
                               <EmojiPicker onSelect={insertEmoji} />
                           </div>
-                          )}
-                      <div className="flex justify-end mt-2">
-                         <Button size="sm" onClick={handlePostComment}>发表评论</Button>
-                      </div>
+                      )}
                   </div>
                </div>
 
@@ -239,6 +249,9 @@ export const ArticleDetail = () => {
         </div>
 
       </div>
+      
+      {/* 封面图大图预览 */}
+      <ImageViewer src={previewCover ? article.cover : null} onClose={() => setPreviewCover(false)} />
     </div>
   );
 };

@@ -42,8 +42,8 @@ export const ThemeToggle = () => {
   );
 };
 
-// --- 分页组件 ---
-export const Pagination = ({ page, totalPages, onPageChange }: { page: number, totalPages: number, onPageChange: (p: number) => void }) => {
+// --- 分页组件 (带总数) ---
+export const Pagination = ({ page, totalPages, totalItems, onPageChange }: { page: number, totalPages: number, totalItems?: number, onPageChange: (p: number) => void }) => {
   const getPageNumbers = () => {
       const pages = [];
       for (let i = 1; i <= totalPages; i++) {
@@ -57,44 +57,50 @@ export const Pagination = ({ page, totalPages, onPageChange }: { page: number, t
   };
 
   return (
-    <div className="flex items-center justify-center space-x-2 mt-8">
-      <Button 
-        variant="secondary" 
-        size="sm" 
-        disabled={page <= 1} 
-        onClick={() => onPageChange(page - 1)}
-      >
-        <ChevronLeft size={16} />
-      </Button>
+    <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-8">
+      {totalItems !== undefined && (
+          <span className="text-sm text-gray-500">共 {totalItems} 条内容</span>
+      )}
       
-      <div className="flex space-x-1">
-          {getPageNumbers().map((p, idx) => (
-              <button
-                  key={idx}
-                  onClick={() => typeof p === 'number' && onPageChange(p)}
-                  disabled={typeof p !== 'number'}
-                  className={`
-                      w-8 h-8 rounded-full text-xs font-medium transition-all
-                      ${p === page 
-                          ? 'bg-apple-blue text-white shadow-md scale-110' 
-                          : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
-                      }
-                      ${typeof p !== 'number' ? 'cursor-default' : ''}
-                  `}
-              >
-                  {p}
-              </button>
-          ))}
-      </div>
+      <div className="flex items-center space-x-2">
+        <Button 
+          variant="secondary" 
+          size="sm" 
+          disabled={page <= 1} 
+          onClick={() => onPageChange(page - 1)}
+        >
+          <ChevronLeft size={16} />
+        </Button>
+        
+        <div className="flex space-x-1">
+            {getPageNumbers().map((p, idx) => (
+                <button
+                    key={idx}
+                    onClick={() => typeof p === 'number' && onPageChange(p)}
+                    disabled={typeof p !== 'number'}
+                    className={`
+                        w-8 h-8 rounded-full text-xs font-medium transition-all
+                        ${p === page 
+                            ? 'bg-apple-blue text-white shadow-md scale-110' 
+                            : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        }
+                        ${typeof p !== 'number' ? 'cursor-default' : ''}
+                    `}
+                >
+                    {p}
+                </button>
+            ))}
+        </div>
 
-      <Button 
-        variant="secondary" 
-        size="sm" 
-        disabled={page >= totalPages} 
-        onClick={() => onPageChange(page + 1)}
-      >
-        <ChevronRight size={16} />
-      </Button>
+        <Button 
+          variant="secondary" 
+          size="sm" 
+          disabled={page >= totalPages} 
+          onClick={() => onPageChange(page + 1)}
+        >
+          <ChevronRight size={16} />
+        </Button>
+      </div>
     </div>
   );
 };
@@ -204,7 +210,7 @@ export const EmojiPicker = ({ onSelect }: { onSelect: (emoji: string) => void })
     );
 };
 
-// --- 验证码组件 ---
+// --- 验证码组件 (30s 自动刷新) ---
 export const Captcha = ({ onValidate }: { onValidate: (isValid: boolean) => void }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [code, setCode] = useState('');
@@ -249,23 +255,26 @@ export const Captcha = ({ onValidate }: { onValidate: (isValid: boolean) => void
         ctx.restore();
     };
 
-    useEffect(() => {
+    const refresh = () => {
         const c = generateCode();
         drawCaptcha(c);
+        setInput('');
         onValidate(false);
+    };
+
+    // 初始化和每 30 秒自动刷新
+    useEffect(() => {
+        refresh(); // 初始加载
+        const interval = setInterval(() => {
+            refresh();
+        }, 30000);
+        return () => clearInterval(interval);
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value.toUpperCase();
         setInput(val);
         onValidate(val === code);
-    };
-
-    const refresh = () => {
-        const c = generateCode();
-        drawCaptcha(c);
-        setInput('');
-        onValidate(false);
     };
 
     return (
@@ -284,7 +293,7 @@ export const Captcha = ({ onValidate }: { onValidate: (isValid: boolean) => void
                 height={40} 
                 className="rounded-xl cursor-pointer" 
                 onClick={refresh}
-                title="点击刷新"
+                title="点击刷新 (或30秒自动刷新)"
             />
         </div>
     );

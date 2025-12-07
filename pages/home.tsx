@@ -190,6 +190,7 @@ export const Home = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [trendingTags, setTrendingTags] = useState(['#React19', '#TailwindCSS', '#UXDesign']);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -215,7 +216,7 @@ export const Home = () => {
     const fetchArticles = async () => {
       setLoading(true);
       try {
-        const data = await request.get<{items: Article[], totalPages: number}>('/articles', { 
+        const data = await request.get<{items: Article[], totalPages: number, total: number}>('/articles', { 
             page, 
             limit: LIMIT,
             category: currentCategory,
@@ -223,6 +224,7 @@ export const Home = () => {
         });
         setArticles(data.items);
         setTotalPages(data.totalPages);
+        setTotalItems(data.total); // 设置总条数
       } catch (e) {
         console.error(e);
       } finally {
@@ -342,9 +344,9 @@ export const Home = () => {
                     ))
                 )}
                 
-                {/* 分页 */}
+                {/* 分页 (传入总数) */}
                 {articles.length > 0 && (
-                    <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+                    <Pagination page={page} totalPages={totalPages} totalItems={totalItems} onPageChange={setPage} />
                 )}
             </>
           )}
