@@ -5,7 +5,7 @@ import { useStore } from '../context/store';
 import { Button, Avatar, ThemeToggle, Modal, ToastContainer, FloatingMenu, SearchModal, FullPlayerModal, Captcha, AdminLoginModal } from './ui';
 import { debounce, throttle } from '../utils/lib';
 
-// --- Auth Modal Content ---
+// --- 认证表单内容 ---
 const AuthForm = ({ onClose }: { onClose: () => void }) => {
   const { login, showToast } = useStore();
   const [isRegister, setIsRegister] = useState(false);
@@ -14,12 +14,12 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   
-  // Validation State
+  // 验证状态
   const [captchaValid, setCaptchaValid] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [timer, setTimer] = useState(0);
 
-  // Countdown timer logic
+  // 倒计时逻辑
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (timer > 0) {
@@ -30,37 +30,37 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
 
   const handleSendCode = () => {
       if (!email) {
-          showToast('Please enter your email', 'error');
+          showToast('请输入您的邮箱', 'error');
           return;
       }
       setTimer(60);
-      showToast('Verification code sent!', 'success');
+      showToast('验证码已发送！', 'success');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) {
-        showToast('Please fill all fields', 'error');
+        showToast('请填写所有字段', 'error');
         return;
     }
     
     if (!captchaValid) {
-        showToast('Invalid Captcha', 'error');
+        showToast('验证码无效', 'error');
         return;
     }
 
     if (isRegister && (!email || !verificationCode)) {
-        showToast('Please verify your email', 'error');
+        showToast('请验证您的邮箱', 'error');
         return;
     }
     
     setLoading(true);
-    // Simulate API delay
+    // 模拟 API 延迟
     try {
       await login(username);
       onClose();
     } catch(err) {
-      // Toast handled in store
+      // Toast 已在 store 中处理
     } finally {
       setLoading(false);
     }
@@ -69,15 +69,15 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-apple-text dark:text-apple-dark-text">{isRegister ? 'Create Account' : 'Welcome Back'}</h2>
-        <p className="text-sm text-apple-subtext dark:text-apple-dark-subtext">Enter your details below</p>
+        <h2 className="text-2xl font-bold text-apple-text dark:text-apple-dark-text">{isRegister ? '创建账户' : '欢迎回来'}</h2>
+        <p className="text-sm text-apple-subtext dark:text-apple-dark-subtext">请输入您的详细信息</p>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
            <input 
              type="text" 
-             placeholder="Username (Try 'admin', 'vip')" 
+             placeholder="用户名 (尝试 'admin', 'vip')" 
              value={username}
              onChange={(e) => setUsername(e.target.value)}
              className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text transition-all"
@@ -88,7 +88,7 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
              <div className="space-y-4 animate-in slide-in-from-top-2">
                 <input 
                     type="email" 
-                    placeholder="Email Address" 
+                    placeholder="邮箱地址" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
@@ -96,7 +96,7 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
                 <div className="flex space-x-2">
                     <input 
                         type="text" 
-                        placeholder="Code" 
+                        placeholder="验证码" 
                         value={verificationCode}
                         onChange={(e) => setVerificationCode(e.target.value)}
                         className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
@@ -108,7 +108,7 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
                         onClick={handleSendCode}
                         className="w-24 whitespace-nowrap text-xs"
                     >
-                        {timer > 0 ? `${timer}s` : 'Get Code'}
+                        {timer > 0 ? `${timer}s` : '获取验证码'}
                     </Button>
                 </div>
              </div>
@@ -117,7 +117,7 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
         <div>
            <input 
              type="password" 
-             placeholder="Password" 
+             placeholder="密码" 
              value={password}
              onChange={(e) => setPassword(e.target.value)}
              className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
@@ -127,7 +127,7 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
         <Captcha onValidate={setCaptchaValid} />
         
         <Button type="submit" className="w-full shadow-lg shadow-blue-500/20" disabled={loading}>
-          {loading ? 'Processing...' : (isRegister ? 'Sign Up' : 'Sign In')}
+          {loading ? '处理中...' : (isRegister ? '注册' : '登录')}
         </Button>
       </form>
 
@@ -137,14 +137,14 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
           onClick={() => { setIsRegister(!isRegister); setCaptchaValid(false); }}
           className="text-apple-blue font-semibold hover:underline"
         >
-          {isRegister ? 'Switch to Sign In' : 'Switch to Sign Up'}
+          {isRegister ? '切换到登录' : '切换到注册'}
         </button>
       </div>
     </div>
   );
 };
 
-// --- Navbar Component ---
+// --- 导航栏组件 ---
 export const Navbar = () => {
   const { user, isLoggedIn, logout, setSearchOpen, isAuthModalOpen, setAuthModalOpen } = useStore();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -159,13 +159,13 @@ export const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { name: 'Blog', path: '/' },
-    { name: 'Community', path: '/community' },
-    { name: 'Music', path: '/music' },
-    { name: 'Tools', path: '/tools' },
-    { name: 'Contact', path: '/contact' },
-    { name: 'About', path: '/about' },
-    { name: 'AI Assistant', path: '/ai' },
+    { name: '博客', path: '/' },
+    { name: '社区', path: '/community' },
+    { name: '音乐', path: '/music' },
+    { name: '工具', path: '/tools' },
+    { name: '联系', path: '/contact' },
+    { name: '关于', path: '/about' },
+    { name: 'AI 助手', path: '/ai' },
   ];
 
   return (
@@ -206,7 +206,7 @@ export const Navbar = () => {
                      onClick={() => setAdminModalOpen(true)}
                      className="text-sm font-medium text-red-500 hover:text-red-600 flex items-center"
                   >
-                      <ShieldAlert size={14} className="mr-1"/> System
+                      <ShieldAlert size={14} className="mr-1"/> 系统
                   </button>
               )}
             </div>
@@ -221,12 +221,12 @@ export const Navbar = () => {
               </button>
 
               {isLoggedIn && user ? (
-                 <div className="relative group cursor-pointer" onClick={() => navigate('/profile')} title="Go to Profile">
+                 <div className="relative group cursor-pointer" onClick={() => navigate('/profile')} title="前往个人资料">
                    <Avatar src={user.avatar} alt={user.name} size="sm" />
                  </div>
               ) : (
                 <Button size="sm" onClick={() => setAuthModalOpen(true)}>
-                  Login
+                  登录
                 </Button>
               )}
             </div>
@@ -263,7 +263,7 @@ export const Navbar = () => {
                      onClick={() => { setIsMobileMenuOpen(false); setAdminModalOpen(true); }}
                      className="block w-full text-left px-3 py-2 rounded-lg text-base font-medium text-red-500 hover:bg-red-50"
                   >
-                      System Backend
+                      系统后台
                   </button>
               )}
             <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
@@ -273,10 +273,10 @@ export const Navbar = () => {
                        <Avatar src={user?.avatar || ''} alt="User" size="sm" />
                        <span className="font-medium text-apple-text dark:text-apple-dark-text">{user?.name}</span>
                     </div>
-                    <span className="text-xs text-red-500 font-medium" onClick={() => {logout(); setIsMobileMenuOpen(false);}}>Log out</span>
+                    <span className="text-xs text-red-500 font-medium" onClick={() => {logout(); setIsMobileMenuOpen(false);}}>登出</span>
                  </div>
               ) : (
-                <Button className="w-full" onClick={() => { setAuthModalOpen(true); setIsMobileMenuOpen(false); }}>Sign In</Button>
+                <Button className="w-full" onClick={() => { setAuthModalOpen(true); setIsMobileMenuOpen(false); }}>登录</Button>
               )}
             </div>
           </div>
@@ -292,7 +292,7 @@ export const Navbar = () => {
   );
 };
 
-// --- Mini Player ---
+// --- 迷你播放器 ---
 export const MiniPlayer = () => {
   const { currentSong, isPlaying, togglePlay, setFullPlayerOpen } = useStore();
   const [progress, setProgress] = useState(0);
@@ -345,7 +345,7 @@ export const MiniPlayer = () => {
   );
 };
 
-// --- Footer Component ---
+// --- 页脚组件 ---
 export const Footer = () => {
   return (
     <footer className="bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 mt-20 transition-colors duration-300">
@@ -358,7 +358,7 @@ export const Footer = () => {
           </div>
           <div className="mt-8 md:mt-0 md:order-1">
             <p className="text-center text-xs text-gray-500 dark:text-gray-400">
-              &copy; 2025 iBlog. Designed with Apple Aesthetics.
+              &copy; 2025 iBlog. 基于苹果美学设计。
             </p>
           </div>
         </div>

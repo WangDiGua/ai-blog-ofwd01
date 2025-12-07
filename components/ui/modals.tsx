@@ -7,19 +7,19 @@ import { Article, Announcement } from '../../types';
 import { X, Search, Hash, Lock, Send, Bug, Lightbulb, Clock, ArrowUpRight, User } from 'lucide-react';
 import { Button, Spinner, MarkdownRenderer } from './atoms';
 
-// --- Base Modal Component ---
+// --- 基础模态框组件 ---
 export const Modal = ({ isOpen, onClose, title, children, className = '' }: { isOpen: boolean, onClose: () => void, title?: string, children: React.ReactNode, className?: string }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      {/* Backdrop */}
+      {/* 背景遮罩 */}
       <div 
         className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity animate-in fade-in"
         onClick={onClose}
       />
       
-      {/* Content */}
+      {/* 内容 */}
       <div className={`relative bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl p-6 transform transition-all animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-800 ${className}`}>
         <div className="flex justify-between items-center mb-4 sticky top-0 bg-inherit z-10 pb-2">
           {title && <h3 className="text-xl font-bold text-apple-text dark:text-apple-dark-text">{title}</h3>}
@@ -33,7 +33,7 @@ export const Modal = ({ isOpen, onClose, title, children, className = '' }: { is
   );
 };
 
-// --- Search Modal ---
+// --- 搜索模态框 ---
 export const SearchModal = () => {
     const { isSearchOpen, setSearchOpen } = useStore();
     const [query, setQuery] = useState('');
@@ -94,7 +94,7 @@ export const SearchModal = () => {
                      <input 
                         ref={inputRef}
                         className="flex-1 bg-transparent border-none outline-none px-4 py-2 text-lg text-apple-text dark:text-apple-dark-text placeholder-gray-400"
-                        placeholder="Search articles, tags, or topics..."
+                        placeholder="搜索文章、标签或话题..."
                         value={query}
                         onChange={handleInput}
                      />
@@ -118,11 +118,11 @@ export const SearchModal = () => {
                                  ))}
                              </div>
                          ) : (
-                             <div className="text-center py-8 text-gray-500">No results found for "{query}"</div>
+                             <div className="text-center py-8 text-gray-500">未找到关于 "{query}" 的结果</div>
                          )
                      ) : (
                          <div>
-                             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Popular Searches</h4>
+                             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">热门搜索</h4>
                              <div className="flex flex-wrap gap-2">
                                  {hotSearches.map(tag => (
                                      <button 
@@ -142,35 +142,35 @@ export const SearchModal = () => {
     );
 };
 
-// --- Admin Login Modal ---
+// --- 管理员登录模态框 ---
 export const AdminLoginModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Simple mock validation
+        // 简单模拟验证
         if (password === 'admin123') {
             onClose();
-            window.location.href = 'https://google.com'; // Redirect to backend placeholder
+            window.location.href = 'https://google.com'; // 重定向到后台占位符
         } else {
-            setError('Invalid System Password');
+            setError('系统密码无效');
         }
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="System Access">
+        <Modal isOpen={isOpen} onClose={onClose} title="系统访问">
             <div className="flex flex-col items-center justify-center mb-6">
                 <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
                     <Lock size={32} className="text-red-500" />
                 </div>
-                <p className="text-center text-sm text-gray-500">Restricted Area. Authorized Personnel Only.</p>
+                <p className="text-center text-sm text-gray-500">受限区域。仅限授权人员。</p>
             </div>
             <form onSubmit={handleLogin} className="space-y-4">
                 <div>
                     <input 
                         type="password" 
-                        placeholder="Enter Admin Password" 
+                        placeholder="输入管理员密码" 
                         value={password}
                         onChange={(e) => { setPassword(e.target.value); setError(''); }}
                         className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-red-500 outline-none text-apple-text dark:text-apple-dark-text text-center tracking-widest"
@@ -179,19 +179,19 @@ export const AdminLoginModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
                     {error && <p className="text-red-500 text-xs text-center mt-2">{error}</p>}
                 </div>
                 <Button variant="danger" type="submit" className="w-full">
-                    Authenticate
+                    验证
                 </Button>
             </form>
         </Modal>
     );
 };
 
-// --- Announcement Modal ---
+// --- 公告模态框 ---
 export const AnnouncementModal = ({ isOpen, onClose, data }: { isOpen: boolean, onClose: () => void, data: Announcement | null }) => {
     if (!data) return null;
     
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Announcement" className="max-w-2xl">
+        <Modal isOpen={isOpen} onClose={onClose} title="公告" className="max-w-2xl">
             <div className="space-y-6">
                  <div className="flex items-center space-x-2 text-sm text-gray-500">
                      <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase text-white
@@ -213,14 +213,14 @@ export const AnnouncementModal = ({ isOpen, onClose, data }: { isOpen: boolean, 
                  </div>
 
                  <div className="flex justify-end">
-                     <Button onClick={onClose}>Close</Button>
+                     <Button onClick={onClose}>关闭</Button>
                  </div>
             </div>
         </Modal>
     );
 };
 
-// --- Feedback Modal ---
+// --- 反馈模态框 ---
 export const FeedbackModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
     const { user, showToast } = useStore();
     const [content, setContent] = useState('');
@@ -230,43 +230,43 @@ export const FeedbackModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: (
         if (!content.trim()) return;
         try {
             await request.post('/user/feedback', { userId: user?.id, content, type });
-            showToast('Thank you for your feedback!', 'success');
+            showToast('感谢您的反馈！', 'success');
             setContent('');
             onClose();
         } catch (e) {
-            showToast('Failed to send feedback', 'error');
+            showToast('发送反馈失败', 'error');
         }
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Give Feedback">
+        <Modal isOpen={isOpen} onClose={onClose} title="反馈建议">
             <div className="space-y-4">
                 <div className="flex space-x-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
                     <button 
                         onClick={() => setType('suggestion')}
                         className={`flex-1 flex items-center justify-center py-2 rounded-md text-sm font-medium transition-all ${type === 'suggestion' ? 'bg-white dark:bg-gray-700 shadow-sm text-apple-blue' : 'text-gray-500'}`}
                     >
-                        <Lightbulb size={16} className="mr-2"/> Suggestion
+                        <Lightbulb size={16} className="mr-2"/> 建议
                     </button>
                     <button 
                         onClick={() => setType('bug')}
                         className={`flex-1 flex items-center justify-center py-2 rounded-md text-sm font-medium transition-all ${type === 'bug' ? 'bg-white dark:bg-gray-700 shadow-sm text-red-500' : 'text-gray-500'}`}
                     >
-                        <Bug size={16} className="mr-2"/> Bug Report
+                        <Bug size={16} className="mr-2"/> Bug 反馈
                     </button>
                 </div>
                 
                 <textarea 
                     className="w-full h-32 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none resize-none text-apple-text dark:text-apple-dark-text"
-                    placeholder="Tell us what you think..."
+                    placeholder="告诉我们要改进的地方..."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                 />
                 
                 <div className="flex justify-end space-x-2">
-                    <Button variant="secondary" onClick={onClose}>Cancel</Button>
+                    <Button variant="secondary" onClick={onClose}>取消</Button>
                     <Button onClick={handleSubmit} disabled={!content.trim()}>
-                        <Send size={16} className="mr-2"/> Submit
+                        <Send size={16} className="mr-2"/> 提交
                     </Button>
                 </div>
             </div>

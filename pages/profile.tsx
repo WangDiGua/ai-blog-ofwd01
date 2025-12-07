@@ -12,16 +12,16 @@ export const Profile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     
-    // Edit Form State
+    // 编辑表单状态
     const [name, setName] = useState('');
     const [bio, setBio] = useState('');
     const [coverUrl, setCoverUrl] = useState('');
 
-    // Writer State
+    // 写作状态
     const [newArticleTitle, setNewArticleTitle] = useState('');
     const [newArticleContent, setNewArticleContent] = useState('');
 
-    // Checkin State
+    // 签到状态
     const [checkedIn, setCheckedIn] = useState(false);
 
     useEffect(() => {
@@ -43,14 +43,14 @@ export const Profile = () => {
 
     const handleCheckIn = async () => {
         if (checkedIn) {
-            showToast('Already checked in today!', 'info');
+            showToast('今天已经签到过了！', 'info');
             return;
         }
         try {
             const res = await request.post<{points: number, total: number}>('/user/checkin');
             setCheckedIn(true);
             updateUser({ points: res.total });
-            showToast(`Checked in! +${res.points} points`, 'success');
+            showToast(`签到成功！ +${res.points} 积分`, 'success');
         } catch(e) {
             console.error(e);
         }
@@ -63,7 +63,7 @@ export const Profile = () => {
             setNewArticleTitle('');
             setNewArticleContent('');
             setActiveTab('articles');
-            showToast('Article published successfully', 'success');
+            showToast('文章发布成功', 'success');
         } catch (e) {
             console.error(e);
         }
@@ -80,7 +80,7 @@ export const Profile = () => {
         <div className="max-w-5xl mx-auto px-4 py-10">
             <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
             
-            {/* Header / Cover Area */}
+            {/* 头部 / 封面区域 */}
             <div className="relative mb-8 rounded-3xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-800">
                 <div className="h-48 md:h-64 relative bg-gray-200 dark:bg-gray-700">
                     <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
@@ -98,7 +98,7 @@ export const Profile = () => {
                                 }}
                              />
                              <label htmlFor="coverUpload" className="bg-black/50 hover:bg-black/70 text-white p-2 rounded-lg cursor-pointer backdrop-blur-md flex items-center text-sm">
-                                <ImageIcon size={16} className="mr-2"/> Change Cover
+                                <ImageIcon size={16} className="mr-2"/> 更换封面
                              </label>
                         </div>
                     )}
@@ -132,7 +132,7 @@ export const Profile = () => {
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-gray-500 dark:text-gray-400 max-w-lg">{user.bio || "No bio yet."}</p>
+                                <p className="text-gray-500 dark:text-gray-400 max-w-lg">{user.bio || "暂无简介。"}</p>
                             </>
                         )}
                      </div>
@@ -144,14 +144,14 @@ export const Profile = () => {
                             disabled={checkedIn}
                         >
                             <Award size={18} className="mr-2"/>
-                            {checkedIn ? 'Checked In' : 'Check In'}
-                            <span className="ml-2 bg-white/20 px-2 py-0.5 rounded text-xs">{(user.points || 0) + (checkedIn ? 0 : 0)} pts</span>
+                            {checkedIn ? '已签到' : '签到'}
+                            <span className="ml-2 bg-white/20 px-2 py-0.5 rounded text-xs">{(user.points || 0) + (checkedIn ? 0 : 0)} 分</span>
                         </Button>
                         
                         {isEditing ? (
                             <>
-                                <Button size="sm" onClick={handleUpdate}>Save</Button>
-                                <Button size="sm" variant="secondary" onClick={() => setIsEditing(false)}>Cancel</Button>
+                                <Button size="sm" onClick={handleUpdate}>保存</Button>
+                                <Button size="sm" variant="secondary" onClick={() => setIsEditing(false)}>取消</Button>
                             </>
                         ) : (
                             <Button size="sm" variant="secondary" onClick={() => setIsEditing(true)}>
@@ -169,7 +169,7 @@ export const Profile = () => {
                 </div>
             </div>
 
-            {/* Tabs */}
+            {/* 标签页 */}
             <div className="flex space-x-1 mb-6 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-xl w-fit mx-auto md:mx-0 overflow-x-auto">
                 {['articles', 'favorites', 'likes', 'write'].map(tab => (
                     <button
@@ -177,19 +177,19 @@ export const Profile = () => {
                         onClick={() => setActiveTab(tab)}
                         className={`px-6 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab ? 'bg-white dark:bg-gray-700 shadow-sm text-apple-blue' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
                     >
-                        {tab === 'write' ? 'Write Article' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                        {tab === 'write' ? '写文章' : tab === 'articles' ? '文章' : tab === 'favorites' ? '收藏' : '点赞'}
                     </button>
                 ))}
             </div>
 
-            {/* Content Area */}
+            {/* 内容区域 */}
             <div className="min-h-[400px]">
                 {activeTab === 'write' ? (
                     <Card className="p-8">
                         <div className="mb-6">
                             <input 
                                 className="w-full text-3xl font-bold border-none outline-none bg-transparent placeholder-gray-300 text-apple-text dark:text-apple-dark-text" 
-                                placeholder="Article Title..." 
+                                placeholder="文章标题..." 
                                 value={newArticleTitle}
                                 onChange={e => setNewArticleTitle(e.target.value)}
                             />
@@ -197,20 +197,20 @@ export const Profile = () => {
                         <div className="mb-6">
                             <textarea 
                                 className="w-full h-96 resize-none border-none outline-none bg-transparent text-lg text-gray-600 dark:text-gray-300 placeholder-gray-300 leading-relaxed" 
-                                placeholder="Tell your story... (Markdown supported)" 
+                                placeholder="讲述你的故事... (支持 Markdown)" 
                                 value={newArticleContent}
                                 onChange={e => setNewArticleContent(e.target.value)}
                             />
                         </div>
                         <div className="flex justify-end">
-                            <Button onClick={handlePublish}>Publish</Button>
+                            <Button onClick={handlePublish}>发布</Button>
                         </div>
                     </Card>
                 ) : (
                     <div className="grid gap-6">
-                        {/* Mock List for other tabs */}
+                        {/* 其他标签的模拟列表 */}
                         <div className="text-gray-500 text-center py-20 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
-                            Showing {activeTab} (Mock Data)...
+                            正在展示 {activeTab === 'articles' ? '文章' : activeTab === 'favorites' ? '收藏' : '点赞'} (模拟数据)...
                         </div>
                     </div>
                 )}

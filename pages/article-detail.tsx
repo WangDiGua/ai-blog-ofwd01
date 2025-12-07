@@ -6,7 +6,7 @@ import { request } from '../utils/lib';
 import { Article, Comment } from '../types';
 import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock } from 'lucide-react';
 
-// Recursive Comment Component
+// 递归评论组件
 const CommentItem = ({ comment, depth = 0 }: { comment: Comment, depth?: number }) => {
     const [replyOpen, setReplyOpen] = useState(false);
     
@@ -22,16 +22,16 @@ const CommentItem = ({ comment, depth = 0 }: { comment: Comment, depth?: number 
                 
                 <div className="flex items-center space-x-4 mt-2">
                     <button className="flex items-center text-xs text-gray-400 hover:text-apple-blue transition-colors">
-                        <ThumbsUp size={12} className="mr-1"/> Like
+                        <ThumbsUp size={12} className="mr-1"/> 点赞
                     </button>
-                    <button onClick={() => setReplyOpen(!replyOpen)} className="text-xs text-gray-400 hover:text-apple-text transition-colors">Reply</button>
+                    <button onClick={() => setReplyOpen(!replyOpen)} className="text-xs text-gray-400 hover:text-apple-text transition-colors">回复</button>
                 </div>
 
                 {replyOpen && (
                     <div className="mt-3">
-                         <textarea className="w-full p-2 text-sm bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-apple-blue dark:text-white" placeholder="Write a reply..." rows={2}/>
+                         <textarea className="w-full p-2 text-sm bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-apple-blue dark:text-white" placeholder="写下回复..." rows={2}/>
                          <div className="flex justify-end mt-2">
-                             <Button size="sm" onClick={() => setReplyOpen(false)}>Post</Button>
+                             <Button size="sm" onClick={() => setReplyOpen(false)}>发送</Button>
                          </div>
                     </div>
                 )}
@@ -74,10 +74,10 @@ export const ArticleDetail = () => {
       requireAuth(() => {
         if (action === 'like') {
             setIsLiked(!isLiked);
-            showToast(isLiked ? 'Unliked' : 'Liked', 'info');
+            showToast(isLiked ? '已取消点赞' : '已点赞', 'info');
         } else if (action === 'bookmark') {
             setIsBookmarked(!isBookmarked);
-            showToast(isBookmarked ? 'Removed from bookmarks' : 'Bookmarked', 'info');
+            showToast(isBookmarked ? '已取消收藏' : '已收藏', 'info');
         }
       });
   };
@@ -85,7 +85,7 @@ export const ArticleDetail = () => {
   const handlePostComment = () => {
       requireAuth(() => {
           if (!commentText.trim()) return;
-          showToast('Comment posted', 'success');
+          showToast('评论已发布', 'success');
           setCommentText('');
       });
   };
@@ -96,7 +96,7 @@ export const ArticleDetail = () => {
   };
 
   if (loading) return <div className="flex justify-center h-[50vh] items-center"><Spinner /></div>;
-  if (!article) return <div className="text-center py-20">Article not found</div>;
+  if (!article) return <div className="text-center py-20">文章未找到</div>;
 
   const toc = article.content.split('\n').filter(l => l.startsWith('## ')).map(l => l.replace('## ', ''));
 
@@ -104,7 +104,7 @@ export const ArticleDetail = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 mb-20">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* Left Sidebar (Interaction) - Desktop */}
+        {/* 左侧侧边栏 (互动) - 桌面端 */}
         <div className="hidden lg:block lg:col-span-1 space-y-6 sticky top-24 h-fit">
            <button 
              onClick={() => handleAction('like')} 
@@ -125,7 +125,7 @@ export const ArticleDetail = () => {
            </button>
         </div>
 
-        {/* Main Article Content */}
+        {/* 主要文章内容 */}
         <div className="lg:col-span-8">
             <div className="mb-6 md:mb-8 animate-in slide-in-from-bottom-4 duration-700">
                <div className="flex items-center space-x-2 text-sm text-apple-blue font-semibold mb-3">
@@ -142,11 +142,11 @@ export const ArticleDetail = () => {
                         <div className="text-xs text-gray-500 flex items-center">
                            <Calendar size={12} className="mr-1"/> {article.date}
                            <span className="mx-2">•</span>
-                           <Clock size={12} className="mr-1"/> 8 min read
+                           <Clock size={12} className="mr-1"/> 8 分钟阅读
                         </div>
                      </div>
                   </div>
-                  {/* Mobile Actions Row */}
+                  {/* 移动端操作栏 */}
                   <div className="flex lg:hidden space-x-4">
                      <button onClick={() => handleAction('like')} className="flex items-center space-x-1">
                          <Heart className={isLiked ? 'fill-red-500 text-red-500' : 'text-gray-400'} size={20}/>
@@ -159,14 +159,14 @@ export const ArticleDetail = () => {
                </div>
             </div>
 
-            {/* Cover Image */}
+            {/* 封面图片 */}
             <div className="rounded-2xl md:rounded-3xl overflow-hidden mb-8 md:mb-10 shadow-lg">
                 <img src={article.cover} alt="Cover" className="w-full object-cover" />
             </div>
 
-            {/* Content Body */}
+            {/* 内容主体 */}
             <article className="prose prose-base md:prose-lg dark:prose-invert max-w-none mb-12 md:mb-16 text-apple-text dark:text-apple-dark-text">
-               {/* Simulating Markdown rendering */}
+               {/* 模拟 Markdown 渲染 */}
                {article.content.split('\n').map((line, idx) => {
                   if (line.startsWith('## ')) {
                       return <h2 key={idx} id={line.replace('## ', '')} className="text-xl md:text-2xl font-bold mt-8 mb-4">{line.replace('## ', '')}</h2>
@@ -181,9 +181,9 @@ export const ArticleDetail = () => {
                })}
             </article>
 
-            {/* Comments Section */}
+            {/* 评论区 */}
             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl md:rounded-3xl p-4 md:p-8">
-               <h3 className="text-lg md:text-xl font-bold mb-6 text-apple-text dark:text-apple-dark-text">Comments ({article.comments?.length || 0})</h3>
+               <h3 className="text-lg md:text-xl font-bold mb-6 text-apple-text dark:text-apple-dark-text">评论 ({article.comments?.length || 0})</h3>
                
                <div className="mb-8 flex space-x-3 md:space-x-4">
                   <Avatar src={user?.avatar || 'https://ui-avatars.com/api/?name=Guest'} alt="me" />
@@ -191,7 +191,7 @@ export const ArticleDetail = () => {
                       <textarea 
                          className="w-full rounded-xl p-3 border-none focus:ring-2 focus:ring-apple-blue bg-white dark:bg-gray-800 resize-none text-apple-text dark:text-apple-dark-text text-sm" 
                          rows={3} 
-                         placeholder="Write a thoughtful comment..." 
+                         placeholder="写下一条友善的评论..." 
                          value={commentText}
                          onChange={(e) => setCommentText(e.target.value)}
                          onFocus={() => { if(!user) requireAuth(()=>{}) }}
@@ -205,7 +205,7 @@ export const ArticleDetail = () => {
                           </div>
                           )}
                       <div className="flex justify-end mt-2">
-                         <Button size="sm" onClick={handlePostComment}>Post</Button>
+                         <Button size="sm" onClick={handlePostComment}>发表评论</Button>
                       </div>
                   </div>
                </div>
@@ -218,11 +218,11 @@ export const ArticleDetail = () => {
             </div>
         </div>
 
-        {/* Right Sidebar (TOC) - Desktop */}
+        {/* 右侧侧边栏 (目录) - 桌面端 */}
         <div className="hidden lg:block lg:col-span-3">
            <div className="sticky top-24">
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
-                 <List size={14} className="mr-2"/> Table of Contents
+                 <List size={14} className="mr-2"/> 目录
               </h3>
               <ul className="space-y-3 border-l-2 border-gray-100 dark:border-gray-800">
                  {toc.map(header => (

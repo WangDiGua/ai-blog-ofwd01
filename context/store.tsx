@@ -10,12 +10,12 @@ interface AppState {
   logout: () => void;
   incrementAiUsage: () => Promise<void>;
   
-  // Auth Modal
+  // 认证模态框
   isAuthModalOpen: boolean;
   setAuthModalOpen: (open: boolean) => void;
   requireAuth: (callback: () => void) => void;
 
-  // Music Player State
+  // 音乐播放器状态
   currentSong: Song | null;
   isPlaying: boolean;
   playSong: (song: Song) => void;
@@ -23,17 +23,17 @@ interface AppState {
   isFullPlayerOpen: boolean;
   setFullPlayerOpen: (open: boolean) => void;
   
-  // Theme & UI
+  // 主题与 UI
   darkMode: boolean;
   toggleTheme: () => void;
-  fontSize: number; // Percentage, e.g., 100, 110, 120
+  fontSize: number; // 百分比，例如 100, 110, 120
   cycleFontSize: () => void;
 
-  // Search Modal
+  // 搜索模态框
   isSearchOpen: boolean;
   setSearchOpen: (open: boolean) => void;
 
-  // Toast
+  // 提示消息
   toasts: ToastMessage[];
   showToast: (message: string, type?: ToastType) => void;
   removeToast: (id: string) => void;
@@ -51,7 +51,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [fontSize, setFontSize] = useState(100);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   
-  // Initialize dark mode from local storage or preference
+  // 从本地存储或首选项初始化深色模式
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('theme');
@@ -60,7 +60,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return false;
   });
 
-  // Apply Theme
+  // 应用主题
   useEffect(() => {
     const root = window.document.documentElement;
     if (darkMode) {
@@ -72,7 +72,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [darkMode]);
 
-  // Apply Font Size
+  // 应用字体大小
   useEffect(() => {
     document.documentElement.style.fontSize = `${fontSize}%`; // 100% = 16px
   }, [fontSize]);
@@ -91,21 +91,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
         const userData = await request.post<User>('/login', { username });
         setUser(userData);
-        showToast(`Welcome back, ${userData.name}!`, 'success');
+        showToast(`欢迎回来，${userData.name}！`, 'success');
     } catch (e) {
-        showToast('Login failed. Please try again.', 'error');
+        showToast('登录失败，请重试。', 'error');
         throw e;
     }
   };
 
   const updateUser = async (data: Partial<User>) => {
       try {
-          // Simulate update
+          // 模拟更新
           await request.post('/user/update', data);
           setUser(prev => prev ? { ...prev, ...data } : null);
-          showToast('Profile updated successfully', 'success');
+          showToast('个人资料更新成功', 'success');
       } catch(e) {
-          showToast('Failed to update profile', 'error');
+          showToast('更新个人资料失败', 'error');
       }
   };
 
@@ -121,7 +121,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUser(null);
-    showToast('Logged out successfully', 'info');
+    showToast('已成功登出', 'info');
   };
 
   const requireAuth = useCallback((callback: () => void) => {
@@ -129,7 +129,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         callback();
     } else {
         setAuthModalOpen(true);
-        showToast('Please login to continue', 'info');
+        showToast('请先登录以继续', 'info');
     }
   }, [user, showToast]);
 
@@ -154,7 +154,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           if (prev >= 112.5) return 125;
           return 112.5;
       });
-      showToast('Font size adjusted');
+      showToast('字体大小已调整');
   };
 
   const value = useMemo(() => ({

@@ -23,7 +23,7 @@ const ArticleSkeleton = () => (
   </Card>
 );
 
-// --- Announcements Component ---
+// --- 公告组件 ---
 const Announcements = () => {
     const [news, setNews] = useState<Announcement[]>([]);
     const [selected, setSelected] = useState<Announcement | null>(null);
@@ -37,7 +37,7 @@ const Announcements = () => {
     return (
         <Card className="p-4 md:p-6">
              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
-                 <Bell size={14} className="mr-2"/> Announcements
+                 <Bell size={14} className="mr-2"/> 公告
              </h3>
              <div className="space-y-3">
                  {news.map(n => (
@@ -55,7 +55,7 @@ const Announcements = () => {
     );
 };
 
-// --- Recommended Authors Component ---
+// --- 推荐作者组件 ---
 const RecommendedAuthors = () => {
     const authors = [
         { id: 1, name: 'Alice Walker', avatar: 'https://ui-avatars.com/api/?name=Alice+Walker&background=FF5733&color=fff', articles: 42 },
@@ -66,7 +66,7 @@ const RecommendedAuthors = () => {
     return (
         <Card className="p-4 md:p-6">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
-                <UserPlus size={14} className="mr-2"/> Recommended Authors
+                <UserPlus size={14} className="mr-2"/> 推荐作者
             </h3>
             <div className="space-y-4">
                 {authors.map(author => (
@@ -75,10 +75,10 @@ const RecommendedAuthors = () => {
                             <Avatar src={author.avatar} alt={author.name} size="sm" />
                             <div>
                                 <div className="text-sm font-semibold text-apple-text dark:text-apple-dark-text">{author.name}</div>
-                                <div className="text-xs text-gray-500">{author.articles} articles</div>
+                                <div className="text-xs text-gray-500">{author.articles} 篇文章</div>
                             </div>
                         </div>
-                        <Button size="sm" variant="secondary" className="text-xs px-2 py-1">Follow</Button>
+                        <Button size="sm" variant="secondary" className="text-xs px-2 py-1">关注</Button>
                     </div>
                 ))}
             </div>
@@ -98,14 +98,14 @@ export const Home = () => {
   const LIMIT = 5;
   const ALL_TAGS = ['#React19', '#TailwindCSS', '#UXDesign', '#AppleEvent', '#CodingLife', '#WebAssembly', '#NextJS', '#Figma', '#Minimalism', '#Darkmode', '#AI', '#ThreeJS', '#Rust', '#Cyberpunk'];
 
-  // Current filters
+  // 当前过滤器
   const currentCategory = searchParams.get('category') || 'All';
   const currentTag = searchParams.get('tag');
 
-  // Rotate Tags with Animation
+  // 轮播标签动画
   useEffect(() => {
     const interval = setInterval(() => {
-        // Simple shuffle for demo
+        // 简单洗牌
         const shuffled = [...ALL_TAGS].sort(() => 0.5 - Math.random());
         setTrendingTags(shuffled.slice(0, 5));
     }, 5000);
@@ -154,22 +154,22 @@ export const Home = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 mb-20">
       
-      {/* Hero / Intro */}
+      {/* 英雄 / 介绍区域 */}
       <div className="text-center mb-10 md:mb-16 space-y-3 md:space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <h1 className="text-3xl md:text-6xl font-bold tracking-tight text-apple-text dark:text-apple-dark-text">
-          Think Different.
+          非同凡想
         </h1>
         <p className="text-base md:text-xl text-apple-subtext dark:text-apple-dark-subtext max-w-2xl mx-auto px-4">
-          Exploring the intersection of design, technology, and lifestyle through a minimalist lens.
+          通过极简主义的镜头探索设计、技术和生活的交汇点。
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Main Content */}
+        {/* 主要内容 */}
         <div className="lg:col-span-8 space-y-6 md:space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 sm:gap-0">
             <h2 className="text-xl md:text-2xl font-bold text-apple-text dark:text-apple-dark-text">
-                {currentTag ? `Tag: ${currentTag}` : 'Latest Stories'}
+                {currentTag ? `标签: ${currentTag}` : '最新文章'}
             </h2>
             <div className="flex flex-wrap gap-2">
                {['All', 'Tech', 'Design', 'Life'].map(cat => (
@@ -178,11 +178,11 @@ export const Home = () => {
                     onClick={() => handleCategoryClick(cat)}
                     className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${currentCategory === cat ? 'bg-apple-blue text-white border-apple-blue' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-apple-blue'}`}
                  >
-                   {cat}
+                   {cat === 'All' ? '全部' : cat === 'Tech' ? '科技' : cat === 'Design' ? '设计' : '生活'}
                  </button>
                ))}
                {(currentTag || currentCategory !== 'All') && (
-                   <button onClick={clearFilters} className="px-3 py-1 text-xs font-medium text-red-500 hover:underline">Clear</button>
+                   <button onClick={clearFilters} className="px-3 py-1 text-xs font-medium text-red-500 hover:underline">清除</button>
                )}
             </div>
           </div>
@@ -194,7 +194,7 @@ export const Home = () => {
           ) : (
             <>
                 {articles.length === 0 ? (
-                    <div className="text-center py-10 text-gray-500">No articles found.</div>
+                    <div className="text-center py-10 text-gray-500">未找到文章。</div>
                 ) : (
                     articles.map((article) => (
                     <Card key={article.id} hover className="flex flex-col md:flex-row group cursor-pointer h-auto md:h-64" onClick={() => navigate(`/article/${article.id}`)}>
@@ -227,7 +227,7 @@ export const Home = () => {
                         <div className="mt-4 flex items-center justify-between">
                             <div className="flex items-center text-xs text-gray-400 space-x-4">
                                 <span className="flex items-center"><Eye size={14} className="mr-1"/> {article.views}</span>
-                                <span className="flex items-center"><Clock size={14} className="mr-1"/> 5 min read</span>
+                                <span className="flex items-center"><Clock size={14} className="mr-1"/> 5 分钟阅读</span>
                             </div>
                             {article.tags && article.tags.length > 0 && (
                                 <div className="flex space-x-2">
@@ -242,7 +242,7 @@ export const Home = () => {
                     ))
                 )}
                 
-                {/* Pagination */}
+                {/* 分页 */}
                 {articles.length > 0 && (
                     <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
                 )}
@@ -250,19 +250,19 @@ export const Home = () => {
           )}
         </div>
 
-        {/* Sidebar */}
+        {/* 侧边栏 */}
         <div className="lg:col-span-4 space-y-6 md:space-y-8">
            <Card className="p-4 md:p-6">
-              <h3 className="text-lg font-bold mb-4 text-apple-text dark:text-apple-dark-text">About Me</h3>
+              <h3 className="text-lg font-bold mb-4 text-apple-text dark:text-apple-dark-text">关于我</h3>
               <div className="flex items-center space-x-4 mb-4">
                 <Avatar src="https://picsum.photos/id/1005/100/100" alt="Admin" size="lg" />
                 <div>
                   <div className="font-semibold text-apple-text dark:text-apple-dark-text">John Developer</div>
-                  <div className="text-xs text-apple-subtext dark:text-apple-dark-subtext">Frontend Engineer</div>
+                  <div className="text-xs text-apple-subtext dark:text-apple-dark-subtext">前端工程师</div>
                 </div>
               </div>
               <p className="text-sm text-apple-subtext dark:text-apple-dark-subtext mb-4">
-                Passionate about creating clean, accessible, and high-performance user interfaces. 
+                热衷于创建整洁、易用和高性能的用户界面。
               </p>
               
               <div className="grid grid-cols-4 gap-2 mb-4">
@@ -272,7 +272,7 @@ export const Home = () => {
                   <a href="#" className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Gitee">
                       <FileCode size={20} className="text-red-500"/>
                   </a>
-                  <a href="#" className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Douyin">
+                  <a href="#" className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="抖音">
                       <Video size={20} className="text-black dark:text-white"/>
                   </a>
                   <a href="#" className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="QQ">
@@ -280,13 +280,13 @@ export const Home = () => {
                   </a>
               </div>
 
-              <Button variant="secondary" size="sm" className="w-full">Full Profile</Button>
+              <Button variant="secondary" size="sm" className="w-full">完整资料</Button>
            </Card>
 
            <div className="sticky top-24 space-y-6 md:space-y-8">
              <div>
-                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Trending Topics</h3>
-                {/* Key change triggers animation */}
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">热门话题</h3>
+                {/* 触发动画的关键变化 */}
                 <div className="space-y-2" key={trendingTags.join(',')}>
                     {trendingTags.map((tag, i) => (
                     <button 
@@ -302,10 +302,10 @@ export const Home = () => {
                 </div>
              </div>
 
-             {/* Announcements */}
+             {/* 公告 */}
              <Announcements />
 
-             {/* Recommended Authors */}
+             {/* 推荐作者 */}
              <RecommendedAuthors />
            </div>
         </div>

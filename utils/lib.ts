@@ -1,7 +1,7 @@
 import { Article, CommunityPost, Song, User, Announcement } from '../types';
 
 /**
- * Generic Debounce Function
+ * 通用防抖函数
  */
 export function debounce<T extends (...args: any[]) => void>(func: T, wait: number): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
@@ -14,7 +14,7 @@ export function debounce<T extends (...args: any[]) => void>(func: T, wait: numb
 }
 
 /**
- * Generic Throttle Function
+ * 通用节流函数
  */
 export function throttle<T extends (...args: any[]) => void>(func: T, limit: number): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
@@ -28,11 +28,11 @@ export function throttle<T extends (...args: any[]) => void>(func: T, limit: num
 }
 
 /**
- * Simulated Request Module (Mocking Axios)
+ * 模拟请求模块 (Mocking Axios)
  */
 class MockRequest {
-  private latency = 400; // ms
-  // Simulating database state for the session
+  private latency = 400; // 毫秒
+  // 模拟会话的数据库状态
   private aiUsageStore: Record<string, number> = {}; 
 
   private async interceptor() {
@@ -45,11 +45,11 @@ class MockRequest {
     
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        // Mock Routing
+        // 模拟路由
         if (endpoint === '/articles') {
           let data = [...MOCK_ARTICLES];
           
-          // Search Filter
+          // 搜索过滤器
           if (params.q) {
             const lowerQ = params.q.toLowerCase();
             data = data.filter(a => 
@@ -59,12 +59,12 @@ class MockRequest {
             );
           }
 
-          // Category Filter
+          // 分类过滤器
           if (params.category && params.category !== 'All') {
             data = data.filter(a => a.category === params.category);
           }
 
-          // Tag Filter
+          // 标签过滤器
           if (params.tag) {
              data = data.filter(a => a.tags?.includes(params.tag) || a.tags?.includes(`#${params.tag}`));
           }
@@ -77,7 +77,7 @@ class MockRequest {
              data = data.slice(2, 5);
           }
 
-          // Pagination
+          // 分页
           const page = params.page || 1;
           const limit = params.limit || 1000;
           const total = data.length;
@@ -98,38 +98,38 @@ class MockRequest {
           const id = endpoint.split('/')[2];
           const article = MOCK_ARTICLES.find(a => a.id === id);
           if (article) resolve(article as unknown as T);
-          else reject({ status: 404, message: 'Article Not Found' });
+          else reject({ status: 404, message: '文章未找到' });
 
         } else if (endpoint === '/community') {
           resolve(MOCK_POSTS as unknown as T);
         } else if (endpoint === '/music') {
           resolve(MOCK_SONGS as unknown as T);
         } else if (endpoint === '/search/hot') {
-            resolve(['React 19', 'Tailwind CSS', 'Apple Design', 'TypeScript', 'WebAssembly'] as unknown as T);
+            resolve(['React 19', 'Tailwind CSS', '苹果设计', 'TypeScript', 'WebAssembly'] as unknown as T);
         } else if (endpoint === '/announcements') {
             resolve(MOCK_ANNOUNCEMENTS as unknown as T);
         } else if (endpoint.startsWith('/ai/history')) {
             resolve([
-              { id: '1', title: 'Code Refactoring Help', date: 'Today' },
-              { id: '2', title: 'Explaining Quantum Physics', date: 'Yesterday' },
-              { id: '3', title: 'CSS Grid Layouts', date: 'Last Week' }
+              { id: '1', title: '代码重构帮助', date: '今天' },
+              { id: '2', title: '解释量子物理', date: '昨天' },
+              { id: '3', title: 'CSS Grid 布局', date: '上周' }
             ] as unknown as T);
         } else {
           console.error(`[Mock 404] ${endpoint} not found`);
-          reject({ status: 404, message: 'Not Found' });
+          reject({ status: 404, message: '未找到' });
         }
       }, this.latency);
     });
   }
 
-  // Simulate Post for Login
+  // 模拟 POST 请求 (如登录)
   async post<T>(endpoint: string, body: any = {}): Promise<T> {
     await this.interceptor();
     return new Promise((resolve, reject) => {
        setTimeout(() => {
           if (endpoint === '/login') {
              if (body.username) {
-               // Demo Role Logic
+               // 演示角色逻辑
                let role = 'user';
                if (body.username.toLowerCase().includes('vip')) role = 'vip';
                if (body.username.toLowerCase().includes('admin')) role = 'admin';
@@ -139,14 +139,14 @@ class MockRequest {
                   name: body.username,
                   avatar: `https://ui-avatars.com/api/?name=${body.username}&background=0071e3&color=fff`,
                   email: `${body.username}@example.com`,
-                  bio: 'Frontend enthusiast and pixel perfectionist.',
+                  bio: '前端爱好者和像素完美主义者。',
                   points: 100,
                   coverImage: 'https://picsum.photos/seed/cover/1200/400',
                   role: role,
                   aiUsage: this.aiUsageStore['u-123'] || 0
                } as unknown as T);
              } else {
-               reject({message: 'Invalid credentials'});
+               reject({message: '凭证无效'});
              }
           } else if (endpoint === '/user/checkin') {
              resolve({ points: 10, total: 110 } as unknown as T);
@@ -185,49 +185,49 @@ class MockRequest {
 
 export const request = new MockRequest();
 
-// --- MOCK DATA ---
+// --- 模拟数据 ---
 
 const LONG_CONTENT = `
-## Introduction
-The digital landscape is constantly evolving. As developers and designers, we must stay ahead of the curve. This article explores the fundamental shifts we're seeing in user interface design.
+## 简介
+数字景观正在不断演变。作为开发者和设计师，我们必须走在潮流的前沿。本文探讨了我们所看到的用户界面设计中的根本性转变。
 
-## The Glassmorphism Trend
-Glassmorphism is more than just a buzzword. It represents a shift towards depth and hierarchy without the clutter. 
-*   **Translucency**: Using backdrop-filter to create a sense of place.
-*   **Vibrancy**: Using subtle gradients to make content pop.
-*   **Border**: Thin, semi-transparent borders to define edges.
+## 毛玻璃拟态趋势
+毛玻璃拟态 (Glassmorphism) 不仅仅是一个流行词。它代表了向深度和层次感的转变，同时没有杂乱感。
+*   **半透明**: 使用 backdrop-filter 创造空间感。
+*   **活力**: 使用微妙的渐变让内容突显。
+*   **边框**: 细微的半透明边框来定义边缘。
 
-## Component Architecture
-Building scalable web applications requires a solid foundation.
-1.  **Atomic Design**: Breaking down interfaces into smallest parts.
-2.  **Compound Components**: Managing state within complex UI elements.
-3.  **Hooks Pattern**: Reusing logic across the application.
+## 组件架构
+构建可扩展的 Web 应用程序需要坚实的基础。
+1.  **原子设计**: 将界面分解为最小的部分。
+2.  **复合组件**: 管理复杂 UI 元素内的状态。
+3.  **Hooks 模式**: 在应用程序中重用逻辑。
 `;
 
 const TITLES = [
-    "The Future of UI Design in 2025",
-    "Understanding React 19 Server Components",
-    "Why Minimalism Never Goes Out of Style",
-    "A Guide to Apple's Design Philosophy",
-    "Mastering TypeScript Generics",
-    "The Rise of AI in Frontend Development",
-    "Building Accessible Web Apps",
-    "CSS Grid vs Flexbox: The Ultimate Guide",
-    "Optimizing Web Performance",
-    "Digital Detox for Developers"
+    "2025年 UI 设计的未来",
+    "理解 React 19 服务器组件",
+    "为什么极简主义永不过时",
+    "苹果设计哲学指南",
+    "精通 TypeScript 泛型",
+    "前端开发中 AI 的崛起",
+    "构建无障碍 Web 应用",
+    "CSS Grid 与 Flexbox：终极指南",
+    "优化 Web 性能",
+    "开发者的数字排毒"
 ];
 
 const MOCK_ARTICLES: Article[] = TITLES.map((title, i) => ({
   id: `art-${i}`,
   title: title,
-  summary: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+  summary: "这是一段关于文章内容的简短摘要，旨在吸引读者点击阅读更多内容。",
   content: LONG_CONTENT,
   cover: `https://picsum.photos/seed/art${i}/800/600`,
   views: Math.floor(Math.random() * 5000) + 100,
   likes: Math.floor(Math.random() * 500),
   category: ["Tech", "Design", "Life"][Math.floor(Math.random() * 3)],
   tags: ["#React19", "#Design", "#WebDev", "#Apple"].sort(() => 0.5 - Math.random()).slice(0, 2),
-  date: "Oct 24, 2024",
+  date: "2024年10月24日",
   comments: []
 }));
 
@@ -235,15 +235,15 @@ const MOCK_POSTS: CommunityPost[] = Array.from({ length: 5 }).map((_, i) => ({
   id: `post-${i}`,
   author: {
     id: `u-${i}`,
-    name: ["Alex Doe", "Sarah Smith", "Mike Ross"][i%3],
+    name: ["张三", "李四", "王五"][i%3],
     avatar: `https://picsum.photos/seed/user${i}/100/100`,
     role: 'user',
     aiUsage: 0
   },
-  content: "Just checking out this new blog design. The frosted glass effect is really smooth!",
+  content: "刚刚看了这个新的博客设计，毛玻璃效果真的很流畅！非常喜欢这种苹果风格的UI。",
   likes: Math.floor(Math.random() * 50),
   comments: Math.floor(Math.random() * 10),
-  timeAgo: `${i + 1}h ago`
+  timeAgo: `${i + 1}小时前`
 }));
 
 const MOCK_SONGS: Song[] = [
@@ -255,63 +255,63 @@ const MOCK_SONGS: Song[] = [
 const MOCK_ANNOUNCEMENTS: Announcement[] = [
     { 
         id: 1, 
-        title: "iBlog V2.0 Released", 
-        summary: "iBlog V2.0 is officially released with a brand new UI!",
+        title: "iBlog V2.0 已发布", 
+        summary: "iBlog V2.0 正式发布，带来全新的用户界面！",
         content: `
-# iBlog V2.0 is Here!
+# iBlog V2.0 来了！
 
-We are excited to announce the immediate availability of iBlog V2.0. This update brings a complete overhaul of the user interface, embracing the **Glassmorphism** design language.
+我们很高兴地宣布 iBlog V2.0 即刻可用。这次更新带来了用户界面的彻底检修，采用了 **毛玻璃拟态 (Glassmorphism)** 设计语言。
 
-### What's New?
-*   **New Design**: A fresh, modern look inspired by Apple.
-*   **AI Assistant**: Powered by Gemini, allowing for smarter interactions.
-*   **Music Player**: Integrated music experience.
-*   **Dark Mode**: A beautiful dark mode that is easy on the eyes.
+### 有什么新功能？
+*   **新设计**: 清新、现代、受苹果启发的外观。
+*   **AI 助手**: 由 Gemini 驱动，实现更智能的交互。
+*   **音乐播放器**: 集成的音乐体验。
+*   **深色模式**: 优美护眼的深色模式。
 
-Enjoy the new experience!
+享受新体验吧！
         `,
         type: "info",
         date: "2024-10-27",
-        publisher: "System Admin"
+        publisher: "系统管理员"
     },
     { 
         id: 2, 
-        title: "Scheduled Maintenance", 
-        summary: "Maintenance scheduled for Sunday 2AM.",
+        title: "计划维护", 
+        summary: "系统维护计划于周日凌晨 2 点进行。",
         content: `
-# Maintenance Notice
+# 维护通知
 
-We will be performing scheduled server maintenance on **Sunday at 2:00 AM UTC**.
+我们将于 **周日凌晨 2:00 UTC** 进行计划内的服务器维护。
 
-Expected downtime is approximately **30 minutes**. During this time, the following services may be unavailable:
-*   Login/Register
-*   Commenting
-*   AI Assistant
+预计停机时间约为 **30 分钟**。在此期间，以下服务可能不可用：
+*   登录/注册
+*   评论
+*   AI 助手
 
-We apologize for any inconvenience.
+对于由此造成的不便，我们深表歉意。
         `,
         type: "warning", 
         date: "2024-10-28",
-        publisher: "DevOps Team"
+        publisher: "运维团队"
     },
     { 
         id: 3, 
-        title: "VIP AI Access", 
-        summary: "New AI Assistant is now available for VIPs.",
+        title: "VIP AI 访问权限", 
+        summary: "新的 AI 助手现已向 VIP 会员开放。",
         content: `
-# AI Assistant for VIPs
+# VIP 专属 AI 助手
 
-We are rolling out the new AI Assistant feature to all **VIP members**.
+我们正在向所有 **VIP 会员** 推出新的 AI 助手功能。
 
-Unlock the power of AI to:
-*   Summarize articles
-*   Generate code snippets
-*   Translate content
+解锁 AI 的力量来：
+*   总结文章
+*   生成代码片段
+*   翻译内容
 
-Upgrade today to get access!
+立即升级以获取访问权限！
         `,
         type: "success",
         date: "2024-10-29",
-        publisher: "Product Team"
+        publisher: "产品团队"
     }
 ];

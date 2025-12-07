@@ -4,7 +4,7 @@ import { Button } from './atoms';
 import { Modal } from './modals';
 import { ChevronLeft, ChevronRight, ArrowUp, Type, Coffee, Sun, Moon, CheckCircle, AlertCircle, Info, Plus } from 'lucide-react';
 
-// --- Animated Theme Toggle (Sun Set / Moon Rise) ---
+// --- 动画主题切换 (日落 / 月升) ---
 export const ThemeToggle = () => {
   const { darkMode, toggleTheme } = useStore();
 
@@ -12,11 +12,11 @@ export const ThemeToggle = () => {
     <button
       onClick={toggleTheme}
       className="relative w-10 h-10 rounded-full overflow-hidden focus:outline-none transition-colors duration-500 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800"
-      aria-label="Toggle Theme"
+      aria-label="切换主题"
     >
-       {/* Container for Sun and Moon */}
+       {/* 太阳和月亮的容器 */}
        <div className="absolute inset-0 flex items-center justify-center">
-          {/* Sun: visible in light mode (y=0), moves down in dark mode (y=100%) */}
+          {/* 太阳: 浅色模式可见 (y=0), 深色模式下移 (y=100%) */}
           <div 
             className="absolute transition-all duration-500 ease-out"
             style={{ 
@@ -27,7 +27,7 @@ export const ThemeToggle = () => {
              <Sun className="text-orange-500 fill-orange-500" size={24} />
           </div>
 
-          {/* Moon: hidden in light mode (y=100%), moves up in dark mode (y=0) */}
+          {/* 月亮: 浅色模式隐藏 (y=100%), 深色模式上移 (y=0) */}
           <div 
             className="absolute transition-all duration-500 ease-out"
             style={{ 
@@ -42,7 +42,7 @@ export const ThemeToggle = () => {
   );
 };
 
-// --- Pagination Component ---
+// --- 分页组件 ---
 export const Pagination = ({ page, totalPages, onPageChange }: { page: number, totalPages: number, onPageChange: (p: number) => void }) => {
   const getPageNumbers = () => {
       const pages = [];
@@ -99,7 +99,7 @@ export const Pagination = ({ page, totalPages, onPageChange }: { page: number, t
   );
 };
 
-// --- Toast Notifications ---
+// --- Toast 通知 ---
 export const ToastContainer = () => {
     const { toasts } = useStore();
     return (
@@ -119,7 +119,7 @@ export const ToastContainer = () => {
     );
 };
 
-// --- Floating Menu (Redesigned) ---
+// --- 悬浮菜单 (重新设计) ---
 export const FloatingMenu = () => {
     const { cycleFontSize } = useStore();
     const [showDonate, setShowDonate] = useState(false);
@@ -132,32 +132,32 @@ export const FloatingMenu = () => {
     return (
         <>
             <div className="fixed right-6 bottom-10 z-40 flex flex-col items-center group">
-                {/* Menu Items */}
+                {/* 菜单项 */}
                 <div className={`flex flex-col-reverse items-center space-y-reverse space-y-3 mb-4 transition-all duration-300 ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
                     <button 
                         onClick={scrollToTop}
                         className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-apple-blue dark:hover:text-white hover:scale-110 transition-all"
-                        title="Back to Top"
+                        title="回到顶部"
                     >
                         <ArrowUp size={18} />
                     </button>
                     <button 
                         onClick={() => setShowDonate(true)}
                         className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center text-pink-500 hover:text-pink-600 hover:scale-110 transition-all"
-                        title="Donate"
+                        title="打赏"
                     >
                         <Coffee size={18} />
                     </button>
                     <button 
                         onClick={cycleFontSize}
                         className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-apple-blue dark:hover:text-white hover:scale-110 transition-all"
-                        title="Adjust Font Size"
+                        title="调整字号"
                     >
                         <Type size={18} />
                     </button>
                 </div>
 
-                {/* Main Trigger Button */}
+                {/* 主触发按钮 */}
                 <button 
                     onClick={() => setIsOpen(!isOpen)}
                     className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xl backdrop-blur-xl transition-all duration-300 hover:scale-105 border border-white/20 
@@ -167,17 +167,17 @@ export const FloatingMenu = () => {
                 </button>
             </div>
 
-            <Modal isOpen={showDonate} onClose={() => setShowDonate(false)} title="Buy me a coffee">
+            <Modal isOpen={showDonate} onClose={() => setShowDonate(false)} title="请我喝杯咖啡">
                 <div className="text-center p-4">
                     <div className="w-20 h-20 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Coffee className="text-pink-500 h-10 w-10" />
                     </div>
                     <p className="text-gray-600 dark:text-gray-300 mb-6">
-                        If you like my work, you can support me to keep this blog running!
+                        如果您喜欢我的作品，您可以支持我继续运营这个博客！
                     </p>
                     <div className="grid grid-cols-2 gap-4">
                         <Button variant="secondary" onClick={() => window.open('https://paypal.me', '_blank')}>PayPal</Button>
-                        <Button className="bg-green-500 hover:bg-green-600 text-white" onClick={() => window.open('https://weixin.qq.com', '_blank')}>WeChat</Button>
+                        <Button className="bg-green-500 hover:bg-green-600 text-white" onClick={() => window.open('https://weixin.qq.com', '_blank')}>微信</Button>
                     </div>
                 </div>
             </Modal>
@@ -185,7 +185,7 @@ export const FloatingMenu = () => {
     );
 };
 
-// --- Emoji Picker (Simple) ---
+// --- 表情选择器 (简单版) ---
 export const EmojiPicker = ({ onSelect }: { onSelect: (emoji: string) => void }) => {
     const emojis = ["👍", "❤️", "😂", "😮", "😢", "😡", "🎉", "🔥", "👀", "🚀", "💯", "🤔", "👏", "💩", "👻"];
     
@@ -204,7 +204,7 @@ export const EmojiPicker = ({ onSelect }: { onSelect: (emoji: string) => void })
     );
 };
 
-// --- Captcha Component ---
+// --- 验证码组件 ---
 export const Captcha = ({ onValidate }: { onValidate: (isValid: boolean) => void }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [code, setCode] = useState('');
@@ -233,7 +233,7 @@ export const Captcha = ({ onValidate }: { onValidate: (isValid: boolean) => void
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'center';
         
-        // Add noise
+        // 添加噪点
         for(let i=0; i<10; i++) {
             ctx.beginPath();
             ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
@@ -272,7 +272,7 @@ export const Captcha = ({ onValidate }: { onValidate: (isValid: boolean) => void
         <div className="flex space-x-2">
             <input 
                 type="text" 
-                placeholder="Captcha" 
+                placeholder="验证码" 
                 className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border-none outline-none text-apple-text dark:text-apple-dark-text"
                 value={input}
                 onChange={handleChange}
@@ -284,7 +284,7 @@ export const Captcha = ({ onValidate }: { onValidate: (isValid: boolean) => void
                 height={40} 
                 className="rounded-xl cursor-pointer" 
                 onClick={refresh}
-                title="Click to refresh"
+                title="点击刷新"
             />
         </div>
     );

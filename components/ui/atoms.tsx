@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Play, Code, Eye } from 'lucide-react';
 
-// --- Card Component ---
+// --- 卡片组件 ---
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
@@ -24,12 +24,12 @@ export const Card = ({ children, className = '', hover = false, ...props }: Card
   );
 };
 
-// --- Skeleton Component ---
+// --- 骨架屏组件 ---
 export const Skeleton = ({ className = '' }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg ${className}`} />
 );
 
-// --- Button Component ---
+// --- 按钮组件 ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
@@ -61,7 +61,7 @@ export const Button = ({ children, variant = 'primary', size = 'md', className =
   );
 };
 
-// --- Avatar Component ---
+// --- 头像组件 ---
 export const Avatar = ({ src, alt, size = 'md' }: { src: string; alt: string; size?: 'sm' | 'md' | 'lg' | 'xl' }) => {
   const sizes = {
     sm: "w-8 h-8",
@@ -79,7 +79,7 @@ export const Avatar = ({ src, alt, size = 'md' }: { src: string; alt: string; si
   );
 };
 
-// --- Loading Spinner ---
+// --- 加载动画 ---
 export const Spinner = () => (
   <svg className="animate-spin h-5 w-5 text-apple-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -87,11 +87,11 @@ export const Spinner = () => (
   </svg>
 );
 
-// --- Markdown/Code Renderer ---
+// --- Markdown/代码渲染器 ---
 export const MarkdownRenderer = ({ content }: { content: string }) => {
     const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
     
-    // Simple detection for HTML code blocks to run
+    // 简单检测 HTML 代码块以运行
     const hasHtmlBlock = content.includes('```html');
     
     const extractHtml = (md: string) => {
@@ -115,10 +115,10 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
                 <div className="flex justify-end space-x-2 mb-2">
                      <button onClick={() => setViewMode(viewMode === 'preview' ? 'code' : 'preview')} className="text-xs flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-300">
                          {viewMode === 'preview' ? <Code size={14} className="mr-1"/> : <Eye size={14} className="mr-1"/>}
-                         {viewMode === 'preview' ? 'View Code' : 'Preview'}
+                         {viewMode === 'preview' ? '查看代码' : '预览'}
                      </button>
                      <button onClick={runCode} className="text-xs flex items-center bg-green-100 dark:bg-green-900 px-2 py-1 rounded text-green-600 dark:text-green-400 font-medium">
-                         <Play size={14} className="mr-1"/> Run
+                         <Play size={14} className="mr-1"/> 运行
                      </button>
                 </div>
             )}
@@ -130,7 +130,7 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
             ) : (
                 <div className="prose prose-sm dark:prose-invert max-w-none">
                      {content.split('\n').map((line, i) => {
-                        if (line.startsWith('```')) return null; // Hide code fences in simple view for demo
+                        if (line.startsWith('```')) return null; // 演示中隐藏代码块
                         if (line.startsWith('# ')) return <h1 key={i} className="text-xl font-bold my-2">{line.substring(2)}</h1>;
                         if (line.startsWith('## ')) return <h2 key={i} className="text-lg font-bold my-2">{line.substring(3)}</h2>;
                         if (line.startsWith('* ')) return <li key={i} className="ml-4 list-disc">{line.substring(2)}</li>;

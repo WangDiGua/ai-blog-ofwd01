@@ -5,7 +5,7 @@ import { CommunityPost, Song } from '../types';
 import { useStore } from '../context/store';
 import { Heart, MessageCircle, Share2, Play, Pause, Hash, Mail, Phone, Send, ChevronLeft, MoreHorizontal, Video as VideoIcon, Mic } from 'lucide-react';
 
-// --- COMMUNITY PAGE ---
+// --- 社区页面 ---
 export const Community = () => {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const { isLoggedIn, requireAuth } = useStore();
@@ -18,11 +18,11 @@ export const Community = () => {
     <div className="max-w-4xl mx-auto px-4 py-6 md:py-10 mb-20">
       <div className="flex justify-between items-end mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-apple-text dark:text-apple-dark-text">Community</h1>
-          <p className="text-apple-subtext dark:text-apple-dark-subtext mt-1 text-sm md:text-base">Join the conversation.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-apple-text dark:text-apple-dark-text">社区</h1>
+          <p className="text-apple-subtext dark:text-apple-dark-subtext mt-1 text-sm md:text-base">加入讨论。</p>
         </div>
         <Button onClick={() => requireAuth(() => console.log('post'))}>
-          {isLoggedIn ? 'New Post' : 'Login'}
+          {isLoggedIn ? '发帖' : '登录'}
         </Button>
       </div>
 
@@ -57,7 +57,7 @@ export const Community = () => {
   );
 };
 
-// --- MUSIC PAGE ---
+// --- 音乐页面 ---
 export const MusicPage = () => {
   const [songs, setSongs] = useState<Song[]>([]);
   const { playSong, currentSong, isPlaying, togglePlay } = useStore();
@@ -75,7 +75,7 @@ export const MusicPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 md:py-10 mb-20">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-        {/* Left: Player Visual */}
+        {/* 左侧: 播放器视觉 */}
         <div className="flex flex-col items-center justify-center p-6 md:p-8 bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-900 dark:to-black rounded-3xl shadow-inner border border-white/20">
            <div className={`w-48 h-48 md:w-80 md:h-80 rounded-2xl shadow-2xl overflow-hidden mb-6 md:mb-8 transition-transform duration-700 ease-spring ${isPlaying ? 'scale-105' : 'scale-100'}`}>
               <img 
@@ -85,8 +85,8 @@ export const MusicPage = () => {
               />
            </div>
            <div className="text-center mb-6">
-              <h2 className="text-xl md:text-2xl font-bold text-apple-text dark:text-apple-dark-text mb-1">{currentSong?.title || "No Song Selected"}</h2>
-              <p className="text-base md:text-lg text-apple-subtext dark:text-apple-dark-subtext">{currentSong?.artist || "Select a song from the list"}</p>
+              <h2 className="text-xl md:text-2xl font-bold text-apple-text dark:text-apple-dark-text mb-1">{currentSong?.title || "未选择歌曲"}</h2>
+              <p className="text-base md:text-lg text-apple-subtext dark:text-apple-dark-subtext">{currentSong?.artist || "从列表中选择一首歌曲"}</p>
            </div>
            
            <div className="flex items-center space-x-6 md:space-x-8">
@@ -105,9 +105,9 @@ export const MusicPage = () => {
            </div>
         </div>
 
-        {/* Right: Playlist */}
+        {/* 右侧: 播放列表 */}
         <div className="space-y-3 md:space-y-4">
-           <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-apple-text dark:text-apple-dark-text">Top Hits</h2>
+           <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-apple-text dark:text-apple-dark-text">热门金曲</h2>
            {songs.map((song) => (
              <div 
                 key={song.id}
@@ -145,25 +145,32 @@ export const MusicPage = () => {
   );
 };
 
-// --- TOOLS PAGE ---
+// --- 工具页面 ---
 export const Tools = () => (
   <div className="max-w-7xl mx-auto px-4 py-6 md:py-10 mb-20">
-    <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-apple-text dark:text-apple-dark-text">Developer Tools</h1>
+    <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-apple-text dark:text-apple-dark-text">开发者工具</h1>
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-       {['JSON Formatter', 'Timestamp Converter', 'Color Picker', 'Base64 Encoder', 'Lorem Ipsum Gen', 'Diff Checker'].map(tool => (
-         <Card key={tool} hover className="p-6 flex flex-col items-center justify-center text-center h-40 md:h-48 cursor-pointer border-dashed border-2 border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+       {[
+           { name: 'JSON 格式化', desc: '美化或压缩 JSON 数据' },
+           { name: '时间戳转换', desc: '转换 Unix 时间戳' },
+           { name: '颜色提取器', desc: '识别和转换颜色代码' },
+           { name: 'Base64 编码', desc: '编码和解码 Base64' },
+           { name: 'Lorem Ipsum 生成', desc: '生成占位文本' },
+           { name: 'Diff 检查器', desc: '比较文本差异' }
+       ].map(tool => (
+         <Card key={tool.name} hover className="p-6 flex flex-col items-center justify-center text-center h-40 md:h-48 cursor-pointer border-dashed border-2 border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-white dark:bg-gray-800 rounded-xl shadow-sm mb-4 flex items-center justify-center">
                <Hash className="text-apple-blue" size={20} />
             </div>
-            <h3 className="font-semibold text-sm md:text-base text-apple-text dark:text-apple-dark-text">{tool}</h3>
-            <p className="text-xs text-gray-400 mt-2">Useful utility</p>
+            <h3 className="font-semibold text-sm md:text-base text-apple-text dark:text-apple-dark-text">{tool.name}</h3>
+            <p className="text-xs text-gray-400 mt-2">{tool.desc}</p>
          </Card>
        ))}
     </div>
   </div>
 );
 
-// --- CONTACT PAGE (WeChat Style Chat) ---
+// --- 联系页面 (微信风格聊天) ---
 interface Message {
   id: number;
   sender: 'me' | 'them';
@@ -181,23 +188,23 @@ interface ContactUser {
 }
 
 const INITIAL_CONTACTS: ContactUser[] = [
-    { id: '1', name: 'Alice Designer', avatar: 'https://ui-avatars.com/api/?name=Alice+D&background=0D8ABC&color=fff', lastMsg: 'Hey, did you check the new mockups?', time: '10:30 AM', unread: 2 },
-    { id: '2', name: 'Bob Engineer', avatar: 'https://ui-avatars.com/api/?name=Bob+E&background=FF5733&color=fff', lastMsg: 'The PR has been merged.', time: 'Yesterday', unread: 0 },
-    { id: '3', name: 'Product Team', avatar: 'https://ui-avatars.com/api/?name=Product&background=6C3483&color=fff', lastMsg: 'Meeting at 3 PM', time: 'Mon', unread: 5 },
-    { id: '4', name: 'Support Bot', avatar: 'https://ui-avatars.com/api/?name=Bot&background=28B463&color=fff', lastMsg: 'How can I help you?', time: 'Sun', unread: 0 },
+    { id: '1', name: 'Alice 设计师', avatar: 'https://ui-avatars.com/api/?name=Alice+D&background=0D8ABC&color=fff', lastMsg: '嘿，你看过新的设计稿了吗？', time: '10:30', unread: 2 },
+    { id: '2', name: 'Bob 工程师', avatar: 'https://ui-avatars.com/api/?name=Bob+E&background=FF5733&color=fff', lastMsg: 'PR 已经合并了。', time: '昨天', unread: 0 },
+    { id: '3', name: '产品团队', avatar: 'https://ui-avatars.com/api/?name=Product&background=6C3483&color=fff', lastMsg: '下午3点开会', time: '周一', unread: 5 },
+    { id: '4', name: '客服机器人', avatar: 'https://ui-avatars.com/api/?name=Bot&background=28B463&color=fff', lastMsg: '有什么可以帮您的吗？', time: '周日', unread: 0 },
 ];
 
 const INITIAL_MESSAGES: Record<string, Message[]> = {
     '1': [
-        { id: 1, sender: 'them', text: 'Hi! Are you free?', time: '10:00 AM' },
-        { id: 2, sender: 'me', text: 'Yes, what\'s up?', time: '10:05 AM' },
-        { id: 3, sender: 'them', text: 'Can we review the Figma file?', time: '10:15 AM' },
-        { id: 4, sender: 'them', text: 'Hey, did you check the new mockups?', time: '10:30 AM' },
+        { id: 1, sender: 'them', text: '嗨！你有空吗？', time: '10:00' },
+        { id: 2, sender: 'me', text: '有的，怎么了？', time: '10:05' },
+        { id: 3, sender: 'them', text: '我们可以审查一下 Figma 文件吗？', time: '10:15' },
+        { id: 4, sender: 'them', text: '嘿，你看过新的设计稿了吗？', time: '10:30' },
     ],
     '2': [
-        { id: 1, sender: 'me', text: 'Is the backend ready?', time: 'Yesterday' },
-        { id: 2, sender: 'them', text: 'Almost done.', time: 'Yesterday' },
-        { id: 3, sender: 'them', text: 'The PR has been merged.', time: 'Yesterday' },
+        { id: 1, sender: 'me', text: '后端准备好了吗？', time: '昨天' },
+        { id: 2, sender: 'them', text: '快好了。', time: '昨天' },
+        { id: 3, sender: 'them', text: 'PR 已经合并了。', time: '昨天' },
     ]
 };
 
@@ -208,7 +215,7 @@ export const Contact = () => {
     const [inputText, setInputText] = useState('');
     const chatEndRef = useRef<HTMLDivElement>(null);
 
-    // Scroll to bottom on new message
+    // 有新消息时滚动到底部
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, selectedContact]);
@@ -230,12 +237,12 @@ export const Contact = () => {
         }));
         setInputText('');
 
-        // Mock auto-reply
+        // 模拟自动回复
         setTimeout(() => {
              const replyMsg: Message = {
                 id: Date.now() + 1,
                 sender: 'them',
-                text: "I'm just a demo bot, but I received your message!",
+                text: "我只是个演示机器人，但我收到了你的消息！",
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
             setMessages(prev => ({
@@ -248,40 +255,40 @@ export const Contact = () => {
     if (!user) {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
-                 <h2 className="text-2xl font-bold mb-4 text-apple-text dark:text-apple-dark-text">Login Required</h2>
-                 <p className="mb-6 text-gray-500">Please login to access the chat room.</p>
-                 <Button onClick={() => requireAuth(() => {})}>Login Now</Button>
+                 <h2 className="text-2xl font-bold mb-4 text-apple-text dark:text-apple-dark-text">需要登录</h2>
+                 <p className="mb-6 text-gray-500">请登录以访问聊天室。</p>
+                 <Button onClick={() => requireAuth(() => {})}>立即登录</Button>
             </div>
         );
     }
 
-    // Use 100dvh for better mobile browser support (address bar handling)
+    // 使用 100dvh 以获得更好的移动浏览器支持 (地址栏处理)
     return (
         <div className="max-w-6xl mx-auto px-2 md:px-4 py-2 md:py-4 h-[calc(100dvh-5rem)] md:h-[calc(100vh-6rem)] mb-20 md:mb-0">
             <div className="flex h-full bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
                 
-                {/* Sidebar (Contact List) */}
+                {/* 侧边栏 (联系人列表) */}
                 <div className={`w-full md:w-80 flex-shrink-0 border-r border-gray-100 dark:border-gray-800 flex flex-col bg-gray-50/50 dark:bg-gray-900/50 ${selectedContact ? 'hidden md:flex' : 'flex'}`}>
-                    {/* Sidebar Header */}
+                    {/* 侧边栏头部 */}
                     <div className="p-3 md:p-4 border-b border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur">
                         <div className="flex items-center space-x-3 mb-3 md:mb-4">
                             <Avatar src={user.avatar} alt="Me" size="md" />
                             <div>
                                 <h3 className="font-semibold text-sm md:text-base text-apple-text dark:text-apple-dark-text">{user.name}</h3>
                                 <div className="flex items-center text-xs text-green-500">
-                                    <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span> Online
+                                    <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span> 在线
                                 </div>
                             </div>
                         </div>
                         <div className="relative">
                              <input 
                                 className="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-lg py-2 px-3 text-sm focus:ring-1 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
-                                placeholder="Search..."
+                                placeholder="搜索..."
                              />
                         </div>
                     </div>
 
-                    {/* Contacts */}
+                    {/* 联系人 */}
                     <div className="flex-1 overflow-y-auto">
                         {INITIAL_CONTACTS.map(contact => (
                             <div 
@@ -309,11 +316,11 @@ export const Contact = () => {
                     </div>
                 </div>
 
-                {/* Main Chat Area */}
+                {/* 主聊天区域 */}
                 <div className={`flex-1 flex flex-col bg-white dark:bg-gray-900 ${!selectedContact ? 'hidden md:flex' : 'flex'}`}>
                     {selectedContact ? (
                         <>
-                            {/* Chat Header */}
+                            {/* 聊天头部 */}
                             <div className="h-14 md:h-16 flex items-center justify-between px-3 md:px-4 border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur sticky top-0 z-10">
                                 <div className="flex items-center">
                                     <button onClick={() => setSelectedContact(null)} className="md:hidden mr-2 p-1 text-gray-500">
@@ -321,7 +328,7 @@ export const Contact = () => {
                                     </button>
                                     <div>
                                         <h3 className="font-semibold text-sm md:text-base text-apple-text dark:text-apple-dark-text">{selectedContact.name}</h3>
-                                        <span className="text-[10px] text-gray-400 md:hidden">Online</span>
+                                        <span className="text-[10px] text-gray-400 md:hidden">在线</span>
                                     </div>
                                 </div>
                                 <button className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
@@ -329,7 +336,7 @@ export const Contact = () => {
                                 </button>
                             </div>
 
-                            {/* Chat Messages */}
+                            {/* 聊天消息 */}
                             <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 bg-gray-50/50 dark:bg-black/20">
                                 {(messages[selectedContact.id] || []).map(msg => (
                                     <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
@@ -346,7 +353,7 @@ export const Contact = () => {
                                 <div ref={chatEndRef} />
                             </div>
 
-                            {/* Input Area */}
+                            {/* 输入区域 */}
                             <div className="p-3 md:p-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
                                 <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
                                     <button type="button" className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
@@ -356,7 +363,7 @@ export const Contact = () => {
                                         value={inputText}
                                         onChange={(e) => setInputText(e.target.value)}
                                         className="flex-1 bg-gray-100 dark:bg-gray-800 border-none rounded-full px-4 py-2 text-sm focus:ring-1 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
-                                        placeholder="Type a message..."
+                                        placeholder="输入消息..."
                                     />
                                     <button 
                                         type="submit" 
@@ -371,7 +378,7 @@ export const Contact = () => {
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
                             <MessageCircle size={64} className="mb-4 opacity-20" />
-                            <p className="text-lg">Select a contact to start chatting</p>
+                            <p className="text-lg">选择联系人开始聊天</p>
                         </div>
                     )}
                 </div>
@@ -380,26 +387,26 @@ export const Contact = () => {
     );
 };
 
-// --- ABOUT PAGE ---
+// --- 关于页面 ---
 export const About = () => (
     <div className="max-w-3xl mx-auto px-4 py-10 md:py-16 text-center mb-16">
         <Avatar src="https://picsum.photos/id/1005/200/200" alt="Me" size="xl" />
         <h1 className="text-3xl md:text-4xl font-bold mt-6 mb-2 text-apple-text dark:text-apple-dark-text">John Developer</h1>
-        <p className="text-lg md:text-xl text-apple-subtext dark:text-apple-dark-subtext mb-8">Building digital experiences with pixels and love.</p>
+        <p className="text-lg md:text-xl text-apple-subtext dark:text-apple-dark-subtext mb-8">用像素和爱构建数字体验。</p>
         
         <div className="flex justify-center space-x-4 mb-12">
-            <Button>Download Resume</Button>
-            <Button variant="secondary">Contact Me</Button>
+            <Button>下载简历</Button>
+            <Button variant="secondary">联系我</Button>
         </div>
 
         <div className="text-left bg-white dark:bg-gray-900 rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-800">
-           <h3 className="text-lg font-bold mb-4 text-apple-text dark:text-apple-dark-text">Philosophy</h3>
+           <h3 className="text-lg font-bold mb-4 text-apple-text dark:text-apple-dark-text">哲学</h3>
            <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed text-sm md:text-base">
-             I believe that great software is not just about code, but about how it makes the user feel. 
-             Adhering to principles of minimalism, clarity, and depth, I strive to create interfaces that are intuitive and delightful.
+             我相信优秀的软件不仅仅是关于代码，更是关于它给用户带来的感受。
+             坚持极简、清晰和深度的原则，我致力于创造直观且令人愉悦的界面。
            </p>
            
-           <h3 className="text-lg font-bold mb-4 text-apple-text dark:text-apple-dark-text">Tech Stack</h3>
+           <h3 className="text-lg font-bold mb-4 text-apple-text dark:text-apple-dark-text">技术栈</h3>
            <div className="flex flex-wrap gap-2">
               {['React', 'TypeScript', 'Tailwind', 'Node.js', 'Next.js', 'Figma', 'GraphQL'].map(skill => (
                   <span key={skill} className="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300">
