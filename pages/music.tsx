@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { request } from '../utils/lib';
+import { musicApi } from '../services/api';
 import { Song } from '../types';
 import { useStore } from '../context/store';
 import { Play, Pause } from 'lucide-react';
@@ -9,7 +9,7 @@ export const MusicPage = () => {
   const { playSong, currentSong, isPlaying, togglePlay } = useStore();
 
   useEffect(() => {
-    request.get<Song[]>('/music').then(setSongs);
+    musicApi.getList().then(setSongs);
   }, []);
 
   const formatTime = (seconds: number) => {

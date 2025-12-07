@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStore } from '../context/store';
 import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, MarkdownEditor, ImageViewer } from '../components/ui';
-import { request } from '../utils/lib';
+import { articleApi } from '../services/api';
 import { Article, Comment } from '../types';
 import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash } from 'lucide-react';
 
@@ -60,10 +60,11 @@ export const ArticleDetail = () => {
   const { user, requireAuth, showToast } = useStore();
 
   useEffect(() => {
+    if (!id) return;
     const fetch = async () => {
       setLoading(true);
       try {
-        const data = await request.get<Article>(`/articles/${id}`);
+        const data = await articleApi.getDetail(id);
         setArticle(data);
       } catch (e) {
         console.error(e);

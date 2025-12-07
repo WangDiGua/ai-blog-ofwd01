@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/store';
-import { request, debounce } from '../../utils/lib';
+import { debounce } from '../../utils/lib';
+import { articleApi, userApi, systemApi } from '../../services/api';
 import { Article, Announcement } from '../../types';
 import { X, Search, Hash, Lock, Send, Bug, Lightbulb, Clock, ArrowUpRight, User } from 'lucide-react';
 import { Button, Spinner, MarkdownRenderer } from './atoms';
@@ -59,7 +60,7 @@ export const SearchModal = () => {
     // 禁止背景滚动
     useEffect(() => {
         if (isSearchOpen) {
-            request.get<string[]>('/search/hot').then(setHotSearches);
+            systemApi.getHotSearches().then(setHotSearches);
             setTimeout(() => inputRef.current?.focus(), 100);
             document.body.style.overflow = 'hidden';
         } else {
@@ -75,7 +76,7 @@ export const SearchModal = () => {
         }
         setLoading(true);
         try {
-            const res = await request.get<{items: Article[]}>('/articles', { q, limit: 5 });
+            const res = await articleApi.getList({ q, limit: 5 });
             setResults(res.items);
         } catch(e) { console.error(e); }
         finally { setLoading(false); }
@@ -260,7 +261,7 @@ export const FeedbackModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: (
     const handleSubmit = async () => {
         if (!content.trim()) return;
         try {
-            await request.post('/user/feedback', { userId: user?.id, content, type });
+            await userApi.submitFeedback({ userId: user?.id, content, type });
             showToast('感谢您的反馈！', 'success');
             setContent('');
             onClose();

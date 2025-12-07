@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useMemo, useEffect, ReactNode, useCallback } from 'react';
 import { User, Song, ToastMessage, ToastType } from '../types';
-import { request } from '../utils/lib';
+import { userApi, aiApi } from '../services/api';
 
 interface AppState {
   user: User | null;
@@ -93,7 +93,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (username: string) => {
     try {
-        const userData = await request.post<User>('/login', { username });
+        const userData = await userApi.login(username);
         setUser(userData);
         showToast(`欢迎回来，${userData.name}！`, 'success');
     } catch (e) {
@@ -105,7 +105,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const updateUser = async (data: Partial<User>) => {
       try {
           // 模拟更新
-          await request.post('/user/update', data);
+          await userApi.updateProfile(data);
           setUser(prev => prev ? { ...prev, ...data } : null);
           showToast('个人资料更新成功', 'success');
       } catch(e) {
@@ -116,7 +116,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const incrementAiUsage = async () => {
     if (!user) return;
     try {
-      const res = await request.post<{usage: number}>('/ai/usage', { userId: user.id });
+      const res = await aiApi.updateUsage(user.id);
       setUser(prev => prev ? { ...prev, aiUsage: res.usage } : null);
     } catch (e) {
       console.error(e);

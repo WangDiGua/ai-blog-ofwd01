@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, Spinner, Pagination, Avatar, Button, Skeleton, AnnouncementModal } from '../components/ui';
-import { request } from '../utils/lib';
+import { articleApi, systemApi, userApi } from '../services/api';
 import { Article, Announcement, User } from '../types';
 import { Eye, Clock, Hash, Bell, Github, FileCode, Video, MessageCircle, UserPlus, X } from 'lucide-react';
 import { useStore } from '../context/store';
@@ -30,7 +30,7 @@ const Announcements = () => {
     const [selected, setSelected] = useState<Announcement | null>(null);
     
     useEffect(() => {
-        request.get<Announcement[]>('/announcements').then(setNews);
+        systemApi.getAnnouncements().then(setNews);
     }, []);
 
     if (news.length === 0) return null;
@@ -75,7 +75,7 @@ const RecommendedAuthors = () => {
             setAuthors(newAuthors);
             
             // Call mock API
-            await request.post('/user/follow', { userId: author.id, isFollowing: author.isFollowing });
+            await userApi.follow({ userId: author.id, isFollowing: author.isFollowing });
             showToast(author.isFollowing ? `已关注 ${author.name}` : `已取消关注 ${author.name}`, 'success');
         });
     };
@@ -145,11 +145,11 @@ export const Home = () => {
     const fetchArticles = async () => {
       setLoading(true);
       try {
-        const data = await request.get<{items: Article[], totalPages: number, total: number}>('/articles', { 
+        const data = await articleApi.getList({ 
             page, 
             limit: LIMIT,
             category: currentCategory,
-            tag: currentTag
+            tag: currentTag || undefined
         });
         setArticles(data.items);
         setTotalPages(data.totalPages);

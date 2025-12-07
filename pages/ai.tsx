@@ -4,7 +4,7 @@ import { Button, MarkdownRenderer } from '../components/ui';
 import { GoogleGenAI } from "@google/genai";
 import { Bot, Send, Sparkles, Plus, ToggleLeft, ToggleRight, Clock, Menu, X } from 'lucide-react';
 import { ChatMessage } from '../types';
-import { request } from '../utils/lib';
+import { aiApi } from '../services/api';
 
 export const AIAssistant = () => {
     const { user, requireAuth, incrementAiUsage, showToast } = useStore();
@@ -30,7 +30,7 @@ export const AIAssistant = () => {
 
     useEffect(() => {
         // 加载模拟历史记录
-        request.get('/ai/history').then((data: any) => setHistory(data));
+        aiApi.getHistory().then((data) => setHistory(data));
     }, []);
 
     const startNewChat = () => {

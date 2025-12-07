@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '../context/store';
 import { Button, Avatar, Card, FeedbackModal, Modal, Spinner, MarkdownEditor } from '../components/ui';
-import { request } from '../utils/lib';
+import { userApi, articleApi } from '../services/api';
 import { Settings, Award, Edit3, Image as ImageIcon, Crown, LogOut, MessageSquare, Users, Heart, AlertTriangle } from 'lucide-react';
 import { User } from '../types';
 
@@ -14,7 +14,8 @@ const UserListModal = ({ isOpen, onClose, title, type }: { isOpen: boolean, onCl
     useEffect(() => {
         if (isOpen) {
             setLoading(true);
-            request.get<any[]>(`/user/${type}`).then(res => {
+            const apiCall = type === 'followers' ? userApi.getFollowers : userApi.getFollowing;
+            apiCall().then(res => {
                 setUsers(res);
                 setLoading(false);
             });
@@ -93,9 +94,10 @@ export const Profile = () => {
                 setDisplayUser(currentUser);
             } else {
                 // 访问他人主页
+                if (!id) return;
                 setLoadingUser(true);
                 try {
-                    const fetchedUser = await request.get<User>(`/users/${id}`);
+                    const fetchedUser = await userApi.getProfile(id);
                     setDisplayUser(fetchedUser);
                 } catch (e) {
                     showToast('无法加载用户信息', 'error');
@@ -127,7 +129,7 @@ export const Profile = () => {
         requireAuth(async () => {
             if (!displayUser) return;
             // 模拟API调用
-            await request.post('/user/follow', { userId: displayUser.id, isFollowing: !displayUser.isFollowing });
+            await userApi.follow({ userId: displayUser.id, isFollowing: !displayUser.isFollowing });
             
             // 乐观更新本地显示
             setDisplayUser(prev => prev ? ({
@@ -146,7 +148,7 @@ export const Profile = () => {
             return;
         }
         try {
-            const res = await request.post<{points: number, total: number}>('/user/checkin');
+            const res = await userApi.checkIn();
             setCheckedIn(true);
             updateUser({ points: res.total });
             showToast(`签到成功！ +${res.points} 积分`, 'success');
@@ -158,7 +160,7 @@ export const Profile = () => {
     const handlePublish = async () => {
         if (!newArticleTitle || !newArticleContent) return;
         try {
-            await request.post('/articles/create', { title: newArticleTitle, content: newArticleContent });
+            await articleApi.create({ title: newArticleTitle, content: newArticleContent });
             setNewArticleTitle('');
             setNewArticleContent('');
             setActiveTab('articles');

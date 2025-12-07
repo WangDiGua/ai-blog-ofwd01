@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Button, Avatar, MarkdownRenderer, MarkdownEditor } from '../components/ui';
-import { request } from '../utils/lib';
+import { communityApi } from '../services/api';
 import { CommunityPost } from '../types';
 import { useStore } from '../context/store';
 import { Heart, MessageCircle, Share2, Send } from 'lucide-react';
@@ -23,7 +23,7 @@ export const Community = () => {
   const [commentsMap, setCommentsMap] = useState<Record<string, CommentMock[]>>({});
 
   useEffect(() => {
-    request.get<CommunityPost[]>('/community').then(data => {
+    communityApi.getPosts().then(data => {
         setPosts(data);
         const initialComments: Record<string, CommentMock[]> = {};
         data.forEach(p => {
