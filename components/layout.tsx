@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { Search, Menu, X, Music, User as UserIcon, LogIn, Github, Twitter, Mail, Maximize2, RefreshCw, Bot, ShieldAlert } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { Search, Menu, X, Music, Maximize2, ShieldAlert, ArrowUp, Coffee, Type, Gift, Plus, Github, Twitter, Mail } from 'lucide-react';
 import { useStore } from '../context/store';
 import { Button, Avatar, ThemeToggle, Modal, ToastContainer, FloatingMenu, SearchModal, FullPlayerModal, Captcha, AdminLoginModal, FestiveWidget } from './ui';
 import { debounce, throttle } from '../utils/lib';
@@ -193,7 +193,14 @@ export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAdminModalOpen, setAdminModalOpen] = useState(false);
+  
+  // Sliding Background State
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, opacity: 0 });
+  const navRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -210,6 +217,38 @@ export const Navbar = () => {
     { name: '关于', path: '/about' },
     { name: 'AI 助手', path: '/ai' },
   ];
+
+  // Update sliding pill position
+  useEffect(() => {
+    const updatePill = () => {
+        let targetIndex = -1;
+
+        // Determine target: hovered item takes precedence, otherwise active item
+        if (hoveredIndex !== null) {
+            targetIndex = hoveredIndex;
+        } else {
+            targetIndex = navLinks.findIndex(link => link.path === location.pathname);
+            // Default to home active only if exactly home
+            if (targetIndex === -1 && location.pathname === '/') targetIndex = 0;
+        }
+
+        const targetEl = navRefs.current[targetIndex];
+
+        if (targetEl) {
+            setPillStyle({
+                left: targetEl.offsetLeft,
+                width: targetEl.offsetWidth,
+                opacity: 1
+            });
+        } else {
+            setPillStyle(prev => ({ ...prev, opacity: 0 }));
+        }
+    };
+
+    updatePill();
+    window.addEventListener('resize', updatePill);
+    return () => window.removeEventListener('resize', updatePill);
+  }, [hoveredIndex, location.pathname, navLinks.length]);
 
   return (
     <>
@@ -232,27 +271,36 @@ export const Navbar = () => {
               <span className="text-2xl font-semibold tracking-tight text-black dark:text-white">iBlog</span>
             </div>
 
-            <div className="hidden md:flex space-x-6 items-center">
-              {navLinks.map((link) => (
+            {/* Desktop Menu with Sliding Background */}
+            <div className="hidden md:flex relative space-x-1 items-center bg-gray-100/50 dark:bg-gray-800/50 p-1 rounded-full border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-md">
+              
+              {/* The Sliding Pill */}
+              <div 
+                className="absolute bg-white dark:bg-gray-700 rounded-full shadow-sm transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]"
+                style={{ 
+                    left: pillStyle.left, 
+                    width: pillStyle.width, 
+                    height: 'calc(100% - 8px)',
+                    top: 4,
+                    opacity: pillStyle.opacity 
+                }}
+              />
+
+              {navLinks.map((link, index) => (
                 <NavLink
                   key={link.name}
                   to={link.path}
+                  ref={(el) => { navRefs.current[index] = el; }}
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
                   className={({ isActive }) => `
-                    text-sm font-medium transition-colors duration-200
-                    ${isActive ? 'text-apple-blue' : 'text-apple-subtext hover:text-apple-text dark:text-apple-dark-subtext dark:hover:text-apple-dark-text'}
+                    relative z-10 px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200
+                    ${isActive ? 'text-black dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'}
                   `}
                 >
                   {link.name}
                 </NavLink>
               ))}
-              {user?.role === 'admin' && (
-                  <button 
-                     onClick={() => setAdminModalOpen(true)}
-                     className="text-sm font-medium text-red-500 hover:text-red-600 flex items-center"
-                  >
-                      <ShieldAlert size={14} className="mr-1"/> 系统
-                  </button>
-              )}
             </div>
 
             <div className="hidden md:flex items-center space-x-4">
@@ -272,6 +320,15 @@ export const Navbar = () => {
                 <Button size="sm" onClick={() => setAuthModalOpen(true)}>
                   登录
                 </Button>
+              )}
+              {user?.role === 'admin' && (
+                  <button 
+                     onClick={() => setAdminModalOpen(true)}
+                     className="text-red-500 hover:text-red-600 transition-colors"
+                     title="系统管理"
+                  >
+                      <ShieldAlert size={20}/>
+                  </button>
               )}
             </div>
 
@@ -295,8 +352,8 @@ export const Navbar = () => {
                 to={link.path}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) => `
-                  block px-3 py-2 rounded-lg text-base font-medium
-                  ${isActive ? 'bg-blue-50 dark:bg-blue-900/20 text-apple-blue' : 'text-apple-text dark:text-apple-dark-text hover:bg-gray-50 dark:hover:bg-gray-900'}
+                  block px-3 py-3 rounded-xl text-base font-medium transition-all
+                  ${isActive ? 'bg-gray-100 dark:bg-gray-800 text-apple-blue font-bold shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'}
                 `}
               >
                 {link.name}
@@ -305,7 +362,7 @@ export const Navbar = () => {
              {user?.role === 'admin' && (
                   <button 
                      onClick={() => { setIsMobileMenuOpen(false); setAdminModalOpen(true); }}
-                     className="block w-full text-left px-3 py-2 rounded-lg text-base font-medium text-red-500 hover:bg-red-50"
+                     className="block w-full text-left px-3 py-3 rounded-xl text-base font-medium text-red-500 hover:bg-red-50"
                   >
                       系统后台
                   </button>

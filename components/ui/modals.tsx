@@ -7,7 +7,7 @@ import { X, Search, Hash, Lock, Send, Bug, Lightbulb, Clock, ArrowUpRight, User 
 import { Button, Spinner, MarkdownRenderer } from './atoms';
 
 // --- 基础模态框组件 ---
-export const Modal = ({ isOpen, onClose, title, children, className = '' }: { isOpen: boolean, onClose: () => void, title?: string, children: React.ReactNode, className?: string }) => {
+export const Modal = ({ isOpen, onClose, title, children, className = '', hideHeader = false }: { isOpen: boolean, onClose: () => void, title?: string, children: React.ReactNode, className?: string, hideHeader?: boolean }) => {
   // 禁止背景滚动
   useEffect(() => {
     if (isOpen) {
@@ -32,12 +32,14 @@ export const Modal = ({ isOpen, onClose, title, children, className = '' }: { is
       
       {/* 内容 */}
       <div className={`relative bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl p-6 transform transition-all animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-800 ${className}`}>
-        <div className="flex justify-between items-center mb-4 sticky top-0 bg-inherit z-10 pb-2">
-          {title && <h3 className="text-xl font-bold text-apple-text dark:text-apple-dark-text">{title}</h3>}
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <X size={20} className="text-gray-500" />
-          </button>
-        </div>
+        {!hideHeader && (
+            <div className="flex justify-between items-center mb-4 sticky top-0 bg-inherit z-10 pb-2">
+                {title && <h3 className="text-xl font-bold text-apple-text dark:text-apple-dark-text">{title}</h3>}
+                <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <X size={20} className="text-gray-500" />
+                </button>
+            </div>
+        )}
         {children}
       </div>
     </div>
@@ -206,34 +208,41 @@ export const AdminLoginModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
 export const AnnouncementModal = ({ isOpen, onClose, data }: { isOpen: boolean, onClose: () => void, data: Announcement | null }) => {
     if (!data) return null;
     
-    // 使用固定比例高度和 flex 布局，确保内容区域可滚动且页脚固定
+    // 使用 fixed height + flex column + hidden overflow on container to create a fixed modal with internal scroll
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="公告" className="w-[90vw] md:w-[700px] h-[80vh] flex flex-col p-0 overflow-hidden">
+        <Modal 
+            isOpen={isOpen} 
+            onClose={onClose} 
+            hideHeader={true}
+            className="w-[90vw] md:w-[700px] !max-h-[80vh] h-[80vh] flex flex-col !p-0 overflow-hidden rounded-3xl"
+        >
             <div className="flex flex-col h-full">
-                {/* 头部信息 */}
-                <div className="px-6 pt-2 pb-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
-                     <div className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
-                         <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase text-white
-                            ${data.type === 'info' ? 'bg-blue-500' : data.type === 'warning' ? 'bg-orange-500' : 'bg-green-500'}
-                         `}>
-                            {data.type}
-                         </span>
-                         <span>•</span>
-                         <span className="flex items-center"><Clock size={14} className="mr-1"/> {data.date}</span>
-                         <span>•</span>
-                         <span className="flex items-center"><User size={14} className="mr-1"/> {data.publisher}</span>
+                {/* Custom Header */}
+                <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shrink-0">
+                     <div className="flex-1 mr-4">
+                         <div className="flex items-center space-x-2 text-sm text-gray-500 mb-1">
+                             <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase text-white
+                                ${data.type === 'info' ? 'bg-blue-500' : data.type === 'warning' ? 'bg-orange-500' : 'bg-green-500'}
+                             `}>
+                                {data.type}
+                             </span>
+                             <span className="flex items-center"><Clock size={12} className="mr-1"/> {data.date}</span>
+                         </div>
+                         <h2 className="text-xl font-bold text-apple-text dark:text-apple-dark-text line-clamp-1">{data.title}</h2>
                      </div>
-                     <h2 className="text-2xl font-bold text-apple-text dark:text-apple-dark-text">{data.title}</h2>
+                     <button onClick={onClose} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0">
+                        <X size={20} className="text-gray-500 dark:text-gray-400" />
+                     </button>
                 </div>
                  
-                 {/* 滚动内容区 */}
+                 {/* Scrollable Content */}
                  <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900/50">
                      <div className="prose prose-sm dark:prose-invert max-w-none">
                          <MarkdownRenderer content={data.content} />
                      </div>
                  </div>
 
-                 {/* 底部操作区 */}
+                 {/* Footer */}
                  <div className="p-4 border-t border-gray-100 dark:border-gray-800 flex justify-end shrink-0 bg-white dark:bg-gray-900">
                      <Button onClick={onClose}>关闭</Button>
                  </div>

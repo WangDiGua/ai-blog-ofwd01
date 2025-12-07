@@ -4,7 +4,7 @@ import { useStore } from '../context/store';
 import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, MarkdownEditor, ImageViewer } from '../components/ui';
 import { request } from '../utils/lib';
 import { Article, Comment } from '../types';
-import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock } from 'lucide-react';
+import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash } from 'lucide-react';
 
 // 递归评论组件
 const CommentItem = ({ comment, depth = 0 }: { comment: Comment, depth?: number }) => {
@@ -18,7 +18,10 @@ const CommentItem = ({ comment, depth = 0 }: { comment: Comment, depth?: number 
                     <span className="font-semibold text-sm text-apple-text dark:text-apple-dark-text truncate">{comment.user.name}</span>
                     <span className="text-xs text-gray-400 flex-shrink-0">{comment.date}</span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{comment.content}</p>
+                {/* 使用 MarkdownRenderer 渲染评论内容 */}
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                    <MarkdownRenderer content={comment.content} />
+                </div>
                 
                 <div className="flex items-center space-x-4 mt-2">
                     <button className="flex items-center text-xs text-gray-400 hover:text-apple-blue transition-colors">
@@ -233,13 +236,14 @@ export const ArticleDetail = () => {
                     <li key={header} className="pl-4">
                        <a 
                          href={`#${header}`} 
-                         className="text-sm text-gray-500 dark:text-gray-400 hover:text-apple-blue transition-colors block"
+                         className="text-sm text-gray-500 dark:text-gray-400 hover:text-apple-blue transition-colors flex items-center"
                          onClick={(e) => {
                              e.preventDefault();
                              // 现在 header 直接对应了 MarkdownRenderer 中生成的 id
                              document.getElementById(header)?.scrollIntoView({ behavior: 'smooth' });
                          }}
                        >
+                         <Hash size={12} className="mr-2 text-gray-300 dark:text-gray-600 flex-shrink-0" />
                          {header}
                        </a>
                     </li>

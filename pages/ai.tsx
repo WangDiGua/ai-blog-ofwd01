@@ -105,9 +105,9 @@ export const AIAssistant = () => {
         });
     };
 
-    // 使用 dvh 以兼容移动浏览器高度
+    // 使用 dvh 以兼容移动浏览器高度，添加 mt-4 避免遮挡
     return (
-        <div className="max-w-7xl mx-auto px-2 md:px-4 h-[calc(100vh-7rem)] md:h-[calc(100vh-7rem)] flex gap-4 md:gap-6 box-border pb-2 md:pb-4 relative">
+        <div className="max-w-7xl mx-auto px-2 md:px-4 h-[calc(100vh-8rem)] md:h-[calc(100vh-8rem)] flex gap-4 md:gap-6 box-border pb-2 md:pb-4 relative mt-4">
             
             {/* 移动端侧边栏遮罩 */}
             {isSidebarOpen && (

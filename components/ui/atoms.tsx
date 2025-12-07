@@ -107,6 +107,26 @@ export const ImageViewer = ({ src, onClose }: { src: string | null, onClose: () 
     );
 };
 
+// --- Helper: Parse inline markdown (bold, italic, code, link) ---
+const parseInline = (text: string) => {
+    // Escape HTML to prevent XSS (very basic)
+    let safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    // Code: `code`
+    safeText = safeText.replace(/`([^`]+)`/g, '<code class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono text-pink-500">$1</code>');
+    
+    // Bold: **bold**
+    safeText = safeText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic: *italic*
+    safeText = safeText.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+    // Link: [text](url)
+    safeText = safeText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-apple-blue hover:underline">$1</a>');
+
+    return <span dangerouslySetInnerHTML={{ __html: safeText }} />;
+};
+
 // --- Markdown/代码渲染器 ---
 export const MarkdownRenderer = ({ content }: { content: string }) => {
     const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
@@ -151,7 +171,8 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
             ) : (
                 <div className="prose prose-sm dark:prose-invert max-w-none text-apple-text dark:text-apple-dark-text">
                      {content.split('\n').map((line, i) => {
-                        if (line.startsWith('```')) return null; // 演示中隐藏代码块
+                        if (line.trim().startsWith('```')) return null; // 简单忽略代码块标记行
+                        
                         if (line.startsWith('# ')) {
                             const text = line.substring(2).trim();
                             return <h1 key={i} id={text} className="text-xl font-bold my-4 text-apple-text dark:text-apple-dark-text scroll-mt-24">{text}</h1>;
@@ -160,9 +181,15 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
                             const text = line.substring(3).trim();
                             return <h2 key={i} id={text} className="text-lg font-bold my-3 text-apple-text dark:text-apple-dark-text scroll-mt-24">{text}</h2>;
                         }
-                        if (line.startsWith('* ')) return <li key={i} className="ml-4 list-disc my-1">{line.substring(2)}</li>;
+                        if (line.startsWith('### ')) {
+                            const text = line.substring(4).trim();
+                            return <h3 key={i} id={text} className="text-base font-bold my-2 text-apple-text dark:text-apple-dark-text scroll-mt-24">{text}</h3>;
+                        }
+                        if (line.startsWith('* ') || line.startsWith('- ')) {
+                            return <li key={i} className="ml-4 list-disc my-1">{parseInline(line.substring(2))}</li>;
+                        }
                         if (line.startsWith('> ')) {
-                            return <blockquote key={i} className="border-l-4 border-apple-blue pl-4 italic my-4 text-gray-600 dark:text-gray-400">{line.replace('> ', '')}</blockquote>
+                            return <blockquote key={i} className="border-l-4 border-apple-blue pl-4 italic my-4 text-gray-600 dark:text-gray-400">{parseInline(line.replace('> ', ''))}</blockquote>
                         }
                         
                         // 图片检测: ![alt](url)
@@ -183,7 +210,7 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
 
                         if (line.trim() === '') return <br key={i} />;
 
-                        return <p key={i} className="my-2 leading-relaxed text-gray-700 dark:text-gray-300">{line}</p>;
+                        return <p key={i} className="my-2 leading-relaxed text-gray-700 dark:text-gray-300">{parseInline(line)}</p>;
                      })}
                 </div>
             )}

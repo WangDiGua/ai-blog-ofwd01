@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button, Avatar } from '../components/ui';
+import { Card, Button, Avatar, MarkdownRenderer, MarkdownEditor } from '../components/ui';
 import { request } from '../utils/lib';
 import { CommunityPost } from '../types';
 import { useStore } from '../context/store';
@@ -28,7 +28,7 @@ export const Community = () => {
         const initialComments: Record<string, CommentMock[]> = {};
         data.forEach(p => {
             initialComments[p.id] = [
-                { id: 1, user: 'Alice', avatar: 'https://ui-avatars.com/api/?name=Alice&background=random', content: '这个设计太棒了！', time: '10分钟前' },
+                { id: 1, user: 'Alice', avatar: 'https://ui-avatars.com/api/?name=Alice&background=random', content: '这个设计太棒了！**点赞**', time: '10分钟前' },
                 { id: 2, user: 'Bob', avatar: 'https://ui-avatars.com/api/?name=Bob&background=random', content: '同感，非常流畅。', time: '5分钟前' }
             ];
         });
@@ -146,7 +146,11 @@ export const Community = () => {
                   <h4 className="font-semibold text-sm md:text-base text-apple-text dark:text-apple-dark-text truncate">{post.author.name}</h4>
                   <span className="text-xs text-gray-400 flex-shrink-0 ml-2">{post.timeAgo}</span>
                 </div>
-                <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-3 md:mb-4 whitespace-pre-wrap">{post.content}</p>
+                
+                {/* 使用 Markdown 渲染帖子内容 */}
+                <div className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-3 md:mb-4">
+                    <MarkdownRenderer content={post.content} />
+                </div>
                 
                 <div className="flex items-center space-x-6 border-t border-gray-100 dark:border-gray-800 pt-3">
                   <button 
@@ -183,7 +187,10 @@ export const Community = () => {
                                                 <span className="font-semibold text-apple-text dark:text-apple-dark-text text-xs">{comment.user}</span>
                                                 <span className="text-[10px] text-gray-400">{comment.time}</span>
                                             </div>
-                                            <p className="text-gray-600 dark:text-gray-300">{comment.content}</p>
+                                            {/* 使用 Markdown 渲染评论 */}
+                                            <div className="text-gray-600 dark:text-gray-300">
+                                                <MarkdownRenderer content={comment.content} />
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -198,7 +205,7 @@ export const Community = () => {
                                     <textarea 
                                         className="w-full bg-white dark:bg-gray-800 border-none rounded-xl p-2 text-sm focus:ring-2 focus:ring-apple-blue outline-none resize-none text-apple-text dark:text-apple-dark-text"
                                         rows={1}
-                                        placeholder="写下你的评论..."
+                                        placeholder="写下你的评论... (支持 Markdown)"
                                         value={commentInput}
                                         onChange={(e) => setCommentInput(e.target.value)}
                                         onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(post.id); }}}
