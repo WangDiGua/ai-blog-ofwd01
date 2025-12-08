@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/store';
 import { Button } from './atoms';
 import { Modal } from './modals';
-import { ChevronLeft, ChevronRight, ArrowUp, Type, Coffee, Sun, Moon, CheckCircle, AlertCircle, Info, Plus, Gift } from 'lucide-react';
+import { authApi } from '../../services/api/auth';
+import { ChevronLeft, ChevronRight, ArrowUp, Type, Coffee, Sun, Moon, CheckCircle, AlertCircle, Info, Plus, Gift, RefreshCw } from 'lucide-react';
 
 // --- 动画主题切换 (日落 / 月升) ---
 export const ThemeToggle = () => {
@@ -217,91 +218,48 @@ export const EmojiPicker = ({ onSelect }: { onSelect: (emoji: string) => void })
     );
 };
 
-// --- 验证码组件 (30s 自动刷新) ---
-export const Captcha = ({ onValidate }: { onValidate: (isValid: boolean) => void }) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [code, setCode] = useState('');
-    const [input, setInput] = useState('');
+// --- 真实验证码组件 (从后端获取图片) ---
+export const Captcha = ({ onRefresh }: { onRefresh: (key: string) => void }) => {
+    const [imgSrc, setImgSrc] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const generateCode = () => {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let newCode = '';
-        for(let i=0; i<4; i++) newCode += chars.charAt(Math.floor(Math.random() * chars.length));
-        setCode(newCode);
-        return newCode;
-    };
-
-    const drawCaptcha = (text: string) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        ctx.clearRect(0,0, canvas.width, canvas.height);
-        ctx.fillStyle = '#f3f4f6';
-        ctx.fillRect(0,0, canvas.width, canvas.height);
-        
-        ctx.font = '24px monospace';
-        ctx.fillStyle = '#1d1d1f';
-        ctx.textBaseline = 'middle';
-        ctx.textAlign = 'center';
-        
-        // 添加噪点
-        for(let i=0; i<10; i++) {
-            ctx.beginPath();
-            ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
-            ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
-            ctx.strokeStyle = '#d1d5db';
-            ctx.stroke();
+    const refreshCaptcha = async () => {
+        setLoading(true);
+        try {
+            // 调用真实后端获取验证码
+            const res = await authApi.getCaptcha();
+            // 假设后端返回 { key: "uuid", image: "base64 string" }
+            setImgSrc(res.image);
+            onRefresh(res.key); // 将 key 回传给父组件
+        } catch (e) {
+            console.error("Failed to fetch captcha", e);
+        } finally {
+            setLoading(false);
         }
-        
-        ctx.save();
-        ctx.translate(canvas.width/2, canvas.height/2);
-        ctx.rotate((Math.random() - 0.5) * 0.4);
-        ctx.fillText(text, 0, 0);
-        ctx.restore();
     };
 
-    const refresh = () => {
-        const c = generateCode();
-        drawCaptcha(c);
-        setInput('');
-        onValidate(false);
-    };
-
-    // 初始化和每 30 秒自动刷新
+    // 初始加载
     useEffect(() => {
-        refresh(); // 初始加载
-        const interval = setInterval(() => {
-            refresh();
-        }, 30000);
-        return () => clearInterval(interval);
+        refreshCaptcha();
     }, []);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value.toUpperCase();
-        setInput(val);
-        onValidate(val === code);
-    };
-
     return (
-        <div className="flex space-x-2">
-            <input 
-                type="text" 
-                placeholder="验证码" 
-                className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border-none outline-none text-apple-text dark:text-apple-dark-text"
-                value={input}
-                onChange={handleChange}
-                maxLength={4}
-            />
-            <canvas 
-                ref={canvasRef} 
-                width={100} 
-                height={40} 
-                className="rounded-xl cursor-pointer" 
-                onClick={refresh}
-                title="点击刷新 (或30秒自动刷新)"
-            />
+        <div className="relative group cursor-pointer" onClick={refreshCaptcha} title="点击刷新">
+            {loading ? (
+                <div className="w-[100px] h-[40px] bg-gray-200 dark:bg-gray-700 rounded-xl flex items-center justify-center animate-pulse">
+                    <RefreshCw size={16} className="animate-spin text-gray-400" />
+                </div>
+            ) : imgSrc ? (
+                <img 
+                    src={imgSrc} 
+                    alt="Captcha" 
+                    className="w-[100px] h-[40px] rounded-xl object-cover border border-gray-200 dark:border-gray-700"
+                />
+            ) : (
+                <div className="w-[100px] h-[40px] bg-gray-100 rounded-xl flex items-center justify-center text-xs text-gray-500">
+                    加载失败
+                </div>
+            )}
         </div>
     );
 };
