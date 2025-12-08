@@ -38,6 +38,10 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
           showToast('请输入您的邮箱', 'error');
           return;
       }
+      if (!email.endsWith('@qq.com')) {
+          showToast('仅支持发送验证码到 QQ 邮箱', 'error');
+          return;
+      }
       setTimer(60);
       showToast('验证码已发送！', 'success');
   };
@@ -62,6 +66,23 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
     if (!username || !password) {
         showToast('请填写所有字段', 'error');
         return;
+    }
+
+    // 注册时的额外安全校验
+    if (isRegister) {
+        // 1. 邮箱校验: 只支持 QQ 邮箱
+        const emailRegex = /^[a-zA-Z0-9._-]+@qq\.com$/i;
+        if (!emailRegex.test(email)) {
+             showToast('注册仅支持使用 QQ 邮箱', 'error');
+             return;
+        }
+
+        // 2. 密码强度校验: 至少8位，包含字母和数字
+        const passwordStrengthRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+        if (!passwordStrengthRegex.test(password)) {
+            showToast('密码强度不足：需至少8位，且包含字母和数字', 'error');
+            return;
+        }
     }
     
     // 如果验证码错误，刷新验证码并增加错误计数
@@ -125,7 +146,7 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
              <div className="space-y-4 animate-in slide-in-from-top-2">
                 <input 
                     type="email" 
-                    placeholder="邮箱地址" 
+                    placeholder="邮箱地址 (仅限 QQ 邮箱)" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={!!isLocked}
@@ -156,7 +177,7 @@ const AuthForm = ({ onClose }: { onClose: () => void }) => {
         <div>
            <input 
              type="password" 
-             placeholder="密码" 
+             placeholder={isRegister ? "密码 (至少8位, 含字母数字)" : "密码"} 
              value={password}
              onChange={(e) => setPassword(e.target.value)}
              disabled={!!isLocked}
