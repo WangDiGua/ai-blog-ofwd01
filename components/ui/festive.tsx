@@ -101,17 +101,6 @@ export const FestiveWidget = () => {
                     {p.content}
                 </div>
             ))}
-            
-            {/* 季节指示器 (右上角小标签) */}
-            <div className="absolute top-20 right-4 pointer-events-auto">
-                <div className="bg-white/50 dark:bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium text-gray-600 dark:text-gray-300 shadow-sm border border-white/20 transition-all">
-                    {activeSeason === 'spring' && '春暖花开'}
-                    {activeSeason === 'summer' && '夏日炎炎'}
-                    {activeSeason === 'autumn' && '金秋送爽'}
-                    {activeSeason === 'winter' && '冬日飘雪'}
-                    {seasonMode === 'auto' && ' (自动)'}
-                </div>
-            </div>
         </div>
     );
 };
