@@ -15,6 +15,7 @@ import { Tools } from './pages/tools';
 import { About } from './pages/about';
 import { Contact } from './pages/contact';
 import { AIAssistant } from './pages/ai';
+import { StartPage, MessageBoard, Album } from './pages/views';
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -23,6 +24,25 @@ const ScrollToTop = () => {
     window.scrollTo(0, 0);
   }, [pathname]);
   return null;
+};
+
+// Layout wrapper to conditionally hide Navbar/Footer for fullscreen pages like StartPage
+const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
+    const location = useLocation();
+    const isFullScreenPage = location.pathname === '/start' || location.pathname === '/message-board';
+
+    return (
+        <>
+            {!isFullScreenPage && <Navbar />}
+            
+            <main className={`flex-grow ${!isFullScreenPage ? 'pt-20' : ''}`}>
+                {children}
+            </main>
+
+            <MiniPlayer />
+            {!isFullScreenPage && <Footer />}
+        </>
+    );
 };
 
 const App = () => {
@@ -38,9 +58,8 @@ const App = () => {
       <Router>
         <div className="min-h-screen flex flex-col bg-apple-bg text-apple-text dark:bg-apple-dark-bg dark:text-apple-dark-text font-sans selection:bg-apple-blue selection:text-white transition-colors duration-300">
           <ScrollToTop />
-          <Navbar />
           
-          <main className="flex-grow pt-4">
+          <LayoutWrapper>
             <Suspense fallback={
               <div className="flex items-center justify-center h-[60vh]">
                 <Spinner />
@@ -48,6 +67,9 @@ const App = () => {
             }>
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/start" element={<StartPage />} />
+                <Route path="/message-board" element={<MessageBoard />} />
+                <Route path="/album" element={<Album />} />
                 <Route path="/article/:id" element={<ArticleDetail />} />
                 <Route path="/community" element={<Community />} />
                 <Route path="/music" element={<MusicPage />} />
@@ -78,10 +100,8 @@ const App = () => {
                 <Route path="*" element={<div className="text-center py-20 text-gray-400">404 - Page Not Found</div>} />
               </Routes>
             </Suspense>
-          </main>
+          </LayoutWrapper>
 
-          <MiniPlayer />
-          <Footer />
         </div>
       </Router>
     </AppProvider>

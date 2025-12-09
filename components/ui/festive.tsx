@@ -1,73 +1,116 @@
 import React, { useState, useEffect } from 'react';
-import { X, Gift, Snowflake } from 'lucide-react';
 import { useStore } from '../../context/store';
 
-// --- 节日挂件组件 ---
+// 粒子类型定义
+interface Particle {
+    id: number;
+    x: number; // Left percentage (0-100)
+    delay: number; // Animation delay
+    duration: number; // Animation duration
+    size: number; // Font size or scale
+    swing: number; // Horizontal swing amount
+    content: string; // Emoji char
+}
+
 export const FestiveWidget = () => {
-    const { showFestive, toggleFestive } = useStore();
-    const [theme, setTheme] = useState<'none' | 'christmas' | 'spring'>('spring');
+    const { showFestive, seasonMode } = useStore();
+    const [activeSeason, setActiveSeason] = useState<'spring' | 'summer' | 'autumn' | 'winter'>('spring');
+    const [particles, setParticles] = useState<Particle[]>([]);
 
-    // 可以在这里根据日期自动切换
+    // 1. 判断生效的季节（手动 或 自动）
     useEffect(() => {
-        const month = new Date().getMonth();
-        if (month === 11) setTheme('christmas');
-        else if (month === 0 || month === 1) setTheme('spring');
-    }, []);
+        if (seasonMode !== 'auto') {
+            setActiveSeason(seasonMode);
+        } else {
+            const month = new Date().getMonth() + 1; // 1-12
+            if (month >= 3 && month <= 5) setActiveSeason('spring');
+            else if (month >= 6 && month <= 8) setActiveSeason('summer');
+            else if (month >= 9 && month <= 11) setActiveSeason('autumn');
+            else setActiveSeason('winter');
+        }
+    }, [seasonMode]);
 
-    if (!showFestive || theme === 'none') return null;
+    // 2. 生成粒子系统
+    useEffect(() => {
+        if (!showFestive) {
+            setParticles([]);
+            return;
+        }
+
+        const count = 30; // 粒子数量
+        const newParticles: Particle[] = [];
+        
+        // 根据季节选择不同的粒子内容
+        const getEmoji = () => {
+            switch(activeSeason) {
+                case 'spring': return ['🌸', '💮', '🌱'][Math.floor(Math.random() * 3)];
+                case 'summer': return ['✨', '🫧', '☀️'][Math.floor(Math.random() * 3)];
+                case 'autumn': return ['🍁', '🍂', '🌾'][Math.floor(Math.random() * 3)];
+                case 'winter': return ['❄️', '❅', '🌨️'][Math.floor(Math.random() * 3)];
+            }
+        };
+
+        for (let i = 0; i < count; i++) {
+            newParticles.push({
+                id: i,
+                x: Math.random() * 100, // 0-100vw
+                delay: Math.random() * 10, // 0-10s delay
+                duration: 10 + Math.random() * 10, // 10-20s duration
+                size: 10 + Math.random() * 20, // 10-30px
+                swing: Math.random() * 50 - 25, // -25 to 25px swing
+                content: getEmoji()
+            });
+        }
+        setParticles(newParticles);
+    }, [showFestive, activeSeason]);
+
+    if (!showFestive) return null;
 
     return (
-        <div className="hidden 2xl:block pointer-events-none fixed inset-0 z-30">
-            {/* 左侧挂件 */}
-            <div className="fixed left-6 top-1/4 pointer-events-auto group animate-in slide-in-from-left-10 duration-1000">
-                <button 
-                    onClick={toggleFestive} 
-                    className="absolute -top-2 -right-2 bg-gray-200 dark:bg-gray-700 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="关闭节日装饰"
+        <div className="fixed inset-0 pointer-events-none z-[5] overflow-hidden">
+            <style>{`
+                @keyframes fall {
+                    0% {
+                        transform: translateY(-10vh) translateX(0) rotate(0deg);
+                        opacity: 0;
+                    }
+                    10% {
+                        opacity: 1;
+                    }
+                    100% {
+                        transform: translateY(110vh) translateX(var(--swing)) rotate(360deg);
+                        opacity: 0.3;
+                    }
+                }
+            `}</style>
+            {particles.map((p) => (
+                <div
+                    key={p.id}
+                    className="absolute top-0 select-none will-change-transform"
+                    style={{
+                        left: `${p.x}%`,
+                        fontSize: `${p.size}px`,
+                        animationName: 'fall',
+                        animationDuration: `${p.duration}s`,
+                        animationDelay: `-${p.delay}s`, // 负延迟使动画立即在中间开始
+                        animationIterationCount: 'infinite',
+                        animationTimingFunction: 'linear',
+                        ['--swing' as any]: `${p.swing}px`
+                    }}
                 >
-                    <X size={12} />
-                </button>
-                {theme === 'christmas' ? (
-                    <div className="flex flex-col items-center">
-                        <Snowflake size={64} className="text-blue-200 animate-spin-slow" />
-                        <div className="w-2 h-32 bg-gradient-to-b from-gray-300 to-transparent mt-[-10px]"></div>
-                        <Gift size={48} className="text-red-500 -mt-2" />
-                    </div>
-                ) : (
-                    <div className="bg-red-600 w-16 pt-6 pb-12 rounded-b-full shadow-lg border-2 border-yellow-400 flex flex-col items-center space-y-4">
-                        <div className="w-10 h-10 border-2 border-yellow-400 rounded-full flex items-center justify-center text-yellow-400 font-bold text-xl bg-red-700">春</div>
-                        <div className="text-yellow-100 font-serif text-2xl space-y-2 flex flex-col">
-                            <span>欢</span><span>度</span><span>佳</span><span>节</span>
-                        </div>
-                        <div className="w-2 h-20 bg-yellow-400/50 mt-2"></div>
-                    </div>
-                )}
-            </div>
-
-            {/* 右侧挂件 */}
-            <div className="fixed right-6 top-1/4 pointer-events-auto group animate-in slide-in-from-right-10 duration-1000">
-                <button 
-                    onClick={toggleFestive} 
-                    className="absolute -top-2 -left-2 bg-gray-200 dark:bg-gray-700 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="关闭节日装饰"
-                >
-                    <X size={12} />
-                </button>
-                {theme === 'christmas' ? (
-                    <div className="flex flex-col items-center">
-                        <Snowflake size={64} className="text-blue-200 animate-spin-slow" />
-                        <div className="w-2 h-32 bg-gradient-to-b from-gray-300 to-transparent mt-[-10px]"></div>
-                        <Gift size={48} className="text-green-500 -mt-2" />
-                    </div>
-                ) : (
-                    <div className="bg-red-600 w-16 pt-6 pb-12 rounded-b-full shadow-lg border-2 border-yellow-400 flex flex-col items-center space-y-4">
-                        <div className="w-10 h-10 border-2 border-yellow-400 rounded-full flex items-center justify-center text-yellow-400 font-bold text-xl bg-red-700">福</div>
-                        <div className="text-yellow-100 font-serif text-2xl space-y-2 flex flex-col">
-                            <span>恭</span><span>喜</span><span>发</span><span>财</span>
-                        </div>
-                        <div className="w-2 h-20 bg-yellow-400/50 mt-2"></div>
-                    </div>
-                )}
+                    {p.content}
+                </div>
+            ))}
+            
+            {/* 季节指示器 (右上角小标签) */}
+            <div className="absolute top-20 right-4 pointer-events-auto">
+                <div className="bg-white/50 dark:bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium text-gray-600 dark:text-gray-300 shadow-sm border border-white/20 transition-all">
+                    {activeSeason === 'spring' && '春暖花开'}
+                    {activeSeason === 'summer' && '夏日炎炎'}
+                    {activeSeason === 'autumn' && '金秋送爽'}
+                    {activeSeason === 'winter' && '冬日飘雪'}
+                    {seasonMode === 'auto' && ' (自动)'}
+                </div>
             </div>
         </div>
     );

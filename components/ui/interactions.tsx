@@ -3,7 +3,7 @@ import { useStore } from '../../context/store';
 import { Button } from './atoms';
 import { Modal } from './modals';
 import { authApi } from '../../services/api/auth';
-import { ChevronLeft, ChevronRight, ArrowUp, Type, Coffee, Sun, Moon, CheckCircle, AlertCircle, Info, Plus, Gift, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowUp, Type, Coffee, Sun, Moon, CheckCircle, AlertCircle, Info, Plus, Gift, RefreshCw, CloudSun } from 'lucide-react';
 
 // --- 动画主题切换 (日落 / 月升) ---
 export const ThemeToggle = () => {
@@ -126,58 +126,80 @@ export const ToastContainer = () => {
     );
 };
 
-// --- 悬浮菜单 (重新设计) ---
+// --- 悬浮菜单 (Refined Style) ---
 export const FloatingMenu = () => {
-    const { cycleFontSize, showFestive, toggleFestive } = useStore();
+    const { cycleFontSize, showFestive, toggleFestive, cycleSeasonMode, seasonMode } = useStore();
     const [showDonate, setShowDonate] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
     const scrollToTop = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        setIsOpen(false);
     };
+
+    const getSeasonIconColor = () => {
+        switch(seasonMode) {
+            case 'spring': return 'text-pink-500';
+            case 'summer': return 'text-green-500';
+            case 'autumn': return 'text-orange-500';
+            case 'winter': return 'text-blue-500';
+            default: return 'text-gray-600 dark:text-gray-300';
+        }
+    };
+
+    const menuItems = [
+        { icon: ArrowUp, action: scrollToTop, label: "回到顶部", color: "text-gray-600 dark:text-gray-300" },
+        { icon: Coffee, action: () => setShowDonate(true), label: "打赏", color: "text-pink-500" },
+        { icon: Type, action: cycleFontSize, label: "调整字号", color: "text-gray-600 dark:text-gray-300" },
+        ...(showFestive ? [{ icon: CloudSun, action: cycleSeasonMode, label: `季节: ${seasonMode}`, color: getSeasonIconColor() }] : []),
+        { icon: Gift, action: toggleFestive, label: "节日氛围", color: showFestive ? 'text-red-500' : 'text-gray-600 dark:text-gray-300' },
+    ];
 
     return (
         <>
-            <div className="fixed right-6 bottom-10 z-40 flex flex-col items-center group">
-                {/* 菜单项 */}
-                <div className={`flex flex-col-reverse items-center space-y-reverse space-y-3 mb-4 transition-all duration-300 ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-                    <button 
-                        onClick={scrollToTop}
-                        className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-apple-blue dark:hover:text-white hover:scale-110 transition-all"
-                        title="回到顶部"
-                    >
-                        <ArrowUp size={18} />
-                    </button>
-                    <button 
-                        onClick={() => setShowDonate(true)}
-                        className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center text-pink-500 hover:text-pink-600 hover:scale-110 transition-all"
-                        title="打赏"
-                    >
-                        <Coffee size={18} />
-                    </button>
-                    <button 
-                        onClick={cycleFontSize}
-                        className="w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-apple-blue dark:hover:text-white hover:scale-110 transition-all"
-                        title="调整字号"
-                    >
-                        <Type size={18} />
-                    </button>
-                    <button 
-                        onClick={toggleFestive}
-                        className={`w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all ${showFestive ? 'text-red-500' : 'text-gray-600 dark:text-gray-300'}`}
-                        title="切换节日氛围"
-                    >
-                        <Gift size={18} />
-                    </button>
+            <div className="fixed right-6 bottom-10 z-40 flex flex-col items-center">
+                {/* 菜单项容器 */}
+                <div className={`flex flex-col-reverse items-center space-y-reverse space-y-4 mb-4`}>
+                    {menuItems.map((item, index) => (
+                        <div 
+                            key={index}
+                            className={`
+                                relative group flex items-center justify-end
+                                transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                            `}
+                            style={{
+                                transform: isOpen ? `translateY(0) scale(1)` : `translateY(${20 * (index + 1)}px) scale(0.5)`,
+                                opacity: isOpen ? 1 : 0,
+                                pointerEvents: isOpen ? 'auto' : 'none',
+                                transitionDelay: isOpen ? `${index * 50}ms` : '0ms'
+                            }}
+                        >
+                            {/* Label Tooltip */}
+                            <span className="absolute right-14 px-2 py-1 bg-black/70 text-white text-xs rounded-md backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none mr-2">
+                                {item.label}
+                            </span>
+
+                            <button 
+                                onClick={() => { item.action(); }}
+                                className={`w-12 h-12 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-white/20 dark:border-gray-700 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all ${item.color}`}
+                            >
+                                <item.icon size={20} />
+                            </button>
+                        </div>
+                    ))}
                 </div>
 
                 {/* 主触发按钮 */}
                 <button 
                     onClick={() => setIsOpen(!isOpen)}
-                    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xl backdrop-blur-xl transition-all duration-300 hover:scale-105 border border-white/20 
-                    ${isOpen ? 'bg-gray-800 text-white rotate-45' : 'bg-apple-blue text-white'}`}
+                    className={`
+                        w-14 h-14 rounded-full flex items-center justify-center shadow-xl backdrop-blur-xl border border-white/20 
+                        transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-50
+                        hover:scale-105 active:scale-95
+                        ${isOpen ? 'bg-gray-800 dark:bg-gray-700 text-white rotate-[135deg]' : 'bg-apple-blue text-white rotate-0'}
+                    `}
                 >
-                    <Plus size={24} className="transition-transform" />
+                    <Plus size={28} className="transition-transform" />
                 </button>
             </div>
 

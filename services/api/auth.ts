@@ -7,7 +7,7 @@ export const authApi = {
         request.post<User & { token: string }>('/auth/login', data),
         
     // 注册接口
-    register: (data: { username: string; email: string; password?: string; code?: string }) =>
+    register: (data: { username: string; email: string; password?: string; code?: string; captchaKey?: string; captchaCode?: string }) =>
         request.post<User>('/auth/register', data),
 
     // 获取图形验证码

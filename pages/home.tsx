@@ -5,6 +5,7 @@ import { articleApi, systemApi, userApi } from '../services/api';
 import { Article, Announcement, User } from '../types';
 import { Eye, Clock, Hash, Bell, Github, FileCode, Video, MessageCircle, UserPlus, X } from 'lucide-react';
 import { useStore } from '../context/store';
+import { calculateReadingTime } from '../utils/lib';
 
 const ArticleSkeleton = () => (
   <Card className="flex flex-col md:flex-row h-auto md:h-64 p-0 overflow-hidden">
@@ -268,7 +269,7 @@ export const Home = () => {
                         <div className="mt-4 flex items-center justify-between">
                             <div className="flex items-center text-xs text-gray-400 space-x-4">
                                 <span className="flex items-center"><Eye size={14} className="mr-1"/> {article.views}</span>
-                                <span className="flex items-center"><Clock size={14} className="mr-1"/> 5 分钟阅读</span>
+                                <span className="flex items-center"><Clock size={14} className="mr-1"/> {calculateReadingTime(article.content)}</span>
                             </div>
                             {article.tags && article.tags.length > 0 && (
                                 <div className="flex space-x-2">

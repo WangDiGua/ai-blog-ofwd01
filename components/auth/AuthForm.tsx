@@ -9,7 +9,7 @@ import { z } from 'zod';
 const loginSchema = z.object({
   username: z.string().min(3, "用户名至少3个字符").max(20, "用户名不能超过20字符").regex(/^[a-zA-Z0-9_]+$/, "用户名只能包含字母、数字和下划线"),
   password: z.string().min(1, "请输入密码"),
-  captchaCode: z.string().length(4, "验证码必须是4位"),
+  captchaCode: z.string().length(4, "图形验证码必须是4位"),
 });
 
 const registerSchema = z.object({
@@ -20,7 +20,8 @@ const registerSchema = z.object({
     .regex(/[A-Za-z]/, "密码需包含字母")
     .regex(/[0-9]/, "密码需包含数字")
     .regex(/[^A-Za-z0-9]/, "密码需包含特殊字符"),
-  code: z.string().length(6, "验证码必须是6位"),
+  code: z.string().length(6, "邮件验证码必须是6位"),
+  captchaCode: z.string().length(4, "图形验证码必须是4位"),
 });
 
 export const AuthForm = ({ onClose }: { onClose: () => void }) => {
@@ -111,11 +112,12 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
                 username: formData.username,
                 password: formData.password,
                 email: formData.email,
-                code: formData.verificationCode
+                code: formData.verificationCode,
+                captchaCode: formData.captchaCode
             });
 
             if (!result.success) {
-                const errorMsg = result.error.errors[0].message;
+                const errorMsg = result.error.issues[0].message;
                 showToast(errorMsg, 'error');
                 setLoading(false);
                 return;
@@ -125,7 +127,9 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
                 username: formData.username, 
                 email: formData.email, 
                 password: formData.password, 
-                code: formData.verificationCode
+                code: formData.verificationCode,
+                captchaKey,
+                captchaCode: formData.captchaCode
             });
             showToast('注册成功，请登录', 'success');
             setIsRegister(false); // 切换回登录页
@@ -139,7 +143,7 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
             });
 
             if (!result.success) {
-                const errorMsg = result.error.errors[0].message;
+                const errorMsg = result.error.issues[0].message;
                 showToast(errorMsg, 'error');
                 setLoading(false);
                 return;
@@ -199,7 +203,11 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
         <p className="text-sm text-apple-subtext dark:text-apple-dark-text">请输入您的详细信息</p>
       </div>
       
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+        {/* 隐藏的 input，用于欺骗浏览器自动填充机制 */}
+        <input type="text" style={{ display: 'none' }} />
+        <input type="password" style={{ display: 'none' }} />
+
         <div>
            <input 
              name="username"
@@ -210,6 +218,7 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
              disabled={!!isLocked}
              className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text transition-all disabled:opacity-50"
              maxLength={20}
+             autoComplete="off"
            />
         </div>
 
@@ -223,6 +232,7 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
                     onChange={handleChange}
                     disabled={!!isLocked}
                     className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text disabled:opacity-50"
+                    autoComplete="off"
                 />
                 <div className="flex space-x-2">
                     <input 
@@ -234,6 +244,7 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
                         disabled={!!isLocked}
                         className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text disabled:opacity-50"
                         maxLength={6}
+                        autoComplete="off"
                     />
                     <Button 
                         type="button" 
@@ -257,6 +268,7 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
              onChange={handleChange}
              disabled={!!isLocked}
              className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text disabled:opacity-50"
+             autoComplete="new-password"
            />
            {/* 密码强度可视化 */}
            {isRegister && formData.password.length > 0 && (
@@ -274,21 +286,20 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
            )}
         </div>
 
-        {/* 登录时显示图形验证码 */}
-        {!isRegister && (
-            <div className="flex space-x-2 animate-in fade-in">
-                <input 
-                    name="captchaCode"
-                    type="text" 
-                    placeholder="验证码" 
-                    value={formData.captchaCode}
-                    onChange={handleChange}
-                    className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
-                    maxLength={4}
-                />
-                <Captcha onRefresh={(key) => setCaptchaKey(key)} />
-            </div>
-        )}
+        {/* 图形验证码 (登录和注册都显示) */}
+        <div className="flex space-x-2 animate-in fade-in">
+            <input 
+                name="captchaCode"
+                type="text" 
+                placeholder="图形验证码" 
+                value={formData.captchaCode}
+                onChange={handleChange}
+                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
+                maxLength={4}
+                autoComplete="off"
+            />
+            <Captcha onRefresh={(key) => setCaptchaKey(key)} />
+        </div>
         
         <Button type="submit" className="w-full shadow-lg shadow-blue-500/20" disabled={loading || !!isLocked}>
           {loading ? '处理中...' : (isLocked ? '已锁定 (1分钟)' : (isRegister ? '注册' : '登录'))}

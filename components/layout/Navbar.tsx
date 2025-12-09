@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Menu, X, ShieldAlert } from 'lucide-react';
+import { Search, Menu, X, ShieldAlert, ChevronDown } from 'lucide-react';
 import { useStore } from '../../context/store';
 import { Button, Avatar, ThemeToggle, Modal, ToastContainer, FloatingMenu, SearchModal, FullPlayerModal, AdminLoginModal, FestiveWidget } from '../ui';
 import { AuthForm } from '../auth/AuthForm';
@@ -16,7 +16,7 @@ export const Navbar = () => {
   // Sliding Background State
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, opacity: 0 });
-  const navRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const navRefs = useRef<(HTMLAnchorElement | HTMLDivElement | null)[]>([]);
   
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -25,11 +25,12 @@ export const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { name: '博客', path: '/' },
+    { name: '博客', path: '/', hasSubmenu: true, subItems: [{name: '首页', path: '/'}, {name: '起始页', path: '/start'}] },
     { name: '社区', path: '/community' },
+    { name: '相册', path: '/album' },
     { name: '音乐', path: '/music' },
     { name: '工具', path: '/tools' },
-    { name: '联系', path: '/contact' },
+    { name: '联系', path: '/contact', hasSubmenu: true, subItems: [{name: '即时聊天', path: '/contact'}, {name: '留言板', path: '/message-board'}] },
     { name: '关于', path: '/about' },
     { name: 'AI 助手', path: '/ai' },
   ];
@@ -43,7 +44,13 @@ export const Navbar = () => {
         if (hoveredIndex !== null) {
             targetIndex = hoveredIndex;
         } else {
-            targetIndex = navLinks.findIndex(link => link.path === location.pathname);
+            // Logic to find active tab including sub-routes
+            targetIndex = navLinks.findIndex(link => {
+                if (link.path === location.pathname) return true;
+                if (link.hasSubmenu && link.subItems?.some(sub => sub.path === location.pathname)) return true;
+                return false;
+            });
+            
             // Default to home active only if exactly home
             if (targetIndex === -1 && location.pathname === '/') targetIndex = 0;
         }
@@ -103,22 +110,62 @@ export const Navbar = () => {
               />
 
               {navLinks.map((link, index) => {
-                const isActive = location.pathname === link.path;
+                const isActive = location.pathname === link.path || (link.hasSubmenu && link.subItems?.some(sub => sub.path === location.pathname));
+                
+                // Render items with submenu
+                if (link.hasSubmenu) {
+                    return (
+                        <div
+                            key={link.name}
+                            ref={(el) => { navRefs.current[index] = el; }}
+                            onMouseEnter={() => setHoveredIndex(index)}
+                            onMouseLeave={() => setHoveredIndex(null)}
+                            className="relative group z-20"
+                        >
+                            <Link
+                                to={link.path}
+                                className={`
+                                    relative px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200 flex items-center
+                                    ${isActive ? 'text-black dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'}
+                                `}
+                            >
+                                {link.name}
+                                <ChevronDown size={12} className="ml-1 opacity-50 group-hover:opacity-100 transition-opacity" />
+                            </Link>
+
+                            {/* Dropdown Menu */}
+                            <div className="absolute top-full left-0 pt-2 w-32 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
+                                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-1 overflow-hidden">
+                                    {link.subItems?.map(sub => (
+                                        <Link 
+                                            key={sub.name}
+                                            to={sub.path} 
+                                            className="block px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+                                        >
+                                            {sub.name}
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
+
                 return (
-                <Link
-                  key={link.name}
-                  to={link.path}
-                  ref={(el) => { navRefs.current[index] = el; }}
-                  onMouseEnter={() => setHoveredIndex(index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  className={`
-                    relative z-10 px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200
-                    ${isActive ? 'text-black dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'}
-                  `}
-                >
-                  {link.name}
-                </Link>
-                )
+                    <Link
+                    key={link.name}
+                    to={link.path}
+                    ref={(el) => { navRefs.current[index] = el; }}
+                    onMouseEnter={() => setHoveredIndex(index)}
+                    onMouseLeave={() => setHoveredIndex(null)}
+                    className={`
+                        relative z-10 px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200
+                        ${isActive ? 'text-black dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'}
+                    `}
+                    >
+                    {link.name}
+                    </Link>
+                );
               })}
             </div>
 
@@ -168,17 +215,33 @@ export const Navbar = () => {
             {navLinks.map((link) => {
               const isActive = location.pathname === link.path;
               return (
-              <Link
-                key={link.name}
-                to={link.path}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`
-                  block px-3 py-3 rounded-xl text-base font-medium transition-all
-                  ${isActive ? 'bg-gray-100 dark:bg-gray-800 text-apple-blue font-bold shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'}
-                `}
-              >
-                {link.name}
-              </Link>
+              <div key={link.name}>
+                  <Link
+                    to={link.path}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`
+                      block px-3 py-3 rounded-xl text-base font-medium transition-all
+                      ${isActive ? 'bg-gray-100 dark:bg-gray-800 text-apple-blue font-bold shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'}
+                    `}
+                  >
+                    {link.name}
+                  </Link>
+                  {/* Mobile Submenu */}
+                  {link.hasSubmenu && (
+                      <div className="pl-6 border-l-2 border-gray-100 dark:border-gray-800 ml-3">
+                           {link.subItems?.map(sub => (
+                               <Link 
+                                    key={sub.name}
+                                    to={sub.path}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="block px-3 py-2 text-sm text-gray-500 hover:text-apple-blue"
+                                >
+                                    {sub.name}
+                                </Link>
+                           ))}
+                      </div>
+                  )}
+              </div>
             )})}
              {user?.role === 'admin' && (
                   <button 
@@ -208,8 +271,6 @@ export const Navbar = () => {
       <Modal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)}>
          <AuthForm onClose={() => setAuthModalOpen(false)} />
       </Modal>
-
-      <div className="h-16" />
     </>
   );
 };

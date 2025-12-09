@@ -3,4 +3,7 @@
 // - pages/article-detail.tsx
 // - pages/profile.tsx
 // - pages/extras.tsx
-export {};
+// - pages/start-page.tsx
+export * from './start-page';
+export * from './message-board';
+export * from './album';

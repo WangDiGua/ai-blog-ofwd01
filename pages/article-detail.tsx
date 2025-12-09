@@ -5,6 +5,7 @@ import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, MarkdownEditor,
 import { articleApi } from '../services/api';
 import { Article, Comment } from '../types';
 import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash } from 'lucide-react';
+import { calculateReadingTime } from '../utils/lib';
 
 // 递归评论组件
 const CommentItem = ({ comment, depth = 0 }: { comment: Comment, depth?: number }) => {
@@ -156,7 +157,7 @@ export const ArticleDetail = () => {
                         <div className="text-xs text-gray-500 flex items-center">
                            <Calendar size={12} className="mr-1"/> {article.date}
                            <span className="mx-2">•</span>
-                           <Clock size={12} className="mr-1"/> 8 分钟阅读
+                           <Clock size={12} className="mr-1"/> {calculateReadingTime(article.content)}
                         </div>
                      </div>
                   </div>

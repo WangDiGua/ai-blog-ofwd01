@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useMemo, useEffect, ReactNo
 import { User, Song, ToastMessage, ToastType } from '../types';
 import { userApi, aiApi } from '../services/api';
 
+export type SeasonMode = 'auto' | 'spring' | 'summer' | 'autumn' | 'winter';
+
 interface AppState {
   user: User | null;
   isLoggedIn: boolean;
@@ -20,17 +22,21 @@ interface AppState {
   isPlaying: boolean;
   playSong: (song: Song) => void;
   togglePlay: () => void;
-  closePlayer: () => void; // 新增关闭播放器方法
+  closePlayer: () => void;
   isFullPlayerOpen: boolean;
   setFullPlayerOpen: (open: boolean) => void;
   
   // 主题与 UI
   darkMode: boolean;
   toggleTheme: () => void;
-  fontSize: number; // 百分比，例如 100, 110, 120
+  fontSize: number; 
   cycleFontSize: () => void;
-  showFestive: boolean; // 节日氛围开关
+  
+  // 节日与季节
+  showFestive: boolean; 
   toggleFestive: () => void;
+  seasonMode: SeasonMode;
+  cycleSeasonMode: () => void;
 
   // 搜索模态框
   isSearchOpen: boolean;
@@ -52,7 +58,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isFullPlayerOpen, setFullPlayerOpen] = useState(false);
   const [isSearchOpen, setSearchOpen] = useState(false);
   const [fontSize, setFontSize] = useState(100);
-  const [showFestive, setShowFestive] = useState(false); // 默认关闭
+  
+  // 节日与季节状态
+  const [showFestive, setShowFestive] = useState(false);
+  const [seasonMode, setSeasonMode] = useState<SeasonMode>('auto');
+
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   
   // 从本地存储或首选项初始化深色模式
@@ -104,7 +114,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateUser = async (data: Partial<User>) => {
       try {
-          // 模拟更新
           await userApi.updateProfile(data);
           setUser(prev => prev ? { ...prev, ...data } : null);
           showToast('个人资料更新成功', 'success');
@@ -148,7 +157,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // 关闭播放器逻辑
   const closePlayer = () => {
     setCurrentSong(null);
     setIsPlaying(false);
@@ -164,6 +172,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           const next = !prev;
           showToast(next ? '节日氛围已开启' : '节日氛围已关闭', 'success');
           return next;
+      });
+  };
+
+  const cycleSeasonMode = () => {
+      const modes: SeasonMode[] = ['auto', 'spring', 'summer', 'autumn', 'winter'];
+      setSeasonMode(prev => {
+          const currentIndex = modes.indexOf(prev);
+          const nextMode = modes[(currentIndex + 1) % modes.length];
+          const labels = { auto: '自动节气', spring: '春季', summer: '夏季', autumn: '秋季', winter: '冬季' };
+          showToast(`已切换至: ${labels[nextMode]}`, 'info');
+          return nextMode;
       });
   };
 
@@ -199,12 +218,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     cycleFontSize,
     showFestive,
     toggleFestive,
+    seasonMode,
+    cycleSeasonMode,
     isSearchOpen,
     setSearchOpen,
     toasts,
     showToast,
     removeToast
-  }), [user, isAuthModalOpen, currentSong, isPlaying, isFullPlayerOpen, darkMode, fontSize, showFestive, isSearchOpen, toasts]);
+  }), [user, isAuthModalOpen, currentSong, isPlaying, isFullPlayerOpen, darkMode, fontSize, showFestive, seasonMode, isSearchOpen, toasts]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
