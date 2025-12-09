@@ -3,6 +3,7 @@ import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-d
 import { AppProvider } from './context/store';
 import { Navbar, Footer, MiniPlayer } from './components/layout';
 import { Spinner } from './components/ui';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 // Page Imports
 import { Home } from './pages/home';
@@ -18,14 +19,14 @@ import { AIAssistant } from './pages/ai';
 // Scroll to top on route change
 const ScrollToTop = () => {
   const { pathname } = useLocation();
-  React.useEffect(() => {
+  useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
   return null;
 };
 
 const App = () => {
-  // 禁止整个 App 的右键菜单
+  // 禁止整个 App 的右键菜单 (基础代码层面保护)
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => e.preventDefault();
     document.addEventListener('contextmenu', handleContextMenu);
@@ -52,10 +53,27 @@ const App = () => {
                 <Route path="/music" element={<MusicPage />} />
                 <Route path="/tools" element={<Tools />} />
                 <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/profile" element={<Profile />} />
+                
+                {/* 受保护路由 */}
+                <Route path="/contact" element={
+                    <ProtectedRoute>
+                        <Contact />
+                    </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                    <ProtectedRoute>
+                        <Profile />
+                    </ProtectedRoute>
+                } />
+                <Route path="/ai" element={
+                    <ProtectedRoute>
+                        <AIAssistant />
+                    </ProtectedRoute>
+                } />
+                
+                {/* 允许未登录访问他人主页，但在组件内部做权限控制 */}
                 <Route path="/user/:id" element={<Profile />} />
-                <Route path="/ai" element={<AIAssistant />} />
+                
                 {/* Fallback */}
                 <Route path="*" element={<div className="text-center py-20 text-gray-400">404 - Page Not Found</div>} />
               </Routes>

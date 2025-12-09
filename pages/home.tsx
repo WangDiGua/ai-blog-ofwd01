@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, Spinner, Pagination, Avatar, Button, Skeleton, AnnouncementModal } from '../components/ui';
 import { articleApi, systemApi, userApi } from '../services/api';
 import { Article, Announcement, User } from '../types';
@@ -115,14 +115,16 @@ const RecommendedAuthors = () => {
 };
 
 export const Home = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [trendingTags, setTrendingTags] = useState(['#React19', '#TailwindCSS', '#UXDesign']);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
+  
+  const searchParams = new URLSearchParams(location.search);
   
   const LIMIT = 5;
   const ALL_TAGS = ['#React19', '#TailwindCSS', '#UXDesign', '#AppleEvent', '#CodingLife', '#WebAssembly', '#NextJS', '#Figma', '#Minimalism', '#Darkmode', '#AI', '#ThreeJS', '#Rust', '#Cyberpunk'];
@@ -163,20 +165,30 @@ export const Home = () => {
     fetchArticles();
   }, [page, currentCategory, currentTag]);
 
+  const updateParams = (key: string, value: string | null) => {
+      const newParams = new URLSearchParams(location.search);
+      if (value) {
+          newParams.set(key, value);
+      } else {
+          newParams.delete(key);
+      }
+      navigate({ search: newParams.toString() });
+  };
+
   const handleCategoryClick = (cat: string) => {
-      setSearchParams({ category: cat });
+      updateParams('category', cat);
       setPage(1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleTagClick = (tag: string) => {
-      setSearchParams({ tag: tag });
+      updateParams('tag', tag);
       setPage(1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const clearFilters = () => {
-      setSearchParams({});
+      navigate({ search: '' });
       setPage(1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
   };

@@ -48,7 +48,7 @@ const CommentItem = ({ comment, depth = 0 }: { comment: Comment, depth?: number 
 }
 
 export const ArticleDetail = () => {
-  const { id } = useParams();
+  const { id } = useParams<{id: string}>();
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);

@@ -24,7 +24,7 @@ export const Modal = ({ isOpen, onClose, title, children, className = '', hideHe
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] flex items-start justify-center pt-24 px-4">
       {/* 背景遮罩 */}
       <div 
         className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity animate-in fade-in"
@@ -54,8 +54,8 @@ export const SearchModal = () => {
     const [results, setResults] = useState<Article[]>([]);
     const [hotSearches, setHotSearches] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
     const inputRef = useRef<HTMLInputElement>(null);
+    const navigate = useNavigate();
 
     // 禁止背景滚动
     useEffect(() => {

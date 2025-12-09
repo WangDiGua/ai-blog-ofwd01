@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Menu, X, ShieldAlert, Plus } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Search, Menu, X, ShieldAlert } from 'lucide-react';
 import { useStore } from '../../context/store';
 import { Button, Avatar, ThemeToggle, Modal, ToastContainer, FloatingMenu, SearchModal, FullPlayerModal, AdminLoginModal, FestiveWidget } from '../ui';
 import { AuthForm } from '../auth/AuthForm';
 
 export const Navbar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoggedIn, logout, setSearchOpen, isAuthModalOpen, setAuthModalOpen } = useStore();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -16,9 +18,6 @@ export const Navbar = () => {
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, opacity: 0 });
   const navRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   
-  const navigate = useNavigate();
-  const location = useLocation();
-
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
@@ -103,21 +102,24 @@ export const Navbar = () => {
                 }}
               />
 
-              {navLinks.map((link, index) => (
-                <NavLink
+              {navLinks.map((link, index) => {
+                const isActive = location.pathname === link.path;
+                return (
+                <Link
                   key={link.name}
                   to={link.path}
                   ref={(el) => { navRefs.current[index] = el; }}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
-                  className={({ isActive }) => `
+                  className={`
                     relative z-10 px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200
                     ${isActive ? 'text-black dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'}
                   `}
                 >
                   {link.name}
-                </NavLink>
-              ))}
+                </Link>
+                )
+              })}
             </div>
 
             <div className="hidden md:flex items-center space-x-4">
@@ -163,19 +165,21 @@ export const Navbar = () => {
 
         <div className={`md:hidden absolute w-full bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
           <div className="px-4 pt-2 pb-6 space-y-2">
-            {navLinks.map((link) => (
-              <NavLink
+            {navLinks.map((link) => {
+              const isActive = location.pathname === link.path;
+              return (
+              <Link
                 key={link.name}
                 to={link.path}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={({ isActive }) => `
+                className={`
                   block px-3 py-3 rounded-xl text-base font-medium transition-all
                   ${isActive ? 'bg-gray-100 dark:bg-gray-800 text-apple-blue font-bold shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'}
                 `}
               >
                 {link.name}
-              </NavLink>
-            ))}
+              </Link>
+            )})}
              {user?.role === 'admin' && (
                   <button 
                      onClick={() => { setIsMobileMenuOpen(false); setAdminModalOpen(true); }}

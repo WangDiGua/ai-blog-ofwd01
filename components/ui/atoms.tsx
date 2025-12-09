@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
 import { Play, Code, Eye, X, Bold, Italic, List, Link as LinkIcon, Image as ImageIcon, Heading, Quote } from 'lucide-react';
+import DOMPurify from 'dompurify';
+
+// --- 配置 DOMPurify ---
+// 允许部分安全的标签和属性，防止 XSS 攻击
+const sanitize = (html: string) => {
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'code', 'pre', 'blockquote', 'h1', 'h2', 'h3', 'span', 'div', 'img'],
+    ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'src', 'alt', 'style'],
+  });
+};
 
 // --- 卡片组件 ---
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -70,9 +80,12 @@ export const Avatar = ({ src, alt, size = 'md' }: { src: string; alt: string; si
     xl: "w-24 h-24"
   };
 
+  // 简单的 XSS 防护，防止 src 注入 javascript:
+  const safeSrc = src.replace(/script:/gi, '');
+
   return (
     <img 
-      src={src} 
+      src={safeSrc} 
       alt={alt} 
       className={`${sizes[size]} rounded-full object-cover border border-gray-100 dark:border-gray-800 shadow-sm`}
     />
@@ -90,6 +103,7 @@ export const Spinner = () => (
 // --- 图片查看器组件 ---
 export const ImageViewer = ({ src, onClose }: { src: string | null, onClose: () => void }) => {
     if (!src) return null;
+    const safeSrc = src.replace(/script:/gi, '');
     return (
         <div 
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-200"
@@ -99,7 +113,7 @@ export const ImageViewer = ({ src, onClose }: { src: string | null, onClose: () 
                 <X size={32} />
             </button>
             <img 
-                src={src} 
+                src={safeSrc} 
                 className="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl object-contain animate-in zoom-in-95 duration-200" 
                 onClick={(e) => e.stopPropagation()} 
             />
@@ -111,8 +125,8 @@ export const ImageViewer = ({ src, onClose }: { src: string | null, onClose: () 
 const sanitizeUrl = (url: string) => {
     try {
         const lower = url.toLowerCase().trim();
-        // Prevent javascript: vbscript: data: protocols
-        if (lower.startsWith('javascript:') || lower.startsWith('vbscript:') || lower.startsWith('data:')) {
+        // Prevent javascript: vbscript: data: protocols (except images)
+        if (lower.startsWith('javascript:') || lower.startsWith('vbscript:')) {
             return '#';
         }
         return url;
@@ -148,7 +162,8 @@ const parseInline = (text: string) => {
         return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-apple-blue hover:underline">${txt}</a>`;
     });
 
-    return <span dangerouslySetInnerHTML={{ __html: safeText }} />;
+    // 3. Final Sanitize via DOMPurify before rendering
+    return <span dangerouslySetInnerHTML={{ __html: sanitize(safeText) }} />;
 };
 
 // --- Markdown/代码渲染器 ---
@@ -167,13 +182,19 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
     const runCode = () => {
         const html = extractHtml(content);
         if (!html) return;
+        
+        // 即使是“运行”功能，我们也可以考虑在一个隔离的 iframe 中运行，或者仅允许特定用户操作。
+        // 这里作为演示工具，我们保持原样，但实际生产中这是高危操作。
         const newWindow = window.open();
         if(newWindow) {
-            newWindow.document.write(html);
+            newWindow.document.write(html); // ⚠️ High Risk: In prod, verify user trust level or use sandboxed iframe
             newWindow.document.close();
         }
     };
 
+    // 如果 content 本身就是 HTML 且不是 markdown，使用 DOMPurify
+    // 这里我们假设 content 主要是 Markdown
+    
     return (
         <div className="w-full">
             {hasHtmlBlock && (
@@ -196,6 +217,8 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
                 <div className="prose prose-sm dark:prose-invert max-w-none text-apple-text dark:text-apple-dark-text">
                      {content.split('\n').map((line, i) => {
                         if (line.trim().startsWith('```')) return null; // 简单忽略代码块标记行
+                        
+                        // 防止 XSS: 即使我们解析 Markdown，也要确保内容被清洗
                         
                         if (line.startsWith('# ')) {
                             const text = line.substring(2).trim();

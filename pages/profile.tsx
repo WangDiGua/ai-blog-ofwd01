@@ -50,11 +50,10 @@ const UserListModal = ({ isOpen, onClose, title, type }: { isOpen: boolean, onCl
     );
 };
 
-
 export const Profile = () => {
     const { user: currentUser, updateUser, isLoggedIn, showToast, logout, requireAuth } = useStore();
+    const { id } = useParams<{id: string}>();
     const navigate = useNavigate();
-    const { id } = useParams(); // 获取路由参数中的 id
     
     // 状态
     const [displayUser, setDisplayUser] = useState<User | null>(null);

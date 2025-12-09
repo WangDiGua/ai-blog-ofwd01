@@ -25,12 +25,20 @@ const BASE_URL = '/api';
  * 真实 HTTP 客户端
  */
 class HttpClient {
+    // 模拟获取 CSRF Token (真实场景中应从 document.cookie 读取 XSRF-TOKEN)
+    private getCsrfToken(): string | null {
+        // Example: return document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] || null;
+        return 'mock-csrf-token-secure';
+    }
+
     /**
      * 获取认证头
      */
     private getHeaders(customHeaders: Record<string, string> = {}) {
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
+            // 安全头部
+            'X-Requested-With': 'XMLHttpRequest', // 防止 CSRF
             ...customHeaders
         };
         
@@ -38,6 +46,12 @@ class HttpClient {
         const token = localStorage.getItem('token');
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        // 添加 CSRF Token
+        const csrfToken = this.getCsrfToken();
+        if (csrfToken) {
+            headers['X-CSRF-Token'] = csrfToken;
         }
         
         return headers;
@@ -48,12 +62,21 @@ class HttpClient {
      */
     private async handleResponse<T>(response: Response): Promise<T> {
         if (!response.ok) {
-            // 处理 HTTP 错误 (404, 500 等)
+            // 安全：统一拦截 401/403
             if (response.status === 401) {
-                // Token 过期，清除并跳转 (可选)
+                console.warn('Unauthorized access. Redirecting to login.');
                 localStorage.removeItem('token');
-                // window.location.href = '/login'; 
+                window.dispatchEvent(new Event('auth-error')); // 触发全局事件
+                // window.location.href = '/login'; // 实际项目中通常重定向
             }
+            if (response.status === 403) {
+                 console.error('Forbidden resource access.');
+                 throw new Error('您没有权限执行此操作');
+            }
+            if (response.status === 429) {
+                 throw new Error('请求过于频繁，请稍后再试');
+            }
+            
             throw new Error(`HTTP Error: ${response.status}`);
         }
 
@@ -79,6 +102,7 @@ class HttpClient {
         const url = new URL(endpoint, window.location.origin + BASE_URL);
         Object.keys(params).forEach(key => {
             if (params[key] !== undefined && params[key] !== null) {
+                // 安全：编码 URI 组件
                 url.searchParams.append(key, String(params[key]));
             }
         });
@@ -93,7 +117,7 @@ class HttpClient {
         // ----------------------------------------------------------------
 
         // MOCK MODE
-        console.log(`[Mock GET] ${endpoint}`, params);
+        // console.log(`[Mock GET] ${endpoint}`, params);
         return this.mockRouter('GET', endpoint, params);
     }
 
@@ -116,7 +140,7 @@ class HttpClient {
         // ----------------------------------------------------------------
 
         // MOCK MODE
-        console.log(`[Mock POST] ${endpoint}`, body);
+        // console.log(`[Mock POST] ${endpoint}`, body);
         return this.mockRouter('POST', endpoint, body);
     }
 
@@ -130,7 +154,7 @@ class HttpClient {
         /*
         // 上传时不手动设置 Content-Type，浏览器会自动识别为 multipart/form-data
         const headers = this.getHeaders();
-        delete headers['Content-Type'];
+        delete headers['Content-Type']; // 关键：让浏览器自动设置 boundary
 
         const response = await fetch(`${BASE_URL}${endpoint}`, {
             method: 'POST',

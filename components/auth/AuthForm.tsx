@@ -2,25 +2,43 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/store';
 import { Button, Captcha } from '../ui';
 import { authApi } from '../../services/api/auth';
+import { z } from 'zod';
+
+// --- Zod Validation Schemas ---
+
+const loginSchema = z.object({
+  username: z.string().min(3, "用户名至少3个字符").max(20, "用户名不能超过20字符").regex(/^[a-zA-Z0-9_]+$/, "用户名只能包含字母、数字和下划线"),
+  password: z.string().min(1, "请输入密码"),
+  captchaCode: z.string().length(4, "验证码必须是4位"),
+});
+
+const registerSchema = z.object({
+  username: z.string().min(3, "用户名至少3个字符").max(20, "用户名不能超过20字符").regex(/^[a-zA-Z0-9_]+$/, "用户名只能包含字母、数字和下划线"),
+  email: z.string().email("请输入有效的邮箱地址").refine(val => val.endsWith('@qq.com'), "目前仅支持 QQ 邮箱注册"),
+  password: z.string()
+    .min(8, "密码至少8位")
+    .regex(/[A-Za-z]/, "密码需包含字母")
+    .regex(/[0-9]/, "密码需包含数字")
+    .regex(/[^A-Za-z0-9]/, "密码需包含特殊字符"),
+  code: z.string().length(6, "验证码必须是6位"),
+});
 
 export const AuthForm = ({ onClose }: { onClose: () => void }) => {
   const { showToast } = useStore();
   const [isRegister, setIsRegister] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('');
+  
+  // Form State
+  const [formData, setFormData] = useState({
+      username: '',
+      password: '',
+      email: '',
+      captchaCode: '', // 图形验证码
+      verificationCode: '' // 邮件验证码
+  });
+
   const [loading, setLoading] = useState(false);
-  
-  // 密码强度状态
-  const [pwdStrength, setPwdStrength] = useState(0); // 0-4
-  
-  // 验证码状态
-  const [captchaCode, setCaptchaCode] = useState(''); // 用户输入的验证码
   const [captchaKey, setCaptchaKey] = useState('');   // 后端返回的验证码ID
-  const [verificationCode, setVerificationCode] = useState(''); // 邮件验证码
   const [timer, setTimer] = useState(0);
-  
-  // 安全限制状态 (本地简单限制，主要依赖后端)
   const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
 
   // 倒计时逻辑
@@ -32,7 +50,14 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
     return () => clearInterval(interval);
   }, [timer]);
 
-  // 计算密码强度
+  // Handle Input Change
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      // 简单的去空格处理
+      setFormData(prev => ({ ...prev, [name]: value.trim() }));
+  };
+
+  // 密码强度计算 (仅用于 UI 展示)
   const calculatePasswordStrength = (pwd: string) => {
     let score = 0;
     if (!pwd) return 0;
@@ -42,28 +67,19 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
     if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
     return score;
   };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value;
-      setPassword(val);
-      if (isRegister) {
-          setPwdStrength(calculatePasswordStrength(val));
-      }
-  };
+  const pwdStrength = calculatePasswordStrength(formData.password);
 
   const handleSendCode = async () => {
-      if (!email) {
-          showToast('请输入您的邮箱', 'error');
-          return;
-      }
-      if (!email.endsWith('@qq.com')) {
-          showToast('仅支持发送验证码到 QQ 邮箱', 'error');
+      // 局部校验邮箱
+      const emailResult = z.string().email().refine(v => v.endsWith('@qq.com')).safeParse(formData.email);
+      if (!emailResult.success) {
+          showToast('请输入有效的 QQ 邮箱', 'error');
           return;
       }
       
       try {
           // 调用后端真实发送接口
-          await authApi.sendVerifyCode(email);
+          await authApi.sendVerifyCode(formData.email);
           setTimer(60);
           showToast('验证码已发送至您的邮箱！', 'success');
       } catch (e: any) {
@@ -86,70 +102,75 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
         }
     }
 
-    if (!username || !password) {
-        showToast('请填写所有字段', 'error');
-        return;
-    }
+    setLoading(true);
 
-    // 注册逻辑
-    if (isRegister) {
-        if (!email || !verificationCode) {
-            showToast('请填写邮箱和验证码', 'error');
-            return;
-        }
-        if (pwdStrength < 3) {
-             showToast('密码强度不足：需至少8位，且包含字母和数字', 'error');
-             return;
-        }
+    try {
+        if (isRegister) {
+            // Validate Registration
+            const result = registerSchema.safeParse({
+                username: formData.username,
+                password: formData.password,
+                email: formData.email,
+                code: formData.verificationCode
+            });
 
-        setLoading(true);
-        try {
+            if (!result.success) {
+                const errorMsg = result.error.errors[0].message;
+                showToast(errorMsg, 'error');
+                setLoading(false);
+                return;
+            }
+
             await authApi.register({
-                username, 
-                email, 
-                password, 
-                code: verificationCode // 邮件验证码
+                username: formData.username, 
+                email: formData.email, 
+                password: formData.password, 
+                code: formData.verificationCode
             });
             showToast('注册成功，请登录', 'success');
             setIsRegister(false); // 切换回登录页
-        } catch (err: any) {
-            showToast(err.message || '注册失败', 'error');
-        } finally {
-            setLoading(false);
-        }
-    } 
-    // 登录逻辑
-    else {
-        if (!captchaCode) {
-            showToast('请输入图形验证码', 'error');
-            return;
-        }
 
-        setLoading(true);
-        try {
+        } else {
+            // Validate Login
+            const result = loginSchema.safeParse({
+                username: formData.username,
+                password: formData.password,
+                captchaCode: formData.captchaCode
+            });
+
+            if (!result.success) {
+                const errorMsg = result.error.errors[0].message;
+                showToast(errorMsg, 'error');
+                setLoading(false);
+                return;
+            }
+
             const userData = await authApi.login({ 
-                username, 
-                password, 
+                username: formData.username, 
+                password: formData.password, 
                 captchaKey, 
-                captchaCode 
+                captchaCode: formData.captchaCode 
             });
             
             // 登录成功，将 Token 存入 localStorage
             if (userData.token) {
+                // 安全实践：HttpOnly cookie 应该由服务器设置
+                // 但这里我们存入 localStorage 作为演示，注意 XSS 风险
                 localStorage.setItem('token', userData.token);
             }
             
             // 刷新页面以更新状态（简化处理）
             window.location.reload(); 
-            
             onClose();
-        } catch(err: any) {
-            showToast(err.message || '登录失败', 'error');
-            // 登录失败通常需要刷新验证码
-            setCaptchaCode('');
-        } finally {
-            setLoading(false);
         }
+    } catch (err: any) {
+        showToast(err.message || (isRegister ? '注册失败' : '登录失败'), 'error');
+        // 登录失败通常需要刷新验证码
+        setFormData(prev => ({ ...prev, captchaCode: '' }));
+        // 简单的防爆破策略：失败后增加小延迟
+        setLockoutUntil(Date.now() + 2000); 
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -157,8 +178,8 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
 
   // 获取强度对应的颜色和文本
   const getStrengthMeta = () => {
-      if (password.length === 0) return { color: 'bg-gray-200', text: '' };
-      if (password.length < 8) return { color: 'bg-red-500', text: '太短' };
+      if (formData.password.length === 0) return { color: 'bg-gray-200', text: '' };
+      if (formData.password.length < 8) return { color: 'bg-red-500', text: '太短' };
       
       switch (pwdStrength) {
           case 1: 
@@ -175,44 +196,49 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
     <div className="space-y-6">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-apple-text dark:text-apple-dark-text">{isRegister ? '创建账户' : '欢迎回来'}</h2>
-        <p className="text-sm text-apple-subtext dark:text-apple-dark-subtext">请输入您的详细信息</p>
+        <p className="text-sm text-apple-subtext dark:text-apple-dark-text">请输入您的详细信息</p>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
            <input 
+             name="username"
              type="text" 
-             placeholder="用户名" 
-             value={username}
-             onChange={(e) => setUsername(e.target.value)}
+             placeholder="用户名 (字母数字下划线)" 
+             value={formData.username}
+             onChange={handleChange}
              disabled={!!isLocked}
              className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text transition-all disabled:opacity-50"
+             maxLength={20}
            />
         </div>
 
         {isRegister && (
              <div className="space-y-4 animate-in slide-in-from-top-2">
                 <input 
+                    name="email"
                     type="email" 
                     placeholder="邮箱地址 (仅限 QQ 邮箱)" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={formData.email}
+                    onChange={handleChange}
                     disabled={!!isLocked}
                     className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text disabled:opacity-50"
                 />
                 <div className="flex space-x-2">
                     <input 
+                        name="verificationCode"
                         type="text" 
                         placeholder="邮件验证码" 
-                        value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value)}
+                        value={formData.verificationCode}
+                        onChange={handleChange}
                         disabled={!!isLocked}
                         className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text disabled:opacity-50"
+                        maxLength={6}
                     />
                     <Button 
                         type="button" 
                         variant="secondary" 
-                        disabled={timer > 0 || !email || !!isLocked}
+                        disabled={timer > 0 || !formData.email || !!isLocked}
                         onClick={handleSendCode}
                         className="w-24 whitespace-nowrap text-xs"
                     >
@@ -224,15 +250,16 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
 
         <div>
            <input 
+             name="password"
              type="password" 
-             placeholder={isRegister ? "密码 (至少8位, 含字母数字)" : "密码"} 
-             value={password}
-             onChange={handlePasswordChange}
+             placeholder={isRegister ? "密码 (8+位, 含特殊字符)" : "密码"} 
+             value={formData.password}
+             onChange={handleChange}
              disabled={!!isLocked}
              className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text disabled:opacity-50"
            />
            {/* 密码强度可视化 */}
-           {isRegister && password.length > 0 && (
+           {isRegister && formData.password.length > 0 && (
                <div className="mt-2 flex items-center space-x-2 animate-in fade-in slide-in-from-top-1">
                    <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                        <div 
@@ -251,11 +278,13 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
         {!isRegister && (
             <div className="flex space-x-2 animate-in fade-in">
                 <input 
+                    name="captchaCode"
                     type="text" 
                     placeholder="验证码" 
-                    value={captchaCode}
-                    onChange={(e) => setCaptchaCode(e.target.value)}
+                    value={formData.captchaCode}
+                    onChange={handleChange}
                     className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
+                    maxLength={4}
                 />
                 <Captcha onRefresh={(key) => setCaptchaKey(key)} />
             </div>
@@ -271,9 +300,7 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
           type="button"
           onClick={() => { 
               setIsRegister(!isRegister); 
-              setCaptchaCode('');
-              setPassword(''); 
-              setPwdStrength(0); 
+              setFormData({ username: '', password: '', email: '', captchaCode: '', verificationCode: '' });
               setLockoutUntil(null);
           }}
           className="text-apple-blue font-semibold hover:underline"
