@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
-import { Button } from '../components/ui';
-import { Send, MessageSquare, ChevronLeft } from 'lucide-react'; // Import ChevronLeft
+import { useNavigate } from 'react-router-dom';
+import { Button, Avatar } from '../components/ui';
+import { Send, MessageSquare, ChevronLeft, Heart, Flag } from 'lucide-react';
 import { useStore } from '../context/store';
 
 interface Danmaku {
@@ -10,7 +10,7 @@ interface Danmaku {
     top: number;
     duration: number;
     color: string;
-    avatar?: string;
+    likes: number; // Add likes
 }
 
 const COLORS = ['text-white', 'text-yellow-300', 'text-green-300', 'text-blue-300', 'text-pink-300', 'text-purple-300'];
@@ -20,12 +20,71 @@ const INITIAL_MESSAGES = [
     "React 19 太强了", "求源码！", "UI 设计很有品味", "打卡滴滴滴", "期待更多内容"
 ];
 
+// 独立弹幕组件以处理自身的交互状态
+const DanmakuItem = ({ 
+    item, 
+    onAnimationEnd, 
+    onLike, 
+    onReport 
+}: { 
+    item: Danmaku, 
+    onAnimationEnd: (id: number) => void,
+    onLike: (id: number) => void,
+    onReport: (id: number) => void
+}) => {
+    const [isHovered, setIsHovered] = useState(false);
+
+    return (
+        <div
+            className={`
+                absolute flex items-center space-x-2 whitespace-nowrap text-lg md:text-2xl font-medium drop-shadow-md will-change-transform z-10
+                cursor-pointer transition-all hover:z-50 hover:scale-105
+                ${item.color}
+            `}
+            style={{
+                top: `${item.top}%`,
+                left: '100%',
+                // 使用 animationPlayState 来暂停
+                animation: `danmaku ${item.duration}s linear forwards`,
+                animationPlayState: isHovered ? 'paused' : 'running'
+            }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            onAnimationEnd={() => onAnimationEnd(item.id)}
+        >
+            <span>{item.text}</span>
+            
+            {/* 仅在悬停或有点赞时显示额外信息 */}
+            <div className={`flex items-center space-x-2 transition-opacity duration-200 ${isHovered || item.likes > 0 ? 'opacity-100' : 'opacity-0'}`}>
+                {/* 点赞数 (0时不显示数字, 但悬停时显示心形按钮) */}
+                <button 
+                    onClick={(e) => { e.stopPropagation(); onLike(item.id); }}
+                    className="flex items-center space-x-1 hover:text-red-500 bg-black/20 rounded-full px-2 py-0.5 backdrop-blur-sm"
+                >
+                    <Heart size={14} className={item.likes > 0 ? "fill-red-500 text-red-500" : ""} />
+                    {item.likes > 0 && <span className="text-xs font-bold text-white">{item.likes}</span>}
+                </button>
+
+                {/* 举报按钮 (仅悬停显示) */}
+                {isHovered && (
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); onReport(item.id); }}
+                        className="p-1 hover:text-orange-500 bg-black/20 rounded-full backdrop-blur-sm"
+                        title="举报"
+                    >
+                        <Flag size={14} />
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+};
+
 export const MessageBoard = () => {
-    const navigate = useNavigate(); // Hook
-    const { showToast, user } = useStore();
+    const navigate = useNavigate();
+    const { showToast } = useStore();
     const [messages, setMessages] = useState<Danmaku[]>([]);
     const [inputValue, setInputValue] = useState('');
-    const containerRef = useRef<HTMLDivElement>(null);
 
     // 初始化弹幕
     useEffect(() => {
@@ -47,8 +106,9 @@ export const MessageBoard = () => {
         id: Date.now() + Math.random(),
         text,
         top: Math.random() * 80 + 5, // 5% - 85% height
-        duration: Math.random() * 10 + 10, // 10s - 20s
+        duration: Math.random() * 10 + 15, // 15s - 25s (slower for interaction)
         color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        likes: Math.random() > 0.8 ? Math.floor(Math.random() * 10) : 0 // 随机初始化点赞
     });
 
     const addDanmaku = (text: string) => {
@@ -64,8 +124,9 @@ export const MessageBoard = () => {
             id: Date.now(),
             text: inputValue,
             top: Math.random() * 80 + 5,
-            duration: 15,
-            color: 'text-red-500 border border-red-500 px-2 rounded-full font-bold bg-white/10'
+            duration: 20,
+            color: 'text-white border-2 border-apple-blue px-3 py-1 rounded-full font-bold bg-apple-blue/20 shadow-[0_0_15px_rgba(0,113,227,0.5)]',
+            likes: 0
         };
 
         setMessages(prev => [...prev, newDanmaku]);
@@ -73,13 +134,22 @@ export const MessageBoard = () => {
         showToast('弹幕发送成功！', 'success');
     };
 
-    // 清理超出屏幕的弹幕 (简单模拟，实际可用 onAnimationEnd)
     const handleAnimationEnd = (id: number) => {
         setMessages(prev => prev.filter(m => m.id !== id));
     };
 
+    const handleLike = (id: number) => {
+        setMessages(prev => prev.map(m => m.id === id ? { ...m, likes: m.likes + 1 } : m));
+    };
+
+    const handleReport = (id: number) => {
+        showToast('已举报该弹幕', 'info');
+    };
+
     return (
-        <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden bg-gray-900 flex flex-col items-center justify-end pb-20 md:pb-32">
+        // 使用 fixed inset-0 确保全屏覆盖，z-index 确保在最上层 (盖住 Navbar 如果需要，或仅仅是全屏背景)
+        <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-gray-900 flex flex-col items-center justify-end pb-24 md:pb-32 z-[100]">
+            
             {/* 背景 */}
             <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900 to-indigo-950 -z-20" />
             
@@ -95,20 +165,15 @@ export const MessageBoard = () => {
             </div>
             
             {/* 弹幕层 */}
-            <div ref={containerRef} className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+            <div className="absolute inset-0 overflow-hidden z-0 pointer-events-auto">
                 {messages.map(msg => (
-                    <div
-                        key={msg.id}
-                        className={`absolute whitespace-nowrap text-lg md:text-2xl font-medium drop-shadow-md animate-danmaku will-change-transform ${msg.color}`}
-                        style={{
-                            top: `${msg.top}%`,
-                            left: '100%',
-                            animationDuration: `${msg.duration}s`
-                        }}
-                        onAnimationEnd={() => handleAnimationEnd(msg.id)}
-                    >
-                        {msg.text}
-                    </div>
+                    <DanmakuItem 
+                        key={msg.id} 
+                        item={msg} 
+                        onAnimationEnd={handleAnimationEnd}
+                        onLike={handleLike}
+                        onReport={handleReport}
+                    />
                 ))}
             </div>
 
@@ -117,21 +182,16 @@ export const MessageBoard = () => {
                     from { transform: translateX(0); }
                     to { transform: translateX(-150vw); }
                 }
-                .animate-danmaku {
-                    animation-name: danmaku;
-                    animation-timing-function: linear;
-                    animation-fill-mode: forwards;
-                }
             `}</style>
 
             {/* 输入区域 */}
-            <div className="z-10 w-full max-w-2xl px-4 animate-in slide-in-from-bottom-10 duration-700">
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-center shadow-2xl">
-                    <div className="mb-6">
-                        <h1 className="text-3xl font-bold text-white mb-2 flex items-center justify-center">
+            <div className="z-10 w-full max-w-2xl px-4 animate-in slide-in-from-bottom-10 duration-700 pointer-events-auto">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 md:p-6 text-center shadow-2xl">
+                    <div className="mb-4 md:mb-6">
+                        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2 flex items-center justify-center">
                             <MessageSquare className="mr-3" /> 留言板
                         </h1>
-                        <p className="text-gray-300">无需登录，发送弹幕与大家互动！</p>
+                        <p className="text-gray-300 text-sm md:text-base">悬停弹幕可点赞互动，无需登录！</p>
                     </div>
 
                     <form onSubmit={handleSend} className="flex gap-2">
@@ -146,7 +206,7 @@ export const MessageBoard = () => {
                         <button 
                             type="submit"
                             disabled={!inputValue.trim()}
-                            className="bg-apple-blue hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 rounded-xl font-medium transition-colors flex items-center"
+                            className="bg-apple-blue hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 md:px-6 rounded-xl font-medium transition-colors flex items-center whitespace-nowrap"
                         >
                             <Send size={18} className="mr-1" /> 发送
                         </button>

@@ -24,15 +24,15 @@ export const Modal = ({ isOpen, onClose, title, children, className = '', hideHe
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center pt-24 px-4">
-      {/* 背景遮罩 */}
+    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-24 px-4">
+      {/* 背景遮罩 - 增加模糊度到 xl */}
       <div 
-        className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity animate-in fade-in"
+        className="absolute inset-0 bg-black/40 backdrop-blur-xl transition-opacity animate-in fade-in duration-300"
         onClick={onClose}
       />
       
       {/* 内容 */}
-      <div className={`relative bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl p-6 transform transition-all animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-800 ${className}`}>
+      <div className={`relative bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl p-6 transform transition-all animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-800 ${className}`}>
         {!hideHeader && (
             <div className="flex justify-between items-center mb-4 sticky top-0 bg-inherit z-10 pb-2">
                 {title && <h3 className="text-xl font-bold text-apple-text dark:text-apple-dark-text">{title}</h3>}
@@ -104,7 +104,7 @@ export const SearchModal = () => {
     if (!isSearchOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[70] flex items-start justify-center pt-24 px-4">
+        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-24 px-4">
              <div className="absolute inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-xl transition-opacity animate-in fade-in" onClick={handleClose} />
              
              <div className="relative w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden animate-in slide-in-from-top-4 duration-300">

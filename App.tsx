@@ -2,7 +2,7 @@ import React, { Suspense, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AppProvider } from './context/store';
 import { Navbar, Footer, MiniPlayer } from './components/layout';
-import { Spinner } from './components/ui';
+import { Spinner, CustomCursor } from './components/ui';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 // Page Imports
@@ -58,6 +58,7 @@ const App = () => {
       <Router>
         <div className="min-h-screen flex flex-col bg-apple-bg text-apple-text dark:bg-apple-dark-bg dark:text-apple-dark-text font-sans selection:bg-apple-blue selection:text-white transition-colors duration-300">
           <ScrollToTop />
+          <CustomCursor />
           
           <LayoutWrapper>
             <Suspense fallback={

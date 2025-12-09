@@ -12,6 +12,7 @@ export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAdminModalOpen, setAdminModalOpen] = useState(false);
+  const [expandedMobileMenus, setExpandedMobileMenus] = useState<string[]>([]);
   
   // Sliding Background State
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -72,6 +73,12 @@ export const Navbar = () => {
     window.addEventListener('resize', updatePill);
     return () => window.removeEventListener('resize', updatePill);
   }, [hoveredIndex, location.pathname, navLinks.length]);
+
+  const toggleMobileSubmenu = (name: string) => {
+      setExpandedMobileMenus(prev => 
+          prev.includes(name) ? prev.filter(item => item !== name) : [...prev, name]
+      );
+  };
 
   return (
     <>
@@ -210,36 +217,53 @@ export const Navbar = () => {
           </div>
         </div>
 
-        <div className={`md:hidden absolute w-full bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+        <div className={`md:hidden absolute w-full bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-[80vh] opacity-100 overflow-y-auto' : 'max-h-0 opacity-0 overflow-hidden'}`}>
           <div className="px-4 pt-2 pb-6 space-y-2">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.path;
+              const isExpanded = expandedMobileMenus.includes(link.name);
+
               return (
               <div key={link.name}>
-                  <Link
-                    to={link.path}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`
-                      block px-3 py-3 rounded-xl text-base font-medium transition-all
-                      ${isActive ? 'bg-gray-100 dark:bg-gray-800 text-apple-blue font-bold shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'}
-                    `}
-                  >
-                    {link.name}
-                  </Link>
-                  {/* Mobile Submenu */}
-                  {link.hasSubmenu && (
-                      <div className="pl-6 border-l-2 border-gray-100 dark:border-gray-800 ml-3">
-                           {link.subItems?.map(sub => (
-                               <Link 
-                                    key={sub.name}
-                                    to={sub.path}
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className="block px-3 py-2 text-sm text-gray-500 hover:text-apple-blue"
-                                >
-                                    {sub.name}
-                                </Link>
-                           ))}
+                  {link.hasSubmenu ? (
+                      <div>
+                           <button
+                             onClick={() => toggleMobileSubmenu(link.name)}
+                             className={`
+                                w-full flex items-center justify-between px-3 py-3 rounded-xl text-base font-medium transition-all
+                                ${isActive ? 'text-apple-blue font-bold' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'}
+                             `}
+                           >
+                               <span>{link.name}</span>
+                               <ChevronDown size={16} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                           </button>
+                           {/* 移动端子菜单 Accordion */}
+                           <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
+                               <div className="pl-4 space-y-1 mt-1 border-l-2 border-gray-100 dark:border-gray-800 ml-3">
+                                   {link.subItems?.map(sub => (
+                                       <Link 
+                                            key={sub.name}
+                                            to={sub.path}
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="block px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-apple-blue rounded-lg"
+                                        >
+                                            {sub.name}
+                                        </Link>
+                                   ))}
+                               </div>
+                           </div>
                       </div>
+                  ) : (
+                      <Link
+                        to={link.path}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`
+                          block px-3 py-3 rounded-xl text-base font-medium transition-all
+                          ${isActive ? 'bg-gray-100 dark:bg-gray-800 text-apple-blue font-bold shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'}
+                        `}
+                      >
+                        {link.name}
+                      </Link>
                   )}
               </div>
             )})}
