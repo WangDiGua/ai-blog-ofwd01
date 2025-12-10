@@ -26,12 +26,30 @@ export const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { name: '博客', path: '/', hasSubmenu: true, subItems: [{name: '首页', path: '/'}, {name: '起始页', path: '/start'}] },
+    { 
+      name: '博客', 
+      path: '/', 
+      hasSubmenu: true, 
+      subItems: [
+        {name: '首页', path: '/'}, 
+        {name: '时间线', path: '/timeline'},
+        {name: '起始页', path: '/start'}
+      ] 
+    },
     { name: '社区', path: '/community' },
     { name: '相册', path: '/album' },
     { name: '音乐', path: '/music' },
     { name: '工具', path: '/tools' },
-    { name: '联系', path: '/contact', hasSubmenu: true, subItems: [{name: '即时聊天', path: '/contact'}, {name: '留言板', path: '/message-board'}] },
+    { 
+      name: '联系', 
+      path: '/contact', 
+      hasSubmenu: true, 
+      subItems: [
+        {name: '即时聊天', path: '/contact'}, 
+        {name: '留言板', path: '/message-board'},
+        {name: '友情链接', path: '/friend-links'}
+      ] 
+    },
     { name: '关于', path: '/about' },
     { name: 'AI 助手', path: '/ai' },
   ];

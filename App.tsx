@@ -15,7 +15,7 @@ import { Tools } from './pages/tools';
 import { About } from './pages/about';
 import { Contact } from './pages/contact';
 import { AIAssistant } from './pages/ai';
-import { StartPage, MessageBoard, Album } from './pages/views';
+import { StartPage, MessageBoard, Album, Timeline, FriendLinks } from './pages/views';
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -70,6 +70,8 @@ const App = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/start" element={<StartPage />} />
                 <Route path="/message-board" element={<MessageBoard />} />
+                <Route path="/timeline" element={<Timeline />} />
+                <Route path="/friend-links" element={<FriendLinks />} />
                 <Route path="/album" element={<Album />} />
                 <Route path="/article/:id" element={<ArticleDetail />} />
                 <Route path="/community" element={<Community />} />

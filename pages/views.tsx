@@ -1,9 +1,6 @@
-// This file has been split into:
-// - pages/home.tsx
-// - pages/article-detail.tsx
-// - pages/profile.tsx
-// - pages/extras.tsx
-// - pages/start-page.tsx
+// This file exports page components to simplify imports in App.tsx
 export * from './start-page';
 export * from './message-board';
 export * from './album';
+export * from './timeline';
+export * from './friend-links';

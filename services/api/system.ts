@@ -7,4 +7,8 @@ export const systemApi = {
     
     getHotSearches: () => 
         request.get<string[]>('/search/hot'),
+    
+    // 友链申请
+    applyFriendLink: (data: { name: string; url: string; avatar: string; desc: string }) => 
+        new Promise<{success: boolean}>(resolve => setTimeout(() => resolve({ success: true }), 1000))
 };

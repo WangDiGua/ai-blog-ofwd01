@@ -3,6 +3,7 @@ import { useStore } from '../../context/store';
 import { Button, Captcha } from '../ui';
 import { authApi } from '../../services/api/auth';
 import { z } from 'zod';
+import { Mail, Lock, User, Key, ArrowRight } from 'lucide-react';
 
 // --- Zod Validation Schemas ---
 
@@ -27,6 +28,7 @@ const registerSchema = z.object({
 export const AuthForm = ({ onClose }: { onClose: () => void }) => {
   const { showToast } = useStore();
   const [isRegister, setIsRegister] = useState(false);
+  const [animating, setAnimating] = useState(false); // 用于切换动画状态控制
   
   // Form State
   const [formData, setFormData] = useState({
@@ -132,7 +134,7 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
                 captchaCode: formData.captchaCode
             });
             showToast('注册成功，请登录', 'success');
-            setIsRegister(false); // 切换回登录页
+            toggleMode(); // 切换回登录页
 
         } else {
             // Validate Login
@@ -158,8 +160,6 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
             
             // 登录成功，将 Token 存入 localStorage
             if (userData.token) {
-                // 安全实践：HttpOnly cookie 应该由服务器设置
-                // 但这里我们存入 localStorage 作为演示，注意 XSS 风险
                 localStorage.setItem('token', userData.token);
             }
             
@@ -196,90 +196,124 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
   
   const strengthMeta = getStrengthMeta();
 
+  const toggleMode = () => {
+      setAnimating(true);
+      setTimeout(() => {
+          setIsRegister(!isRegister);
+          setFormData({ username: '', password: '', email: '', captchaCode: '', verificationCode: '' });
+          setLockoutUntil(null);
+          setAnimating(false);
+      }, 300);
+  };
+
+  // Input wrapper with icon
+  const InputGroup = ({ icon: Icon, children }: { icon: any, children: React.ReactNode }) => (
+      <div className="relative group">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-apple-blue transition-colors duration-300">
+              <Icon size={18} />
+          </div>
+          {children}
+      </div>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-hidden">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-apple-text dark:text-apple-dark-text">{isRegister ? '创建账户' : '欢迎回来'}</h2>
-        <p className="text-sm text-apple-subtext dark:text-apple-dark-text">请输入您的详细信息</p>
+        <h2 className="text-2xl font-bold text-apple-text dark:text-apple-dark-text animate-in slide-in-from-top-4 duration-500">
+            {isRegister ? '加入我们' : '欢迎回来'}
+        </h2>
+        <p className="text-sm text-apple-subtext dark:text-apple-dark-subtext mt-2">
+            {isRegister ? '开启您的创作之旅' : '继续您的探索'}
+        </p>
       </div>
       
-      <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+      <form 
+        onSubmit={handleSubmit} 
+        className={`space-y-4 transition-all duration-300 transform ${animating ? 'opacity-0 translate-x-10 scale-95' : 'opacity-100 translate-x-0 scale-100'}`}
+        autoComplete="off"
+      >
         {/* 隐藏的 input，用于欺骗浏览器自动填充机制 */}
         <input type="text" style={{ display: 'none' }} />
         <input type="password" style={{ display: 'none' }} />
 
-        <div>
+        <InputGroup icon={User}>
            <input 
              name="username"
              type="text" 
-             placeholder="用户名 (字母数字下划线)" 
+             placeholder="用户名" 
              value={formData.username}
              onChange={handleChange}
              disabled={!!isLocked}
-             className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text transition-all disabled:opacity-50"
+             className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-apple-blue/50 focus:bg-white dark:focus:bg-gray-900 outline-none text-apple-text dark:text-apple-dark-text transition-all duration-300 disabled:opacity-50 hover:bg-gray-200/50 dark:hover:bg-gray-700/50"
              maxLength={20}
              autoComplete="off"
            />
-        </div>
+        </InputGroup>
 
         {isRegister && (
-             <div className="space-y-4 animate-in slide-in-from-top-2">
-                <input 
-                    name="email"
-                    type="email" 
-                    placeholder="邮箱地址 (仅限 QQ 邮箱)" 
-                    value={formData.email}
-                    onChange={handleChange}
-                    disabled={!!isLocked}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text disabled:opacity-50"
-                    autoComplete="off"
-                />
-                <div className="flex space-x-2">
+             <div className="space-y-4 animate-in slide-in-from-right-4 fade-in duration-300">
+                <InputGroup icon={Mail}>
                     <input 
-                        name="verificationCode"
-                        type="text" 
-                        placeholder="邮件验证码" 
-                        value={formData.verificationCode}
+                        name="email"
+                        type="email" 
+                        placeholder="QQ 邮箱地址" 
+                        value={formData.email}
                         onChange={handleChange}
                         disabled={!!isLocked}
-                        className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text disabled:opacity-50"
-                        maxLength={6}
+                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-apple-blue/50 focus:bg-white dark:focus:bg-gray-900 outline-none text-apple-text dark:text-apple-dark-text transition-all duration-300 disabled:opacity-50 hover:bg-gray-200/50 dark:hover:bg-gray-700/50"
                         autoComplete="off"
                     />
+                </InputGroup>
+                <div className="flex space-x-2">
+                    <InputGroup icon={Key}>
+                        <input 
+                            name="verificationCode"
+                            type="text" 
+                            placeholder="邮件验证码" 
+                            value={formData.verificationCode}
+                            onChange={handleChange}
+                            disabled={!!isLocked}
+                            className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-apple-blue/50 focus:bg-white dark:focus:bg-gray-900 outline-none text-apple-text dark:text-apple-dark-text transition-all duration-300 disabled:opacity-50"
+                            maxLength={6}
+                            autoComplete="off"
+                        />
+                    </InputGroup>
                     <Button 
                         type="button" 
                         variant="secondary" 
                         disabled={timer > 0 || !formData.email || !!isLocked}
                         onClick={handleSendCode}
-                        className="w-24 whitespace-nowrap text-xs"
+                        className="w-28 whitespace-nowrap text-xs font-semibold"
                     >
-                        {timer > 0 ? `${timer}s` : '获取'}
+                        {timer > 0 ? `${timer}s` : '获取验证码'}
                     </Button>
                 </div>
              </div>
         )}
 
         <div>
-           <input 
-             name="password"
-             type="password" 
-             placeholder={isRegister ? "密码 (8+位, 含特殊字符)" : "密码"} 
-             value={formData.password}
-             onChange={handleChange}
-             disabled={!!isLocked}
-             className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text disabled:opacity-50"
-             autoComplete="new-password"
-           />
+            <InputGroup icon={Lock}>
+               <input 
+                 name="password"
+                 type="password" 
+                 placeholder={isRegister ? "设置密码" : "密码"} 
+                 value={formData.password}
+                 onChange={handleChange}
+                 disabled={!!isLocked}
+                 className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-apple-blue/50 focus:bg-white dark:focus:bg-gray-900 outline-none text-apple-text dark:text-apple-dark-text transition-all duration-300 disabled:opacity-50 hover:bg-gray-200/50 dark:hover:bg-gray-700/50"
+                 autoComplete="new-password"
+               />
+            </InputGroup>
            {/* 密码强度可视化 */}
            {isRegister && formData.password.length > 0 && (
                <div className="mt-2 flex items-center space-x-2 animate-in fade-in slide-in-from-top-1">
-                   <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                   <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                        <div 
-                           className={`h-full transition-all duration-300 ${strengthMeta.color}`} 
+                           className={`h-full transition-all duration-500 ease-out ${strengthMeta.color}`} 
                            style={{ width: `${Math.min((pwdStrength / 4) * 100, 100)}%` }}
                        />
                    </div>
-                   <span className={`text-xs font-medium ${strengthMeta.color.replace('bg-', 'text-')}`}>
+                   <span className={`text-xs font-bold ${strengthMeta.color.replace('bg-', 'text-')}`}>
                        {strengthMeta.text}
                    </span>
                </div>
@@ -294,30 +328,41 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
                 placeholder="图形验证码" 
                 value={formData.captchaCode}
                 onChange={handleChange}
-                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none text-apple-text dark:text-apple-dark-text"
+                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-apple-blue/50 focus:bg-white dark:focus:bg-gray-900 outline-none text-apple-text dark:text-apple-dark-text transition-all duration-300"
                 maxLength={4}
                 autoComplete="off"
             />
-            <Captcha onRefresh={(key) => setCaptchaKey(key)} />
+            <div className="rounded-xl overflow-hidden border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
+                <Captcha onRefresh={(key) => setCaptchaKey(key)} />
+            </div>
         </div>
         
-        <Button type="submit" className="w-full shadow-lg shadow-blue-500/20" disabled={loading || !!isLocked}>
-          {loading ? '处理中...' : (isLocked ? '已锁定 (1分钟)' : (isRegister ? '注册' : '登录'))}
+        <Button 
+            type="submit" 
+            className="w-full py-3.5 text-base font-bold shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all" 
+            disabled={loading || !!isLocked}
+        >
+          {loading ? (
+             <span className="flex items-center"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"/>处理中...</span>
+          ) : (
+             isLocked ? '已锁定 (1分钟)' : (
+                 <span className="flex items-center">{isRegister ? '立即注册' : '登录'} <ArrowRight size={16} className="ml-1"/></span>
+             )
+          )}
         </Button>
       </form>
 
-      <div className="text-center text-sm text-gray-500">
-        <button 
-          type="button"
-          onClick={() => { 
-              setIsRegister(!isRegister); 
-              setFormData({ username: '', password: '', email: '', captchaCode: '', verificationCode: '' });
-              setLockoutUntil(null);
-          }}
-          className="text-apple-blue font-semibold hover:underline"
-        >
-          {isRegister ? '切换到登录' : '切换到注册'}
-        </button>
+      <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+        <div className="text-center text-sm text-gray-500">
+            {isRegister ? '已有账号？' : '还没有账号？'}
+            <button 
+            type="button"
+            onClick={toggleMode}
+            className="ml-2 text-apple-blue font-bold hover:underline transition-all"
+            >
+            {isRegister ? '直接登录' : '免费注册'}
+            </button>
+        </div>
       </div>
     </div>
   );
