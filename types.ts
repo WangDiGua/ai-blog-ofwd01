@@ -1,6 +1,17 @@
 
 // Global Type Definitions
 
+export type CultivationLevel = '炼气期' | '筑基期' | '结丹期' | '元婴期' | '化神期' | '炼虚期' | '合体期' | '大乘期' | '真仙/渡劫期';
+
+export const CULTIVATION_LEVELS: CultivationLevel[] = [
+    '炼气期', '筑基期', '结丹期', '元婴期', '化神期', '炼虚期', '合体期', '大乘期', '真仙/渡劫期'
+];
+
+export interface SignInRecord {
+    date: string;
+    points: number;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -11,6 +22,9 @@ export interface User {
   points?: number;
   coverImage?: string;
   role: 'user' | 'vip' | 'admin';
+  vipType?: 'none' | 'monthly' | 'permanent'; // VIP 类型
+  level: CultivationLevel; // 修仙等级
+  signInHistory?: SignInRecord[]; // 签到历史
   aiUsage: number;
   // 新增统计字段
   followersCount?: number;
@@ -34,6 +48,7 @@ export interface Article {
   authorId?: string;
   authorName?: string; // 方便显示
   authorAvatar?: string;
+  authorLevel?: CultivationLevel; // 作者等级
 }
 
 export interface Comment {

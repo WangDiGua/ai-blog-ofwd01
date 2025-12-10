@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button, Avatar, MarkdownRenderer, MarkdownEditor } from '../components/ui';
+import { Card, Button, Avatar, MarkdownRenderer, RankBadge } from '../components/ui';
 import { communityApi } from '../services/api';
-import { CommunityPost } from '../types';
+import { CommunityPost, CULTIVATION_LEVELS } from '../types';
 import { useStore } from '../context/store';
-import { Heart, MessageCircle, Share2, Send } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Send, Lock } from 'lucide-react';
 
 interface CommentMock {
   id: number;
@@ -35,6 +35,13 @@ export const Community = () => {
         setCommentsMap(initialComments);
     });
   }, []);
+
+  const canComment = () => {
+      if (!user) return false;
+      // 等级索引 >= 1 (筑基期) 才能评论/发帖
+      const userLevelIndex = CULTIVATION_LEVELS.indexOf(user.level);
+      return userLevelIndex >= 1;
+  };
 
   const handleLike = (postId: string) => {
     requireAuth(() => {
@@ -107,6 +114,11 @@ export const Community = () => {
       }
 
       requireAuth(() => {
+          if (!canComment()) {
+              showToast('境界不足！需达到【筑基期】方可参与讨论', 'error');
+              return;
+          }
+
           const newComment: CommentMock = {
               id: Date.now(),
               user: user?.name || '我',
@@ -127,14 +139,24 @@ export const Community = () => {
       });
   };
 
+  const handleNewPost = () => {
+      requireAuth(() => {
+          if (!canComment()) {
+              showToast('境界不足！需达到【筑基期】方可发帖', 'error');
+              return;
+          }
+          showToast('发帖功能开发中...', 'info');
+      });
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 md:py-10 mb-20">
       <div className="flex justify-between items-end mb-6 md:mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-apple-text dark:text-apple-dark-text">社区</h1>
-          <p className="text-apple-subtext dark:text-apple-dark-subtext mt-1 text-sm md:text-base">加入讨论。</p>
+          <p className="text-apple-subtext dark:text-apple-dark-subtext mt-1 text-sm md:text-base">加入修仙论道。</p>
         </div>
-        <Button onClick={() => requireAuth(() => showToast('发帖功能开发中...', 'info'))}>
+        <Button onClick={handleNewPost}>
           {isLoggedIn ? '发帖' : '登录'}
         </Button>
       </div>
@@ -146,7 +168,10 @@ export const Community = () => {
               <Avatar src={post.author.avatar} alt={post.author.name} />
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-center mb-1">
-                  <h4 className="font-semibold text-sm md:text-base text-apple-text dark:text-apple-dark-text truncate">{post.author.name}</h4>
+                  <div className="flex items-center space-x-2">
+                     <h4 className="font-semibold text-sm md:text-base text-apple-text dark:text-apple-dark-text truncate">{post.author.name}</h4>
+                     <RankBadge level={post.author.level} />
+                  </div>
                   <span className="text-xs text-gray-400 flex-shrink-0 ml-2">{post.timeAgo}</span>
                 </div>
                 
@@ -202,7 +227,14 @@ export const Community = () => {
                                 )}
                             </div>
 
-                            <div className="flex space-x-2 items-end">
+                            <div className="flex space-x-2 items-end relative">
+                                {!canComment() && (
+                                    <div className="absolute inset-0 z-10 bg-white/60 dark:bg-black/60 backdrop-blur-[1px] rounded-lg flex items-center justify-center cursor-not-allowed">
+                                        <span className="text-xs font-bold text-gray-600 flex items-center bg-white dark:bg-black px-2 py-1 rounded-full border border-gray-200">
+                                            <Lock size={10} className="mr-1"/> 筑基期方可回复
+                                        </span>
+                                    </div>
+                                )}
                                 <Avatar src={user?.avatar || 'https://ui-avatars.com/api/?name=Guest'} alt="Me" size="sm" />
                                 <div className="flex-1 relative">
                                     <textarea 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Play, Code, Eye, X, Bold, Italic, List, Link as LinkIcon, Image as ImageIcon, Heading, Quote } from 'lucide-react';
+import { Play, Code, Eye, X, Bold, Italic, List, Link as LinkIcon, Image as ImageIcon, Heading, Quote, Crown } from 'lucide-react';
 import DOMPurify from 'dompurify';
+import { CultivationLevel } from '../../types';
 
 // --- 配置 DOMPurify ---
 // 允许部分安全的标签和属性，防止 XSS 攻击
@@ -9,6 +10,32 @@ const sanitize = (html: string) => {
     ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'code', 'pre', 'blockquote', 'h1', 'h2', 'h3', 'span', 'div', 'img'],
     ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'src', 'alt', 'style'],
   });
+};
+
+// --- 等级徽章组件 ---
+export const RankBadge = ({ level }: { level?: CultivationLevel }) => {
+    if (!level) return null;
+
+    const getStyle = (lvl: CultivationLevel) => {
+        switch (lvl) {
+            case '炼气期': return 'bg-gray-100 text-gray-500 border-gray-200';
+            case '筑基期': return 'bg-green-50 text-green-600 border-green-200';
+            case '结丹期': return 'bg-yellow-50 text-yellow-600 border-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.2)]';
+            case '元婴期': return 'bg-purple-50 text-purple-600 border-purple-300 shadow-[0_0_10px_rgba(147,51,234,0.3)] animate-pulse';
+            case '化神期': return 'bg-indigo-50 text-indigo-600 border-indigo-300 shadow-[0_0_15px_rgba(79,70,229,0.4)] ring-1 ring-indigo-200';
+            case '炼虚期': return 'bg-blue-50 text-blue-600 border-blue-300 shadow-[0_0_15px_rgba(37,99,235,0.4)] ring-1 ring-blue-200';
+            case '合体期': return 'bg-orange-50 text-orange-600 border-orange-300 shadow-[0_0_20px_rgba(234,88,12,0.5)] ring-2 ring-orange-200';
+            case '大乘期': return 'bg-rose-50 text-rose-600 border-rose-300 shadow-[0_0_20px_rgba(225,29,72,0.6)] ring-2 ring-rose-200';
+            case '真仙/渡劫期': return 'bg-gradient-to-r from-yellow-100 via-red-100 to-purple-100 text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 via-red-600 to-purple-600 border-yellow-400 font-bold shadow-[0_0_25px_rgba(255,215,0,0.6)] ring-2 ring-yellow-400 animate-pulse';
+            default: return 'bg-gray-100 text-gray-500';
+        }
+    };
+
+    return (
+        <span className={`inline-flex items-center justify-center px-2 py-0.5 text-[10px] md:text-xs rounded border select-none transition-all duration-300 ${getStyle(level)}`}>
+            {level}
+        </span>
+    );
 };
 
 // --- 卡片组件 ---
@@ -41,7 +68,7 @@ export const Skeleton = ({ className = '' }: { className?: string }) => (
 
 // --- 按钮组件 ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'vip';
   size?: 'sm' | 'md' | 'lg';
 }
 
@@ -52,7 +79,8 @@ export const Button = ({ children, variant = 'primary', size = 'md', className =
     primary: "bg-apple-blue text-white hover:bg-blue-600 shadow-sm active:scale-95",
     secondary: "bg-gray-100 dark:bg-gray-800 text-apple-text dark:text-apple-dark-text hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95",
     ghost: "bg-transparent text-apple-blue hover:bg-blue-50/50 dark:hover:bg-blue-900/20",
-    danger: "bg-red-500 text-white hover:bg-red-600 active:scale-95"
+    danger: "bg-red-500 text-white hover:bg-red-600 active:scale-95",
+    vip: "bg-gradient-to-r from-yellow-400 to-orange-500 text-white hover:shadow-lg hover:shadow-yellow-500/30 active:scale-95 border border-yellow-300/50"
   };
 
   const sizes = {
@@ -72,7 +100,7 @@ export const Button = ({ children, variant = 'primary', size = 'md', className =
 };
 
 // --- 头像组件 ---
-export const Avatar = ({ src, alt, size = 'md' }: { src: string; alt: string; size?: 'sm' | 'md' | 'lg' | 'xl' }) => {
+export const Avatar = ({ src, alt, size = 'md', className = '' }: { src: string; alt: string; size?: 'sm' | 'md' | 'lg' | 'xl', className?: string }) => {
   const sizes = {
     sm: "w-8 h-8",
     md: "w-10 h-10",
@@ -87,7 +115,7 @@ export const Avatar = ({ src, alt, size = 'md' }: { src: string; alt: string; si
     <img 
       src={safeSrc} 
       alt={alt} 
-      className={`${sizes[size]} rounded-full object-cover border border-gray-100 dark:border-gray-800 shadow-sm`}
+      className={`${sizes[size]} rounded-full object-cover border border-gray-100 dark:border-gray-800 shadow-sm ${className}`}
     />
   );
 };

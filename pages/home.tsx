@@ -62,9 +62,9 @@ const RecommendedAuthors = () => {
     const navigate = useNavigate();
     const { requireAuth, showToast } = useStore();
     const [authors, setAuthors] = useState<(User & { articles: number })[]>([
-        { id: 'u-1', name: 'Alice Walker', avatar: 'https://ui-avatars.com/api/?name=Alice+Walker&background=FF5733&color=fff', articles: 42, role: 'user', aiUsage: 0, isFollowing: false },
-        { id: 'u-2', name: 'David Chen', avatar: 'https://ui-avatars.com/api/?name=David+Chen&background=33FF57&color=fff', articles: 18, role: 'user', aiUsage: 0, isFollowing: false },
-        { id: 'u-3', name: 'Elena G', avatar: 'https://ui-avatars.com/api/?name=Elena+G&background=3357FF&color=fff', articles: 35, role: 'vip', aiUsage: 0, isFollowing: false }
+        { id: 'u-1', name: 'Alice Walker', avatar: 'https://ui-avatars.com/api/?name=Alice+Walker&background=FF5733&color=fff', articles: 42, role: 'user', aiUsage: 0, isFollowing: false, level: '元婴期' },
+        { id: 'u-2', name: 'David Chen', avatar: 'https://ui-avatars.com/api/?name=David+Chen&background=33FF57&color=fff', articles: 18, role: 'user', aiUsage: 0, isFollowing: false, level: '筑基期' },
+        { id: 'u-3', name: 'Elena G', avatar: 'https://ui-avatars.com/api/?name=Elena+G&background=3357FF&color=fff', articles: 35, role: 'vip', aiUsage: 0, isFollowing: false, level: '化神期' }
     ]);
 
     const handleFollow = (e: React.MouseEvent, index: number) => {

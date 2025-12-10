@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStore } from '../context/store';
-import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, MarkdownEditor, ImageViewer, Modal } from '../components/ui';
+import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, MarkdownEditor, ImageViewer, Modal, RankBadge } from '../components/ui';
 import { articleApi } from '../services/api';
-import { Article, Comment } from '../types';
-import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash, ShieldAlert, Share2, Download, ExternalLink, Hourglass } from 'lucide-react';
+import { Article, Comment, CULTIVATION_LEVELS, CultivationLevel } from '../types';
+import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash, ShieldAlert, Share2, Download, ExternalLink, Hourglass, Lock } from 'lucide-react';
 import { calculateReadingTime } from '../utils/lib';
 
 // 免责声明组件
@@ -42,9 +42,10 @@ const CommentItem = ({ comment, depth = 0 }: { comment: Comment, depth?: number 
                 <Avatar src={comment.user.avatar} alt={comment.user.name} size={depth > 0 ? 'sm' : 'md'} />
             </div>
             <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2 mb-1">
+                <div className="flex items-center space-x-2 mb-1 flex-wrap gap-y-1">
                     <span className="font-semibold text-sm text-apple-text dark:text-apple-dark-text truncate max-w-[120px] md:max-w-xs">{comment.user.name}</span>
-                    <span className="text-xs text-gray-400 flex-shrink-0">{comment.date}</span>
+                    <RankBadge level={comment.user.level} />
+                    <span className="text-xs text-gray-400 flex-shrink-0 ml-auto md:ml-0">{comment.date}</span>
                 </div>
                 {/* 使用 MarkdownRenderer 渲染评论内容 */}
                 <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
@@ -131,12 +132,23 @@ export const ArticleDetail = () => {
       });
   };
 
+  const canComment = () => {
+      if (!user) return false;
+      // 等级索引 >= 1 (筑基期) 才能评论
+      const userLevelIndex = CULTIVATION_LEVELS.indexOf(user.level);
+      return userLevelIndex >= 1;
+  };
+
   const handlePostComment = () => {
-      if (!commentText.trim()) {
-          showToast('评论内容不能为空', 'error');
-          return;
-      }
       requireAuth(() => {
+          if (!canComment()) {
+              showToast('境界不足！需达到【筑基期】方可神识传音（评论）', 'error');
+              return;
+          }
+          if (!commentText.trim()) {
+              showToast('评论内容不能为空', 'error');
+              return;
+          }
           showToast('评论已发布', 'success');
           setCommentText('');
       });
@@ -222,7 +234,10 @@ export const ArticleDetail = () => {
                   <div className="flex items-center space-x-3">
                      <Avatar src="https://picsum.photos/id/1005/50/50" alt="Author" />
                      <div>
-                        <div className="font-medium text-apple-text dark:text-apple-dark-text">John Developer</div>
+                        <div className="font-medium text-apple-text dark:text-apple-dark-text flex items-center gap-2">
+                            John Developer
+                            <RankBadge level="真仙/渡劫期" />
+                        </div>
                         <div className="text-xs text-gray-500 flex items-center">
                            <Calendar size={12} className="mr-1"/> {article.date}
                            <span className="mx-2">•</span>
@@ -280,12 +295,24 @@ export const ArticleDetail = () => {
                <div className="mb-8 flex space-x-3 md:space-x-4">
                   <Avatar src={user?.avatar || 'https://ui-avatars.com/api/?name=Guest'} alt="me" />
                   <div className="flex-1 relative">
+                      {/* 如果没有权限评论，显示遮罩提示 */}
+                      {user && !canComment() && (
+                          <div className="absolute inset-0 z-10 bg-white/60 dark:bg-black/60 backdrop-blur-[1px] rounded-xl flex flex-col items-center justify-center text-center cursor-not-allowed border border-gray-200 dark:border-gray-700">
+                                <Lock className="text-gray-500 mb-2" size={24} />
+                                <p className="text-sm font-bold text-gray-700 dark:text-gray-300">境界不足</p>
+                                <p className="text-xs text-gray-500 mt-1">需突破至【筑基期】方可参与论道</p>
+                                <Button size="sm" className="mt-2 bg-purple-600 hover:bg-purple-700 text-white" onClick={() => window.location.href='/profile'}>
+                                    去突破
+                                </Button>
+                          </div>
+                      )}
+
                       {/* 使用 MarkdownEditor 替代简单文本框 */}
                       <div onClick={() => { if(!user) requireAuth(()=>{}) }}>
                           <MarkdownEditor 
                             value={commentText} 
                             onChange={setCommentText} 
-                            placeholder="写下一条友善的评论... (支持 Markdown)"
+                            placeholder={canComment() ? "写下一条友善的评论... (支持 Markdown)" : "修炼中..."}
                             height="150px"
                           />
                       </div>
@@ -294,7 +321,7 @@ export const ArticleDetail = () => {
                          <button onClick={() => setShowEmoji(!showEmoji)} className="text-gray-400 hover:text-apple-blue p-2">
                               <Smile size={20} />
                          </button>
-                         <Button size="sm" onClick={handlePostComment} disabled={!commentText.trim()}>发表评论</Button>
+                         <Button size="sm" onClick={handlePostComment} disabled={!commentText.trim() || !canComment()}>发表评论</Button>
                       </div>
 
                       {showEmoji && (

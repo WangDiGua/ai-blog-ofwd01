@@ -9,8 +9,11 @@ export const MOCK_USERS: User[] = [
         avatar: 'https://ui-avatars.com/api/?name=John+Dev&background=0071e3&color=fff',
         bio: '全栈开发者，热爱极简设计与高性能代码。',
         role: 'admin',
+        vipType: 'permanent',
+        level: '真仙/渡劫期',
         aiUsage: 45,
-        points: 1200,
+        points: 8888,
+        signInHistory: Array.from({length: 10}).map((_,i) => ({date: new Date(Date.now() - i * 86400000).toLocaleDateString(), points: 10})),
         coverImage: 'https://picsum.photos/seed/cover1/1200/400',
         followersCount: 1024,
         followingCount: 128,
@@ -23,8 +26,11 @@ export const MOCK_USERS: User[] = [
         avatar: 'https://ui-avatars.com/api/?name=Alice+D&background=FF5733&color=fff',
         bio: 'UI/UX 设计师，专注于用户体验。',
         role: 'vip',
+        vipType: 'monthly',
+        level: '元婴期',
         aiUsage: 12,
         points: 500,
+        signInHistory: [{date: new Date().toLocaleDateString(), points: 10}],
         followersCount: 850,
         followingCount: 50,
         totalLikes: 2300
@@ -36,8 +42,11 @@ export const MOCK_USERS: User[] = [
         avatar: 'https://ui-avatars.com/api/?name=Bob+E&background=33FF57&color=fff',
         bio: '后端架构师，Rust 爱好者。',
         role: 'user',
+        vipType: 'none',
+        level: '炼气期',
         aiUsage: 5,
         points: 100,
+        signInHistory: [],
         followersCount: 120,
         followingCount: 200,
         totalLikes: 450
@@ -93,7 +102,8 @@ export const MOCK_ARTICLES: Article[] = Array.from({ length: 10 }).map((_, i) =>
     comments: [], // 评论单独模拟
     authorId: MOCK_USERS[i % MOCK_USERS.length].id,
     authorName: MOCK_USERS[i % MOCK_USERS.length].name,
-    authorAvatar: MOCK_USERS[i % MOCK_USERS.length].avatar
+    authorAvatar: MOCK_USERS[i % MOCK_USERS.length].avatar,
+    authorLevel: MOCK_USERS[i % MOCK_USERS.length].level
 }));
 
 // --- 模拟评论数据 ---
