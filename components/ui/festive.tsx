@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { useStore } from '../../context/store';
 
 // 粒子类型定义
@@ -66,7 +67,7 @@ export const FestiveWidget = () => {
 
     if (!showFestive) return null;
 
-    return (
+    return ReactDOM.createPortal(
         <div className="fixed inset-0 pointer-events-none z-[5] overflow-hidden">
             <style>{`
                 @keyframes fall {
@@ -101,6 +102,7 @@ export const FestiveWidget = () => {
                     {p.content}
                 </div>
             ))}
-        </div>
+        </div>,
+        document.body
     );
 };

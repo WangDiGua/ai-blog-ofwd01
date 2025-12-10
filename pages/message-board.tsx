@@ -147,8 +147,9 @@ export const MessageBoard = () => {
     };
 
     return (
-        // 使用 fixed inset-0 确保全屏覆盖，z-index 确保在最上层 (盖住 Navbar 如果需要，或仅仅是全屏背景)
-        <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-gray-900 flex flex-col items-center justify-end pb-24 md:pb-32 z-[100]">
+        // 修改: 使用 relative 和 min-h-screen，避免在 transform 父级中 fixed 失效的问题
+        // 同时确保它能铺满全屏，因为该页面没有 Navbar 和 Footer
+        <div className="relative w-full min-h-screen overflow-hidden bg-gray-900 flex flex-col items-center justify-end pb-24 md:pb-32 z-[100]">
             
             {/* 背景 */}
             <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900 to-indigo-950 -z-20" />

@@ -372,9 +372,16 @@ export const ArticleDetail = () => {
       {/* 封面图大图预览 */}
       <ImageViewer src={previewCover ? article.cover : null} onClose={() => setPreviewCover(false)} />
 
-      {/* 分享卡片模态框 */}
-      <Modal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} title="分享文章" hideHeader>
-          <div className="flex flex-col items-center">
+      {/* 分享卡片模态框 - 修改：使用 variant='transparent'，移除 hacky 的 overrides */}
+      <Modal 
+        isOpen={isShareOpen} 
+        onClose={() => setIsShareOpen(false)} 
+        title="分享文章" 
+        hideHeader
+        variant="transparent"
+        className="max-w-md w-full"
+      >
+          <div className="flex flex-col items-center w-full">
               {/* 卡片主体 */}
               <div id="share-card" className="w-full bg-white dark:bg-gray-900 rounded-3xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-800 relative select-none">
                   {/* 顶部装饰氛围 */}
@@ -433,12 +440,14 @@ export const ArticleDetail = () => {
               </div>
 
               {/* 操作按钮 */}
-              <Button className="mt-6 w-full shadow-lg shadow-blue-500/20 py-3" onClick={handleDownloadCard}>
-                  <Download className="mr-2" size={18} /> 保存卡片到相册
-              </Button>
-              <button onClick={() => setIsShareOpen(false)} className="mt-4 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                  取消
-              </button>
+              <div className="w-full mt-6 space-y-3">
+                  <Button className="w-full shadow-lg shadow-blue-500/20 py-3" onClick={handleDownloadCard}>
+                      <Download className="mr-2" size={18} /> 保存卡片到相册
+                  </Button>
+                  <button onClick={() => setIsShareOpen(false)} className="w-full text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 py-2">
+                      取消
+                  </button>
+              </div>
           </div>
       </Modal>
     </div>

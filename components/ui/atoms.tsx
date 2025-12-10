@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import { Play, Code, Eye, X, Bold, Italic, List, Link as LinkIcon, Image as ImageIcon, Heading, Quote, Crown, ImageOff } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { CultivationLevel } from '../../types';
@@ -21,7 +22,7 @@ interface ImgProps extends React.ImgHTMLAttributes<HTMLImageElement> {
     fallbackSrc?: string;
 }
 
-export const Img = ({ src, alt, className, fallbackSrc = DEFAULT_IMAGE, ...props }: ImgProps) => {
+export const Img = React.memo(({ src, alt, className = '', fallbackSrc = DEFAULT_IMAGE, ...props }: ImgProps) => {
     const [imgSrc, setImgSrc] = useState(src || fallbackSrc);
     const [hasError, setHasError] = useState(false);
 
@@ -37,19 +38,23 @@ export const Img = ({ src, alt, className, fallbackSrc = DEFAULT_IMAGE, ...props
         }
     };
 
+    // 如果外部传入了 object- 相关类名，则不应用默认的 object-cover
+    const hasObjectFit = className.includes('object-');
+    const objectFitClass = hasObjectFit ? '' : 'object-cover';
+
     return (
         <img
             src={imgSrc}
             alt={alt}
-            className={`${className} ${hasError ? 'object-contain bg-gray-100 dark:bg-gray-800' : 'object-cover'}`}
+            className={`${className} ${hasError ? 'object-contain bg-gray-100 dark:bg-gray-800' : objectFitClass}`}
             onError={handleError}
             {...props}
         />
     );
-};
+});
 
 // --- 等级徽章组件 ---
-export const RankBadge = ({ level }: { level?: CultivationLevel }) => {
+export const RankBadge = React.memo(({ level }: { level?: CultivationLevel }) => {
     if (!level) return null;
 
     const getStyle = (lvl: CultivationLevel) => {
@@ -72,7 +77,7 @@ export const RankBadge = ({ level }: { level?: CultivationLevel }) => {
             {level}
         </span>
     );
-};
+});
 
 // --- 卡片组件 ---
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -81,7 +86,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   hover?: boolean;
 }
 
-export const Card = ({ children, className = '', hover = false, ...props }: CardProps) => {
+export const Card = React.memo(({ children, className = '', hover = false, ...props }: CardProps) => {
   return (
     <div 
       className={`
@@ -95,12 +100,12 @@ export const Card = ({ children, className = '', hover = false, ...props }: Card
       {children}
     </div>
   );
-};
+});
 
 // --- 骨架屏组件 ---
-export const Skeleton = ({ className = '' }: { className?: string }) => (
+export const Skeleton = React.memo(({ className = '' }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg ${className}`} />
-);
+));
 
 // --- 按钮组件 ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -108,7 +113,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export const Button = ({ children, variant = 'primary', size = 'md', className = '', ...props }: ButtonProps) => {
+export const Button = React.memo(({ children, variant = 'primary', size = 'md', className = '', ...props }: ButtonProps) => {
   // Use 'ease-ios' and updated active:scale behavior
   const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-200 ease-ios focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
   
@@ -134,10 +139,10 @@ export const Button = ({ children, variant = 'primary', size = 'md', className =
       {children}
     </button>
   );
-};
+});
 
 // --- 头像组件 (带错误处理) ---
-export const Avatar = ({ src, alt, size = 'md', className = '' }: { src: string; alt: string; size?: 'sm' | 'md' | 'lg' | 'xl', className?: string }) => {
+export const Avatar = React.memo(({ src, alt, size = 'md', className = '' }: { src: string; alt: string; size?: 'sm' | 'md' | 'lg' | 'xl', className?: string }) => {
   const [imgSrc, setImgSrc] = useState(src);
   const [hasError, setHasError] = useState(false);
 
@@ -169,23 +174,24 @@ export const Avatar = ({ src, alt, size = 'md', className = '' }: { src: string;
       className={`${sizes[size]} rounded-full object-cover border border-gray-100 dark:border-gray-800 shadow-sm transition-transform duration-300 ease-ios hover:scale-105 ${className}`}
     />
   );
-};
+});
 
 // --- 加载动画 ---
-export const Spinner = () => (
+export const Spinner = React.memo(() => (
   <svg className="animate-spin h-5 w-5 text-apple-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
   </svg>
-);
+));
 
-// --- 图片查看器组件 ---
-export const ImageViewer = ({ src, onClose }: { src: string | null, onClose: () => void }) => {
+// --- 图片查看器组件 (使用 Portal) ---
+export const ImageViewer = React.memo(({ src, onClose }: { src: string | null, onClose: () => void }) => {
     if (!src) return null;
     const safeSrc = src.replace(/script:/gi, '');
-    return (
+    
+    return ReactDOM.createPortal(
         <div 
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fade-in-ios"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fade-in-ios"
             onClick={onClose}
         >
             <button className="absolute top-4 right-4 text-white/70 hover:text-white p-2 transition-colors">
@@ -197,9 +203,10 @@ export const ImageViewer = ({ src, onClose }: { src: string | null, onClose: () 
                 onClick={(e) => e.stopPropagation()} 
                 alt="Full preview"
             />
-        </div>
+        </div>,
+        document.body
     );
-};
+});
 
 // --- Helper: URL Sanitization (Prevent XSS) ---
 const sanitizeUrl = (url: string) => {
@@ -247,34 +254,82 @@ const parseInline = (text: string) => {
 };
 
 // --- Markdown/代码渲染器 (集成 Img 组件) ---
-export const MarkdownRenderer = ({ content }: { content: string }) => {
+export const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
+    if (!content) return null; // Safety check
+
     const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     
-    // 简单检测 HTML 代码块以运行 (Run functionality intentionally executes code, but separated from preview)
-    const hasHtmlBlock = content.includes('```html');
-    
-    const extractHtml = (md: string) => {
-        const match = md.match(/```html([\s\S]*?)```/);
-        return match ? match[1] : '';
-    };
+    // Memoize the parsing logic so it doesn't run on every render unless content changes
+    const parsedContent = useMemo(() => {
+        const hasHtmlBlock = content.includes('```html');
+        
+        const extractHtml = (md: string) => {
+            const match = md.match(/```html([\s\S]*?)```/);
+            return match ? match[1] : '';
+        };
+
+        const renderLines = () => content.split('\n').map((line, i) => {
+            if (line.trim().startsWith('```')) return null; // 简单忽略代码块标记行
+            
+            if (line.startsWith('# ')) {
+                const text = line.substring(2).trim();
+                return <h1 key={i} id={text} className="text-xl font-bold my-4 text-apple-text dark:text-apple-dark-text scroll-mt-24">{parseInline(text)}</h1>;
+            }
+            if (line.startsWith('## ')) {
+                const text = line.substring(3).trim();
+                return <h2 key={i} id={text} className="text-lg font-bold my-3 text-apple-text dark:text-apple-dark-text scroll-mt-24">{parseInline(text)}</h2>;
+            }
+            if (line.startsWith('### ')) {
+                const text = line.substring(4).trim();
+                return <h3 key={i} id={text} className="text-base font-bold my-2 text-apple-text dark:text-apple-dark-text scroll-mt-24">{parseInline(text)}</h3>;
+            }
+            if (line.startsWith('* ') || line.startsWith('- ')) {
+                return <li key={i} className="ml-4 list-disc my-1">{parseInline(line.substring(2))}</li>;
+            }
+            if (line.startsWith('> ')) {
+                return <blockquote key={i} className="border-l-4 border-apple-blue pl-4 italic my-4 text-gray-600 dark:text-gray-400">{parseInline(line.replace('> ', ''))}</blockquote>
+            }
+            
+            // 图片检测: ![alt](url)
+            const imgMatch = line.match(/!\[(.*?)\]\((.*?)\)/);
+            if (imgMatch) {
+                const cleanSrc = sanitizeUrl(imgMatch[2]);
+                return (
+                    <div key={i} className="my-4 group">
+                        <Img 
+                            src={cleanSrc} 
+                            alt={imgMatch[1]} 
+                            className="rounded-xl shadow-md cursor-zoom-in max-h-96 w-auto mx-auto hover:opacity-90 transition-opacity object-contain"
+                            onClick={() => setPreviewImage(cleanSrc)}
+                        />
+                        {imgMatch[1] && <p className="text-center text-xs text-gray-500 mt-2">{imgMatch[1]}</p>}
+                    </div>
+                );
+            }
+
+            if (line.trim() === '') return <br key={i} />;
+
+            return <p key={i} className="my-2 leading-relaxed text-gray-700 dark:text-gray-300">{parseInline(line)}</p>;
+        });
+
+        return { hasHtmlBlock, extractHtml, renderLines };
+    }, [content]);
 
     const runCode = () => {
-        const html = extractHtml(content);
+        const html = parsedContent.extractHtml(content);
         if (!html) return;
         
-        // 即使是“运行”功能，我们也可以考虑在一个隔离的 iframe 中运行，或者仅允许特定用户操作。
-        // 这里作为演示工具，我们保持原样，但实际生产中这是高危操作。
         const newWindow = window.open();
         if(newWindow) {
-            newWindow.document.write(html); // ⚠️ High Risk: In prod, verify user trust level or use sandboxed iframe
+            newWindow.document.write(html);
             newWindow.document.close();
         }
     };
 
     return (
         <div className="w-full">
-            {hasHtmlBlock && (
+            {parsedContent.hasHtmlBlock && (
                 <div className="flex justify-end space-x-2 mb-2">
                      <button onClick={() => setViewMode(viewMode === 'preview' ? 'code' : 'preview')} className="text-xs flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-300">
                          {viewMode === 'preview' ? <Code size={14} className="mr-1"/> : <Eye size={14} className="mr-1"/>}
@@ -292,56 +347,14 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
                 </pre>
             ) : (
                 <div className="prose prose-sm dark:prose-invert max-w-none text-apple-text dark:text-apple-dark-text">
-                     {content.split('\n').map((line, i) => {
-                        if (line.trim().startsWith('```')) return null; // 简单忽略代码块标记行
-                        
-                        if (line.startsWith('# ')) {
-                            const text = line.substring(2).trim();
-                            return <h1 key={i} id={text} className="text-xl font-bold my-4 text-apple-text dark:text-apple-dark-text scroll-mt-24">{parseInline(text)}</h1>;
-                        }
-                        if (line.startsWith('## ')) {
-                            const text = line.substring(3).trim();
-                            return <h2 key={i} id={text} className="text-lg font-bold my-3 text-apple-text dark:text-apple-dark-text scroll-mt-24">{parseInline(text)}</h2>;
-                        }
-                        if (line.startsWith('### ')) {
-                            const text = line.substring(4).trim();
-                            return <h3 key={i} id={text} className="text-base font-bold my-2 text-apple-text dark:text-apple-dark-text scroll-mt-24">{parseInline(text)}</h3>;
-                        }
-                        if (line.startsWith('* ') || line.startsWith('- ')) {
-                            return <li key={i} className="ml-4 list-disc my-1">{parseInline(line.substring(2))}</li>;
-                        }
-                        if (line.startsWith('> ')) {
-                            return <blockquote key={i} className="border-l-4 border-apple-blue pl-4 italic my-4 text-gray-600 dark:text-gray-400">{parseInline(line.replace('> ', ''))}</blockquote>
-                        }
-                        
-                        // 图片检测: ![alt](url)
-                        const imgMatch = line.match(/!\[(.*?)\]\((.*?)\)/);
-                        if (imgMatch) {
-                            const cleanSrc = sanitizeUrl(imgMatch[2]);
-                            return (
-                                <div key={i} className="my-4 group">
-                                    <Img 
-                                        src={cleanSrc} 
-                                        alt={imgMatch[1]} 
-                                        className="rounded-xl shadow-md cursor-zoom-in max-h-96 w-auto mx-auto hover:opacity-90 transition-opacity"
-                                        onClick={() => setPreviewImage(cleanSrc)}
-                                    />
-                                    {imgMatch[1] && <p className="text-center text-xs text-gray-500 mt-2">{imgMatch[1]}</p>}
-                                </div>
-                            );
-                        }
-
-                        if (line.trim() === '') return <br key={i} />;
-
-                        return <p key={i} className="my-2 leading-relaxed text-gray-700 dark:text-gray-300">{parseInline(line)}</p>;
-                     })}
+                     {parsedContent.renderLines()}
                 </div>
             )}
 
             <ImageViewer src={previewImage} onClose={() => setPreviewImage(null)} />
         </div>
     );
-};
+});
 
 // --- Markdown 编辑器组件 (React版 v-md-editor 替代品) ---
 interface MarkdownEditorProps {

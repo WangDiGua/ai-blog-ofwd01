@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { useStore } from '../../context/store';
 import { Button } from './atoms';
 import { Modal } from './modals';
@@ -159,10 +160,10 @@ export const Pagination = ({ page, totalPages, totalItems, onPageChange }: { pag
   );
 };
 
-// --- Toast 通知 ---
+// --- Toast 通知 (Portal) ---
 export const ToastContainer = () => {
     const { toasts } = useStore();
-    return (
+    return ReactDOM.createPortal(
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] space-y-2 pointer-events-none">
             {toasts.map(toast => (
                 <div 
@@ -175,11 +176,12 @@ export const ToastContainer = () => {
                     <span className="text-sm font-medium text-apple-text dark:text-apple-dark-text">{toast.message}</span>
                 </div>
             ))}
-        </div>
+        </div>,
+        document.body
     );
 };
 
-// --- 悬浮菜单 (精修版) ---
+// --- 悬浮菜单 (精修版 - Portal) ---
 export const FloatingMenu = () => {
     const { cycleFontSize, showFestive, toggleFestive, cycleSeasonMode, seasonMode } = useStore();
     const [showDonate, setShowDonate] = useState(false);
@@ -208,7 +210,7 @@ export const FloatingMenu = () => {
         { icon: Gift, action: toggleFestive, label: "节日氛围", color: showFestive ? 'text-red-500' : 'text-gray-600 dark:text-gray-300' },
     ];
 
-    return (
+    return ReactDOM.createPortal(
         <>
             <div className="fixed right-6 bottom-10 z-[90] flex flex-col items-center">
                 {/* 菜单项容器 */}
@@ -279,7 +281,8 @@ export const FloatingMenu = () => {
                     </div>
                 </div>
             </Modal>
-        </>
+        </>,
+        document.body
     );
 };
 

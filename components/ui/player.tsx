@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { useStore } from '../../context/store';
 import { ChevronLeft, SkipBack, SkipForward, Play, Pause, X } from 'lucide-react';
 
@@ -18,7 +19,7 @@ export const FullPlayerModal = () => {
 
     if (!isFullPlayerOpen || !currentSong) return null;
 
-    return (
+    return ReactDOM.createPortal(
         <div className="fixed inset-0 z-[100] bg-white/30 dark:bg-black/30 backdrop-blur-xl flex flex-col animate-in slide-in-from-bottom-10 duration-300">
              {/* 背景模糊 */}
              <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -80,6 +81,7 @@ export const FullPlayerModal = () => {
                      <button className="text-gray-500 hover:text-gray-900 dark:hover:text-white"><SkipForward size={32} /></button>
                  </div>
              </div>
-        </div>
+        </div>,
+        document.body
     );
 };

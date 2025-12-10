@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/store';
 import { debounce } from '../../utils/lib';
@@ -7,8 +8,24 @@ import { Article, Announcement } from '../../types';
 import { X, Search, Hash, Lock, Send, Bug, Lightbulb, Clock, ArrowUpRight, User } from 'lucide-react';
 import { Button, Spinner, MarkdownRenderer } from './atoms';
 
-// --- 基础模态框组件 ---
-export const Modal = ({ isOpen, onClose, title, children, className = '', hideHeader = false }: { isOpen: boolean, onClose: () => void, title?: string, children: React.ReactNode, className?: string, hideHeader?: boolean }) => {
+// --- 基础模态框组件 (Portal 版本) ---
+export const Modal = ({ 
+    isOpen, 
+    onClose, 
+    title, 
+    children, 
+    className = '', 
+    hideHeader = false,
+    variant = 'default' // 新增 variant 属性
+}: { 
+    isOpen: boolean, 
+    onClose: () => void, 
+    title?: string, 
+    children: React.ReactNode, 
+    className?: string, 
+    hideHeader?: boolean,
+    variant?: 'default' | 'transparent'
+}) => {
   // 禁止背景滚动
   useEffect(() => {
     if (isOpen) {
@@ -23,17 +40,26 @@ export const Modal = ({ isOpen, onClose, title, children, className = '', hideHe
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-24 px-4">
-      {/* 背景遮罩 - 增加模糊度到 xl，使用 fade-in-ios */}
+  // 根据变体选择基础样式
+  const baseContentClasses = variant === 'transparent'
+    ? "relative w-full max-h-[90vh] overflow-y-auto no-scrollbar transform transition-all animate-modal-spring"
+    : "relative bg-white dark:bg-gray-900 w-full rounded-3xl shadow-2xl p-6 transform transition-all animate-modal-spring max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-800";
+
+  // 如果 className 中没有指定 max-w，则默认使用 max-w-md
+  const maxWidthClass = className.includes('max-w-') ? '' : 'max-w-md';
+
+  // 使用 Portal 将模态框渲染到 body 节点，避免被父级 transform 属性影响 fixed 定位
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      {/* 背景遮罩 */}
       <div 
         className="absolute inset-0 bg-black/40 backdrop-blur-xl transition-opacity animate-fade-in-ios"
         onClick={onClose}
       />
       
-      {/* 内容 - 使用 modal-spring 动画 */}
-      <div className={`relative bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl p-6 transform transition-all animate-modal-spring max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-800 ${className}`}>
-        {!hideHeader && (
+      {/* 内容容器 */}
+      <div className={`${baseContentClasses} ${maxWidthClass} ${className}`}>
+        {!hideHeader && variant !== 'transparent' && (
             <div className="flex justify-between items-center mb-4 sticky top-0 bg-inherit z-10 pb-2">
                 {title && <h3 className="text-xl font-bold text-apple-text dark:text-apple-dark-text">{title}</h3>}
                 <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
@@ -43,7 +69,8 @@ export const Modal = ({ isOpen, onClose, title, children, className = '', hideHe
         )}
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -113,11 +140,11 @@ export const SearchModal = () => {
 
     if (!isSearchOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-24 px-4">
+    // SearchModal 也可以使用 Portal (为了保持一致性建议也改，但这里手动实现结构)
+    return ReactDOM.createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-24 px-4">
              <div className="absolute inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-xl transition-opacity animate-fade-in-ios" onClick={handleClose} />
              
-             {/* Search box uses slide-up-ios for a smoother entry from top area or just fade-scale */}
              <div className="relative w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden animate-modal-spring">
                  <div className="flex items-center p-4 border-b border-gray-100 dark:border-gray-800">
                      <Search className="text-gray-400 ml-2" size={20} />
@@ -168,7 +195,8 @@ export const SearchModal = () => {
                      )}
                  </div>
              </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
@@ -221,12 +249,15 @@ export const AnnouncementModal = ({ isOpen, onClose, data }: { isOpen: boolean, 
     if (!data) return null;
     
     // 使用 fixed height + flex column + hidden overflow on container to create a fixed modal with internal scroll
+    // Added !max-w-3xl to ensure it's wide enough and override default max-w-md
+    // Removed !p-0 to ensure padding is managed internally nicely or use !p-0 carefully. 
+    // Using overflow-hidden on container to ensure header/footer stay fixed.
     return (
         <Modal 
             isOpen={isOpen} 
             onClose={onClose} 
             hideHeader={true}
-            className="w-[90vw] md:w-[700px] !max-h-[80vh] h-[80vh] flex flex-col !p-0 overflow-hidden rounded-3xl"
+            className="!max-w-3xl w-full !max-h-[80vh] h-[80vh] flex flex-col !p-0 overflow-hidden rounded-3xl"
         >
             <div className="flex flex-col h-full">
                 {/* Custom Header */}
