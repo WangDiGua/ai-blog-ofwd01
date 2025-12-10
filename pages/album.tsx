@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, ImageViewer } from '../components/ui';
+import { Button, ImageViewer, DEFAULT_IMAGE } from '../components/ui';
 import { Download, Heart, Maximize2 } from 'lucide-react';
 import { useStore } from '../context/store';
 
@@ -13,16 +13,32 @@ interface Photo {
     likes: number;
 }
 
-// --- 懒加载图片组件 ---
+// --- 懒加载图片组件 (集成错误处理) ---
 const LazyImage = ({ src, alt, className, onClick }: { src: string; alt: string; className?: string; onClick?: () => void }) => {
     const [isLoaded, setIsLoaded] = useState(false);
+    const [hasError, setHasError] = useState(false);
+    const [imgSrc, setImgSrc] = useState(src);
     const imgRef = useRef<HTMLImageElement>(null);
+
+    useEffect(() => {
+        setImgSrc(src);
+        setHasError(false);
+        setIsLoaded(false);
+    }, [src]);
 
     useEffect(() => {
         if (imgRef.current?.complete) {
             setIsLoaded(true);
         }
     }, []);
+
+    const handleError = () => {
+        if (!hasError) {
+            setImgSrc(DEFAULT_IMAGE);
+            setHasError(true);
+            setIsLoaded(true); // 让骨架屏消失
+        }
+    };
 
     return (
         <div className={`relative overflow-hidden bg-gray-200 dark:bg-gray-800 ${className}`} onClick={onClick}>
@@ -31,11 +47,12 @@ const LazyImage = ({ src, alt, className, onClick }: { src: string; alt: string;
             
             <img 
                 ref={imgRef}
-                src={src} 
+                src={imgSrc} 
                 alt={alt}
                 loading="lazy"
                 onLoad={() => setIsLoaded(true)}
-                className={`w-full h-full object-cover transition-all duration-700 ease-in-out ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
+                onError={handleError}
+                className={`w-full h-full ${hasError ? 'object-contain p-4' : 'object-cover'} transition-all duration-700 ease-in-out ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
             />
         </div>
     );

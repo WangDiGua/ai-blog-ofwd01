@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Card, Button, Avatar } from '../components/ui';
+import { Card, Button, Avatar, Modal } from '../components/ui';
 import { useStore } from '../context/store';
 import { systemApi } from '../services/api';
-import { Copy, Mail, Send, CheckCircle, AtSign, Link as LinkIcon, Image as ImageIcon, PenTool } from 'lucide-react';
+import { Copy, Mail, Send, CheckCircle, AtSign, Link as LinkIcon, Image as ImageIcon, PenTool, ExternalLink, AlertTriangle } from 'lucide-react';
 
 const MY_SITE_INFO = {
     name: 'iBlog',
@@ -11,23 +11,27 @@ const MY_SITE_INFO = {
     desc: '用像素和爱构建数字体验。'
 };
 
-const FriendLinkCard = ({ name, url, avatar, desc }: any) => (
-    <a href={url} target="_blank" rel="noreferrer" className="group block">
+const FriendLinkCard = ({ name, url, avatar, desc, onClick }: any) => (
+    <div onClick={() => onClick(url)} className="group block cursor-pointer">
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex items-start space-x-4">
             <Avatar src={avatar} alt={name} size="md" className="group-hover:rotate-12 transition-transform duration-300" />
             <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-apple-text dark:text-apple-dark-text group-hover:text-apple-blue transition-colors truncate">{name}</h4>
+                <h4 className="font-bold text-apple-text dark:text-apple-dark-text group-hover:text-apple-blue transition-colors truncate flex items-center">
+                    {name} 
+                    <ExternalLink size={12} className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400" />
+                </h4>
                 <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">{desc}</p>
             </div>
         </div>
-    </a>
+    </div>
 );
 
 export const FriendLinks = () => {
-    const { showToast } = useStore();
+    const { showToast, requireAuth } = useStore();
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({ name: '', url: '', avatar: '', desc: '' });
+    const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
     // 模拟已有友链
     const links = [
@@ -59,6 +63,23 @@ export const FriendLinks = () => {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleLinkClick = (url: string) => {
+        setRedirectUrl(url);
+    };
+
+    const confirmRedirect = () => {
+        if (redirectUrl) {
+            window.open(redirectUrl, '_blank');
+            setRedirectUrl(null);
+        }
+    };
+
+    const handleOpenForm = () => {
+        requireAuth(() => {
+            setIsFormOpen(true);
+        });
     };
 
     return (
@@ -125,7 +146,7 @@ export const FriendLinks = () => {
                         <h3 className="text-lg font-bold text-apple-text dark:text-apple-dark-text mb-6">小伙伴们</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {links.map((link, idx) => (
-                                <FriendLinkCard key={idx} {...link} />
+                                <FriendLinkCard key={idx} {...link} onClick={handleLinkClick} />
                             ))}
                         </div>
                     </div>
@@ -138,7 +159,7 @@ export const FriendLinks = () => {
                         {/* 状态 1: 信封 (未打开) */}
                         {!isFormOpen && (
                             <div 
-                                onClick={() => setIsFormOpen(true)}
+                                onClick={handleOpenForm}
                                 className="relative cursor-pointer group animate-in zoom-in duration-500"
                             >
                                 <div className="w-64 h-48 bg-gradient-to-br from-orange-100 to-yellow-100 dark:from-orange-900/40 dark:to-yellow-900/40 rounded-xl shadow-2xl flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 border border-orange-200 dark:border-orange-800">
@@ -149,7 +170,7 @@ export const FriendLinks = () => {
                                 </div>
                                 <div className="text-center mt-8">
                                     <p className="text-lg font-bold text-gray-700 dark:text-gray-300">申请友链</p>
-                                    <p className="text-sm text-gray-400">点击信封，投递你的名片</p>
+                                    <p className="text-sm text-gray-400">点击信封，投递你的名片（需登录）</p>
                                 </div>
                             </div>
                         )}
@@ -211,6 +232,27 @@ export const FriendLinks = () => {
                     </div>
                 </div>
             </div>
+
+            {/* 安全跳转提示弹窗 */}
+            <Modal isOpen={!!redirectUrl} onClose={() => setRedirectUrl(null)} title="外链跳转提示">
+                <div className="flex flex-col items-center text-center p-4">
+                    <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mb-4">
+                        <AlertTriangle className="text-yellow-600 dark:text-yellow-500" size={32} />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">即将离开本站</h3>
+                    <div className="text-gray-500 dark:text-gray-400 text-sm mb-6 leading-relaxed">
+                        <p>您即将前往外部网站：</p>
+                        <div className="my-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-apple-blue font-mono break-all text-xs">
+                            {redirectUrl}
+                        </div>
+                        <p>请注意保护个人隐私和财产安全，谨防诈骗。</p>
+                    </div>
+                    <div className="flex space-x-4 w-full">
+                        <Button variant="secondary" className="flex-1" onClick={() => setRedirectUrl(null)}>取消</Button>
+                        <Button className="flex-1" onClick={confirmRedirect}>继续前往</Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };

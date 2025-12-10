@@ -1,9 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { Github, Twitter, Mail, Heart, Shield, BarChart3, Code, Cpu } from 'lucide-react';
 
+// --- 数字滚动动画组件 ---
+const NumberTicker = ({ value, start }: { value: number, start: boolean }) => {
+    const [count, setCount] = useState(start ? 0 : value); // 初始状态
+
+    useEffect(() => {
+        if (!start) {
+            setCount(value); // 如果不动画，直接显示值
+            return;
+        }
+        
+        let startTimestamp: number | null = null;
+        const duration = 1500; // 动画时长 1.5s
+        
+        const step = (timestamp: number) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            
+            // EaseOutExpo 缓动效果
+            const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+            
+            setCount(Math.floor(ease * value));
+            
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        
+        window.requestAnimationFrame(step);
+    }, [start, value]);
+
+    return <>{count.toLocaleString()}</>;
+};
+
 export const Footer = () => {
   // 模拟访客统计数据
   const [visitorStats, setVisitorStats] = useState({ total: 102456, today: 128 });
+  const [isHoveringStats, setIsHoveringStats] = useState(false);
 
   useEffect(() => {
     // 模拟数据动态增长效果
@@ -54,22 +88,26 @@ export const Footer = () => {
                 </div>
             </div>
 
-             {/* 3. 访客统计 */}
+             {/* 3. 访客统计 (带悬浮动画) */}
             <div className="space-y-4">
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center">
                     <BarChart3 size={16} className="mr-2 text-apple-blue"/> 访客统计
                 </h4>
-                <div className="grid grid-cols-2 gap-4">
-                     <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+                <div 
+                    className="grid grid-cols-2 gap-4 cursor-crosshair"
+                    onMouseEnter={() => setIsHoveringStats(true)}
+                    onMouseLeave={() => setIsHoveringStats(false)}
+                >
+                     <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800 group hover:border-apple-blue/30 transition-colors">
                          <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">总访客量</div>
                          <div className="text-lg font-mono font-bold text-gray-800 dark:text-gray-200">
-                            {visitorStats.total.toLocaleString()}
+                            <NumberTicker value={visitorStats.total} start={isHoveringStats} />
                          </div>
                      </div>
-                     <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+                     <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800 group hover:border-green-500/30 transition-colors">
                          <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">今日访客</div>
                          <div className="text-lg font-mono font-bold text-green-500 flex items-center">
-                            {visitorStats.today.toLocaleString()}
+                            <NumberTicker value={visitorStats.today} start={isHoveringStats} />
                             <span className="w-1.5 h-1.5 bg-green-500 rounded-full ml-2 animate-pulse"></span>
                          </div>
                      </div>

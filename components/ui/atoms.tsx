@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Play, Code, Eye, X, Bold, Italic, List, Link as LinkIcon, Image as ImageIcon, Heading, Quote, Crown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Play, Code, Eye, X, Bold, Italic, List, Link as LinkIcon, Image as ImageIcon, Heading, Quote, Crown, ImageOff } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { CultivationLevel } from '../../types';
 
@@ -10,6 +10,42 @@ const sanitize = (html: string) => {
     ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'code', 'pre', 'blockquote', 'h1', 'h2', 'h3', 'span', 'div', 'img'],
     ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'src', 'alt', 'style'],
   });
+};
+
+// --- 通用默认图片常量 ---
+export const DEFAULT_IMAGE = "https://placehold.co/800x600/f3f4f6/9ca3af?text=No+Image";
+export const DEFAULT_AVATAR = "https://ui-avatars.com/api/?name=User&background=random";
+
+// --- 增强版图片组件 (带自动回退) ---
+interface ImgProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+    fallbackSrc?: string;
+}
+
+export const Img = ({ src, alt, className, fallbackSrc = DEFAULT_IMAGE, ...props }: ImgProps) => {
+    const [imgSrc, setImgSrc] = useState(src || fallbackSrc);
+    const [hasError, setHasError] = useState(false);
+
+    useEffect(() => {
+        setImgSrc(src || fallbackSrc);
+        setHasError(false);
+    }, [src, fallbackSrc]);
+
+    const handleError = () => {
+        if (!hasError) {
+            setImgSrc(fallbackSrc);
+            setHasError(true);
+        }
+    };
+
+    return (
+        <img
+            src={imgSrc}
+            alt={alt}
+            className={`${className} ${hasError ? 'object-contain bg-gray-100 dark:bg-gray-800' : 'object-cover'}`}
+            onError={handleError}
+            {...props}
+        />
+    );
 };
 
 // --- 等级徽章组件 ---
@@ -99,8 +135,16 @@ export const Button = ({ children, variant = 'primary', size = 'md', className =
   );
 };
 
-// --- 头像组件 ---
+// --- 头像组件 (带错误处理) ---
 export const Avatar = ({ src, alt, size = 'md', className = '' }: { src: string; alt: string; size?: 'sm' | 'md' | 'lg' | 'xl', className?: string }) => {
+  const [imgSrc, setImgSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setImgSrc(src);
+    setHasError(false);
+  }, [src]);
+
   const sizes = {
     sm: "w-8 h-8",
     md: "w-10 h-10",
@@ -109,12 +153,18 @@ export const Avatar = ({ src, alt, size = 'md', className = '' }: { src: string;
   };
 
   // 简单的 XSS 防护，防止 src 注入 javascript:
-  const safeSrc = src.replace(/script:/gi, '');
+  const safeSrc = (imgSrc || '').replace(/script:/gi, '');
 
   return (
     <img 
-      src={safeSrc} 
+      src={safeSrc || DEFAULT_AVATAR} 
       alt={alt} 
+      onError={() => {
+          if(!hasError) {
+              setImgSrc(DEFAULT_AVATAR);
+              setHasError(true);
+          }
+      }}
       className={`${sizes[size]} rounded-full object-cover border border-gray-100 dark:border-gray-800 shadow-sm ${className}`}
     />
   );
@@ -140,10 +190,11 @@ export const ImageViewer = ({ src, onClose }: { src: string | null, onClose: () 
             <button className="absolute top-4 right-4 text-white/70 hover:text-white p-2 transition-colors">
                 <X size={32} />
             </button>
-            <img 
+            <Img 
                 src={safeSrc} 
                 className="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl object-contain animate-in zoom-in-95 duration-200" 
                 onClick={(e) => e.stopPropagation()} 
+                alt="Full preview"
             />
         </div>
     );
@@ -194,7 +245,7 @@ const parseInline = (text: string) => {
     return <span dangerouslySetInnerHTML={{ __html: sanitize(safeText) }} />;
 };
 
-// --- Markdown/代码渲染器 ---
+// --- Markdown/代码渲染器 (集成 Img 组件) ---
 export const MarkdownRenderer = ({ content }: { content: string }) => {
     const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
     const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -220,9 +271,6 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
         }
     };
 
-    // 如果 content 本身就是 HTML 且不是 markdown，使用 DOMPurify
-    // 这里我们假设 content 主要是 Markdown
-    
     return (
         <div className="w-full">
             {hasHtmlBlock && (
@@ -245,8 +293,6 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
                 <div className="prose prose-sm dark:prose-invert max-w-none text-apple-text dark:text-apple-dark-text">
                      {content.split('\n').map((line, i) => {
                         if (line.trim().startsWith('```')) return null; // 简单忽略代码块标记行
-                        
-                        // 防止 XSS: 即使我们解析 Markdown，也要确保内容被清洗
                         
                         if (line.startsWith('# ')) {
                             const text = line.substring(2).trim();
@@ -273,7 +319,7 @@ export const MarkdownRenderer = ({ content }: { content: string }) => {
                             const cleanSrc = sanitizeUrl(imgMatch[2]);
                             return (
                                 <div key={i} className="my-4 group">
-                                    <img 
+                                    <Img 
                                         src={cleanSrc} 
                                         alt={imgMatch[1]} 
                                         className="rounded-xl shadow-md cursor-zoom-in max-h-96 w-auto mx-auto hover:opacity-90 transition-opacity"

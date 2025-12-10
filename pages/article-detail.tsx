@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStore } from '../context/store';
-import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, MarkdownEditor, ImageViewer, Modal, RankBadge } from '../components/ui';
+import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, MarkdownEditor, ImageViewer, Modal, RankBadge, Img } from '../components/ui';
 import { articleApi } from '../services/api';
 import { Article, Comment, CULTIVATION_LEVELS, CultivationLevel } from '../types';
 import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash, ShieldAlert, Share2, Download, ExternalLink, Hourglass, Lock } from 'lucide-react';
@@ -274,7 +274,7 @@ export const ArticleDetail = () => {
                 className="rounded-xl md:rounded-3xl overflow-hidden mb-8 md:mb-10 shadow-lg cursor-zoom-in relative group aspect-video"
                 onClick={() => setPreviewCover(true)}
             >
-                <img src={article.cover} alt="Cover" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <Img src={article.cover} alt="Cover" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 transition-opacity pointer-events-none">
                      <span className="text-white text-xs md:text-sm bg-black/50 px-3 py-1 rounded-full backdrop-blur-sm">查看大图</span>
                 </div>
@@ -396,7 +396,7 @@ export const ArticleDetail = () => {
 
                       {/* 封面图 */}
                       <div className="rounded-2xl overflow-hidden mb-5 shadow-lg relative aspect-video">
-                          <img src={article.cover} alt="Cover" className="w-full h-full object-cover" />
+                          <Img src={article.cover} alt="Cover" className="w-full h-full object-cover" />
                           <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-md font-bold tracking-wider">
                               精选文章
                           </div>

@@ -77,6 +77,8 @@ console.log(greeting);
 我们正处于一个激动人心的时代。
 `;
 
+const TAG_POOL = ['Frontend', 'React', 'Design', 'Performance', 'Web', 'CSS', 'JS', 'TS', 'Vite', 'NextJS', 'AI', 'Rust', 'UI/UX'];
+
 export const MOCK_ARTICLES: Article[] = Array.from({ length: 10 }).map((_, i) => ({
     id: `art-${i + 1}`,
     title: [
@@ -97,7 +99,8 @@ export const MOCK_ARTICLES: Article[] = Array.from({ length: 10 }).map((_, i) =>
     views: Math.floor(Math.random() * 10000) + 500,
     likes: Math.floor(Math.random() * 1000) + 50,
     category: i % 3 === 0 ? 'Tech' : i % 3 === 1 ? 'Design' : 'Life',
-    tags: ['Frontend', 'React', 'Design', 'Performance'].sort(() => 0.5 - Math.random()).slice(0, 2),
+    // 随机生成 2-5 个标签
+    tags: TAG_POOL.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 4) + 2),
     date: new Date(Date.now() - i * 86400000).toLocaleDateString(),
     comments: [], // 评论单独模拟
     authorId: MOCK_USERS[i % MOCK_USERS.length].id,

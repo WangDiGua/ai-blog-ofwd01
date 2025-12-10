@@ -3,6 +3,7 @@ import { musicApi } from '../services/api';
 import { Song } from '../types';
 import { useStore } from '../context/store';
 import { Play, Pause } from 'lucide-react';
+import { Img } from '../components/ui';
 
 export const MusicPage = () => {
   const [songs, setSongs] = useState<Song[]>([]);
@@ -23,7 +24,7 @@ export const MusicPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
         <div className="flex flex-col items-center justify-center p-6 md:p-8 bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-900 dark:to-black rounded-3xl shadow-inner border border-white/20">
            <div className={`w-48 h-48 md:w-80 md:h-80 rounded-2xl shadow-2xl overflow-hidden mb-6 md:mb-8 transition-transform duration-700 ease-spring ${isPlaying ? 'scale-105' : 'scale-100'}`}>
-              <img 
+              <Img 
                 src={currentSong ? currentSong.cover : "https://picsum.photos/seed/music/400/400"} 
                 alt="Album Art" 
                 className="w-full h-full object-cover"
@@ -73,7 +74,7 @@ export const MusicPage = () => {
                    )}
                    <Play size={12} className="hidden group-hover:inline text-apple-blue mx-auto" />
                 </div>
-                <img src={song.cover} alt="art" className="w-10 h-10 rounded-md shadow-sm mr-3 md:mr-4" />
+                <Img src={song.cover} alt="art" className="w-10 h-10 rounded-md shadow-sm mr-3 md:mr-4" />
                 <div className="flex-1 min-w-0">
                    <h4 className={`text-sm font-semibold truncate ${currentSong?.id === song.id ? 'text-apple-blue' : 'text-apple-text dark:text-apple-dark-text'}`}>{song.title}</h4>
                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{song.artist}</p>
