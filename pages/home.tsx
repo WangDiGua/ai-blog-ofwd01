@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, Pagination, Img } from '../components/ui';
 import { articleApi } from '../services/api';
@@ -17,6 +17,9 @@ export const Home = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [trendingTags, setTrendingTags] = useState(['#React19', '#TailwindCSS', '#UXDesign']);
+  
+  // React 18 Concurrent Feature
+  const [isPending, startTransition] = useTransition();
   
   const searchParams = new URLSearchParams(location.search);
   
@@ -73,21 +76,28 @@ export const Home = () => {
   };
 
   const handleCategoryClick = (cat: string) => {
-      updateParams('category', cat);
-      setPage(1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // 使用 startTransition 标记低优先级更新，保持 UI (如按钮点击态) 响应迅速
+      startTransition(() => {
+          updateParams('category', cat);
+          setPage(1);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
   };
 
   const handleTagClick = (tag: string) => {
-      updateParams('tag', tag);
-      setPage(1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      startTransition(() => {
+          updateParams('tag', tag);
+          setPage(1);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
   };
 
   const clearFilters = () => {
-      navigate({ search: '' });
-      setPage(1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      startTransition(() => {
+          navigate({ search: '' });
+          setPage(1);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
   };
 
   return (
@@ -104,7 +114,7 @@ export const Home = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* 主要内容 */}
-        <div className="lg:col-span-8 space-y-6 md:space-y-8">
+        <div className={`lg:col-span-8 space-y-6 md:space-y-8 transition-opacity duration-300 ${isPending ? 'opacity-70' : 'opacity-100'}`}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 sm:gap-0">
             <h2 className="text-xl md:text-2xl font-bold text-apple-text dark:text-apple-dark-text">
                 {currentTag ? `标签: ${currentTag}` : '最新文章'}

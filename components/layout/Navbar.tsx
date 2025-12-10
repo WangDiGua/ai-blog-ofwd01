@@ -4,6 +4,7 @@ import { Search, Menu, X, ShieldAlert, ChevronDown } from 'lucide-react';
 import { useStore } from '../../context/store';
 import { Button, Avatar, ThemeToggle, Modal, ToastContainer, FloatingMenu, SearchModal, FullPlayerModal, AdminLoginModal, FestiveWidget } from '../ui';
 import { AuthForm } from '../auth/AuthForm';
+import { throttle } from '../../utils/lib'; // Import throttle
 
 export const Navbar = () => {
   const navigate = useNavigate();
@@ -20,7 +21,8 @@ export const Navbar = () => {
   const navRefs = useRef<(HTMLAnchorElement | HTMLDivElement | null)[]>([]);
   
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    // 节流滚动事件，每 100ms 触发一次，减少重渲染频率
+    const handleScroll = throttle(() => setIsScrolled(window.scrollY > 20), 100);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);

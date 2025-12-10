@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { useStore } from '../../context/store';
+import { useStore, ThemeMode } from '../../context/store';
 import { Button } from './atoms';
 import { Modal } from './modals';
 import { authApi } from '../../services/api/auth';
-import { ArrowUp, Type, Coffee, Sun, Moon, Eye, CheckCircle, AlertCircle, Info, Gift, RefreshCw, CloudSun, Command, X } from 'lucide-react';
+import { ArrowUp, Type, Coffee, Sun, Moon, Eye, CheckCircle, AlertCircle, Info, Gift, RefreshCw, CloudSun, Command, X, Cloud } from 'lucide-react';
 
 // --- 全局自定义光标 ---
 export const CustomCursor = () => {
@@ -73,52 +73,150 @@ export const CustomCursor = () => {
     );
 };
 
-// --- 动画主题切换 (三态：亮色/暗色/护眼) ---
+// --- 全屏主题切换遮罩动画 ---
+export const ThemeTransitionOverlay = () => {
+    const { isThemeAnimating, transitionStage, theme, previousTheme } = useStore();
+
+    // 锁定滚动并处理滚动条抖动
+    useEffect(() => {
+        if (isThemeAnimating) {
+            // 1. 计算滚动条宽度 (窗口总宽度 - 可视区域宽度)
+            const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+            
+            // 2. 锁定滚动
+            document.body.style.overflow = 'hidden';
+            
+            // 3. 如果存在滚动条，添加右内边距以填补空间，防止页面内容跳动
+            if (scrollbarWidth > 0) {
+                document.body.style.paddingRight = `${scrollbarWidth}px`;
+                
+                // 同时处理 Fixed 定位的 Navbar (假设是 <nav> 标签)
+                const nav = document.querySelector('nav');
+                if (nav) {
+                    nav.style.paddingRight = `${scrollbarWidth}px`;
+                }
+            }
+        } else {
+            // 恢复初始状态
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+            const nav = document.querySelector('nav');
+            if (nav) {
+                nav.style.paddingRight = '';
+            }
+        }
+        
+        // 清理函数
+        return () => { 
+            document.body.style.overflow = ''; 
+            document.body.style.paddingRight = '';
+            const nav = document.querySelector('nav');
+            if (nav) {
+                nav.style.paddingRight = '';
+            }
+        };
+    }, [isThemeAnimating]);
+
+    if (!isThemeAnimating) return null;
+
+    // 获取背景色
+    const getBgColor = (mode: ThemeMode) => {
+        switch (mode) {
+            case 'light': return 'bg-sky-200'; // 浅色背景
+            case 'dark': return 'bg-slate-900'; // 深色背景
+            case 'eye': return 'bg-[#f3ebd6]'; // 护眼背景 (暖色)
+            default: return 'bg-sky-200';
+        }
+    };
+
+    // 背景色过渡: 下落阶段使用旧主题色，升起阶段使用新主题色
+    const containerClass = transitionStage === 'setting' ? getBgColor(previousTheme) : getBgColor(theme);
+
+    // 渲染天体 (太阳/月亮)
+    const CelestialBody = ({ type, position }: { type: ThemeMode, position: 'center' | 'bottom' | 'hidden' }) => {
+        let Icon = Sun;
+        let colorClass = "text-yellow-500 fill-yellow-500 drop-shadow-[0_0_30px_rgba(250,204,21,0.6)]";
+        let bgGlow = "bg-yellow-400/20";
+
+        if (type === 'dark') {
+            Icon = Moon;
+            colorClass = "text-gray-200 fill-gray-200 drop-shadow-[0_0_30px_rgba(255,255,255,0.4)]";
+            bgGlow = "bg-white/10";
+        } else if (type === 'eye') {
+            Icon = Eye; 
+            colorClass = "text-green-600 fill-green-100 drop-shadow-[0_0_30px_rgba(74,222,128,0.4)]";
+            bgGlow = "bg-green-400/20";
+        }
+
+        // 位置样式
+        let posStyle = {};
+        if (position === 'center') {
+            posStyle = { top: '50%', transform: 'translate(-50%, -50%)', opacity: 1 };
+        } else if (position === 'bottom') {
+            posStyle = { top: '120%', transform: 'translate(-50%, 0)', opacity: 1 }; // 沉入底部
+        } else {
+            posStyle = { top: '120%', transform: 'translate(-50%, 0)', opacity: 0 }; // 初始隐藏
+        }
+
+        return (
+            <div 
+                className={`absolute left-1/2 transition-all duration-[1500ms] ease-in-out z-20`}
+                style={posStyle}
+            >
+                <div className={`w-32 h-32 md:w-64 md:h-64 rounded-full flex items-center justify-center ${bgGlow} backdrop-blur-sm`}>
+                    <Icon size={80} className={`md:w-40 md:h-40 ${colorClass}`} />
+                </div>
+            </div>
+        );
+    };
+
+    return ReactDOM.createPortal(
+        <div className={`fixed inset-0 z-[10000] pointer-events-auto transition-colors duration-[1500ms] ease-in-out ${containerClass} flex items-center justify-center overflow-hidden`}>
+            {/* 装饰云层 */}
+            <div className={`absolute top-20 left-20 text-white/20 transition-transform duration-[3000ms] ${transitionStage === 'setting' ? '-translate-x-10' : 'translate-x-10'}`}>
+                <Cloud size={120} fill="currentColor" />
+            </div>
+            <div className={`absolute bottom-40 right-20 text-white/10 transition-transform duration-[3000ms] ${transitionStage === 'setting' ? 'translate-x-10' : '-translate-x-10'}`}>
+                <Cloud size={180} fill="currentColor" />
+            </div>
+
+            {/* 旧天体 (负责下落) */}
+            <CelestialBody 
+                type={previousTheme} 
+                position={transitionStage === 'setting' ? 'bottom' : 'hidden'} 
+            />
+
+            {/* 新天体 (负责升起) */}
+            <CelestialBody 
+                type={theme} 
+                position={transitionStage === 'rising' ? 'center' : 'bottom'} 
+            />
+            
+            {/* 文字提示 */}
+            <div className="absolute bottom-10 text-center w-full transition-opacity duration-500 opacity-50 text-apple-text dark:text-white font-mono text-sm tracking-widest uppercase">
+                {transitionStage === 'setting' ? 'Switching Theme...' : 'Almost there...'}
+            </div>
+        </div>,
+        document.body
+    );
+};
+
+// --- 动画主题切换按钮 (简化版) ---
 export const ThemeToggle = () => {
-  const { theme, toggleTheme } = useStore();
+  const { theme, toggleTheme, isThemeAnimating } = useStore();
 
   return (
     <button
       onClick={toggleTheme}
-      className="relative w-10 h-10 rounded-full overflow-hidden focus:outline-none transition-colors duration-500 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800"
+      disabled={isThemeAnimating}
+      className="relative w-10 h-10 rounded-full overflow-hidden focus:outline-none transition-colors duration-500 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
       aria-label="切换主题"
       title={`当前模式: ${theme === 'dark' ? '深色' : theme === 'eye' ? '护眼' : '浅色'}`}
     >
        <div className="absolute inset-0 flex items-center justify-center">
-          
-          {/* 太阳 (浅色) */}
-          <div 
-            className="absolute transition-all duration-500 ease-out"
-            style={{ 
-              transform: theme === 'light' ? 'translateY(0) scale(1)' : 'translateY(150%) scale(0.5)',
-              opacity: theme === 'light' ? 1 : 0
-            }}
-          >
-             <Sun className="text-orange-500 fill-orange-500" size={24} />
-          </div>
-
-          {/* 月亮 (深色) */}
-          <div 
-            className="absolute transition-all duration-500 ease-out"
-            style={{ 
-              transform: theme === 'dark' ? 'translateY(0) scale(1)' : theme === 'light' ? 'translateY(150%) scale(0.5)' : 'translateY(-150%) scale(0.5)',
-              opacity: theme === 'dark' ? 1 : 0
-            }}
-          >
-             <Moon className="text-yellow-300 fill-yellow-300" size={24} />
-          </div>
-
-          {/* 眼睛 (护眼) */}
-          <div 
-            className="absolute transition-all duration-500 ease-out"
-            style={{ 
-              transform: theme === 'eye' ? 'translateY(0) scale(1)' : 'translateY(-150%) scale(0.5)',
-              opacity: theme === 'eye' ? 1 : 0
-            }}
-          >
-             <Eye className="text-green-600 fill-green-100" size={24} />
-          </div>
-
+          {theme === 'light' && <Sun className="text-orange-500 fill-orange-500 animate-in zoom-in duration-300" size={24} />}
+          {theme === 'dark' && <Moon className="text-yellow-300 fill-yellow-300 animate-in zoom-in duration-300" size={24} />}
+          {theme === 'eye' && <Eye className="text-green-600 fill-green-100 animate-in zoom-in duration-300" size={24} />}
        </div>
     </button>
   );
@@ -126,7 +224,6 @@ export const ThemeToggle = () => {
 
 // --- 分页组件 (带总数) ---
 export const Pagination = ({ page, totalPages, totalItems, onPageChange }: { page: number, totalPages: number, totalItems?: number, onPageChange: (p: number) => void }) => {
-  // ... (No changes to Pagination logic, keeping it compact)
   const getPageNumbers = () => {
       const pages = [];
       for (let i = 1; i <= totalPages; i++) {

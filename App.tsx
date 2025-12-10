@@ -2,20 +2,27 @@ import React, { Suspense, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AppProvider } from './context/store';
 import { Navbar, Footer, MiniPlayer } from './components/layout';
-import { Spinner, CustomCursor } from './components/ui';
+import { Spinner, CustomCursor, ThemeTransitionOverlay } from './components/ui';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
-// Page Imports
-import { Home } from './pages/home';
-import { ArticleDetail } from './pages/article-detail';
-import { Profile } from './pages/profile';
-import { Community } from './pages/community';
-import { MusicPage } from './pages/music';
-import { Tools } from './pages/tools';
-import { About } from './pages/about';
-import { Contact } from './pages/contact';
-import { AIAssistant } from './pages/ai';
-import { StartPage, MessageBoard, Album, Timeline, FriendLinks } from './pages/views';
+// --- Lazy Load Pages ---
+// 使用 React.lazy 动态导入组件，实现代码分割，减小首屏体积
+const Home = React.lazy(() => import('./pages/home').then(module => ({ default: module.Home })));
+const ArticleDetail = React.lazy(() => import('./pages/article-detail').then(module => ({ default: module.ArticleDetail })));
+const Profile = React.lazy(() => import('./pages/profile').then(module => ({ default: module.Profile })));
+const Community = React.lazy(() => import('./pages/community').then(module => ({ default: module.Community })));
+const MusicPage = React.lazy(() => import('./pages/music').then(module => ({ default: module.MusicPage })));
+const Tools = React.lazy(() => import('./pages/tools').then(module => ({ default: module.Tools })));
+const About = React.lazy(() => import('./pages/about').then(module => ({ default: module.About })));
+const Contact = React.lazy(() => import('./pages/contact').then(module => ({ default: module.Contact })));
+const AIAssistant = React.lazy(() => import('./pages/ai').then(module => ({ default: module.AIAssistant })));
+
+// 批量导入 views 中的组件 (也需要 Lazy Load)
+const StartPage = React.lazy(() => import('./pages/views').then(module => ({ default: module.StartPage })));
+const MessageBoard = React.lazy(() => import('./pages/views').then(module => ({ default: module.MessageBoard })));
+const Album = React.lazy(() => import('./pages/views').then(module => ({ default: module.Album })));
+const Timeline = React.lazy(() => import('./pages/views').then(module => ({ default: module.Timeline })));
+const FriendLinks = React.lazy(() => import('./pages/views').then(module => ({ default: module.FriendLinks })));
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -71,6 +78,7 @@ const App = () => {
 
   return (
     <AppProvider>
+      <ThemeTransitionOverlay />
       <Router>
         <div className="min-h-screen flex flex-col bg-apple-bg text-apple-text dark:bg-apple-dark-bg dark:text-apple-dark-text font-sans selection:bg-apple-blue selection:text-white transition-colors duration-500 ease-ios">
           <ScrollToTop />
@@ -78,7 +86,7 @@ const App = () => {
           
           <LayoutWrapper>
             <Suspense fallback={
-              <div className="flex items-center justify-center h-[60vh]">
+              <div className="flex items-center justify-center h-[60vh] w-full">
                 <Spinner />
               </div>
             }>
