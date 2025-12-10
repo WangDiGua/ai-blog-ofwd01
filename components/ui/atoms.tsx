@@ -86,7 +86,7 @@ export const Card = ({ children, className = '', hover = false, ...props }: Card
     <div 
       className={`
         bg-apple-card dark:bg-apple-dark-card rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden
-        transition-all duration-300 ease-out
+        transition-all duration-300 ease-ios
         ${hover ? 'hover:shadow-md hover:scale-[1.01] hover:-translate-y-1' : ''}
         ${className}
       `}
@@ -109,14 +109,15 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = ({ children, variant = 'primary', size = 'md', className = '', ...props }: ButtonProps) => {
-  const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
+  // Use 'ease-ios' and updated active:scale behavior
+  const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-200 ease-ios focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
   
   const variants = {
-    primary: "bg-apple-blue text-white hover:bg-blue-600 shadow-sm active:scale-95",
-    secondary: "bg-gray-100 dark:bg-gray-800 text-apple-text dark:text-apple-dark-text hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95",
-    ghost: "bg-transparent text-apple-blue hover:bg-blue-50/50 dark:hover:bg-blue-900/20",
-    danger: "bg-red-500 text-white hover:bg-red-600 active:scale-95",
-    vip: "bg-gradient-to-r from-yellow-400 to-orange-500 text-white hover:shadow-lg hover:shadow-yellow-500/30 active:scale-95 border border-yellow-300/50"
+    primary: "bg-apple-blue text-white hover:bg-blue-600 shadow-sm active:scale-90 hover:scale-[1.02]",
+    secondary: "bg-gray-100 dark:bg-gray-800 text-apple-text dark:text-apple-dark-text hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-90 hover:scale-[1.02]",
+    ghost: "bg-transparent text-apple-blue hover:bg-blue-50/50 dark:hover:bg-blue-900/20 active:scale-90",
+    danger: "bg-red-500 text-white hover:bg-red-600 active:scale-90 hover:scale-[1.02]",
+    vip: "bg-gradient-to-r from-yellow-400 to-orange-500 text-white hover:shadow-lg hover:shadow-yellow-500/30 active:scale-90 border border-yellow-300/50 hover:scale-[1.02]"
   };
 
   const sizes = {
@@ -165,7 +166,7 @@ export const Avatar = ({ src, alt, size = 'md', className = '' }: { src: string;
               setHasError(true);
           }
       }}
-      className={`${sizes[size]} rounded-full object-cover border border-gray-100 dark:border-gray-800 shadow-sm ${className}`}
+      className={`${sizes[size]} rounded-full object-cover border border-gray-100 dark:border-gray-800 shadow-sm transition-transform duration-300 ease-ios hover:scale-105 ${className}`}
     />
   );
 };
@@ -184,7 +185,7 @@ export const ImageViewer = ({ src, onClose }: { src: string | null, onClose: () 
     const safeSrc = src.replace(/script:/gi, '');
     return (
         <div 
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fade-in-ios"
             onClick={onClose}
         >
             <button className="absolute top-4 right-4 text-white/70 hover:text-white p-2 transition-colors">
@@ -192,7 +193,7 @@ export const ImageViewer = ({ src, onClose }: { src: string | null, onClose: () 
             </button>
             <Img 
                 src={safeSrc} 
-                className="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl object-contain animate-in zoom-in-95 duration-200" 
+                className="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl object-contain animate-modal-spring" 
                 onClick={(e) => e.stopPropagation()} 
                 alt="Full preview"
             />

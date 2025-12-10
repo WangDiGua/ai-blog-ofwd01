@@ -13,10 +13,9 @@ export const AIAssistant = () => {
     const [loading, setLoading] = useState(false);
     const [showThinking, setShowThinking] = useState(false);
     const [history, setHistory] = useState<{id: string, title: string, date: string}[]>([]);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false); // 移动端侧边栏状态
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // 限制逻辑
     const MAX_USAGE = user?.role === 'vip' ? 20 : 10;
     const remaining = MAX_USAGE - (user?.aiUsage || 0);
 
@@ -29,7 +28,6 @@ export const AIAssistant = () => {
     }, [messages, loading]);
 
     useEffect(() => {
-        // 加载模拟历史记录
         aiApi.getHistory().then((data) => setHistory(data));
     }, []);
 
@@ -59,29 +57,20 @@ export const AIAssistant = () => {
             setInput('');
             setLoading(true);
 
-            // 模拟思考过程
             if (showThinking) {
                 await new Promise(r => setTimeout(r, 1500));
             }
 
             try {
-                // 初始化 Google GenAI
-                // 优先使用 Vite 环境变量，回退到 process.env.API_KEY
-                const apiKey = process.env.API_KEY || 'DEMO_KEY';
-                const ai = new GoogleGenAI({ apiKey });
+                // Correctly use process.env.API_KEY
+                const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
                 
-                let text = '';
-                // 检查是否为 Demo Key 或空
-                if (!apiKey || apiKey === 'DEMO_KEY') {
-                    await new Promise(r => setTimeout(r, 1000));
-                    text = `(演示模式) 这是一个模拟响应，因为未检测到有效的 API_KEY。\n\n您询问了：${userMsg.text}\n\n请在本地 .env 文件中配置 VITE_API_KEY 以使用真实模型。`;
-                } else {
-                    const response = await ai.models.generateContent({
-                        model: 'gemini-2.5-flash',
-                        contents: userMsg.text,
-                    });
-                    text = response.text || "我无法生成响应。";
-                }
+                const response = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: userMsg.text,
+                });
+                
+                const text = response.text || "我无法生成响应。";
 
                 const aiMsg: ChatMessage = {
                     id: (Date.now() + 1).toString(),
@@ -95,11 +84,17 @@ export const AIAssistant = () => {
 
             } catch (error) {
                 console.error("AI Error:", error);
-                showToast('无法连接到 AI 助手，请检查 API Key 配置', 'error');
+                // Handle missing API key or other errors
+                let errorMessage = "无法连接到 AI 助手，请稍后再试。";
+                if (error instanceof Error && error.message.includes("API key")) {
+                    errorMessage = "未配置有效的 API Key。";
+                }
+                showToast(errorMessage, 'error');
+                
                 setMessages(prev => [...prev, {
                     id: Date.now().toString(),
                     role: 'model',
-                    text: "抱歉，连接 AI 服务失败。请检查网络或 API 密钥。",
+                    text: "抱歉，连接 AI 服务失败。请检查 API 密钥配置。",
                     timestamp: Date.now()
                 }]);
             } finally {
@@ -108,7 +103,6 @@ export const AIAssistant = () => {
         });
     };
 
-    // 使用 dvh 以兼容移动浏览器高度，添加 mt-4 避免遮挡
     return (
         <div className="max-w-7xl mx-auto px-2 md:px-4 h-[calc(100vh-8rem)] md:h-[calc(100vh-8rem)] flex gap-4 md:gap-6 box-border pb-2 md:pb-4 relative mt-4">
             

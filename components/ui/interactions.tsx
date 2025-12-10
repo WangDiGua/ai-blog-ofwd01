@@ -3,7 +3,7 @@ import { useStore } from '../../context/store';
 import { Button } from './atoms';
 import { Modal } from './modals';
 import { authApi } from '../../services/api/auth';
-import { ArrowUp, Type, Coffee, Sun, Moon, CheckCircle, AlertCircle, Info, Gift, RefreshCw, CloudSun, Command, X } from 'lucide-react';
+import { ArrowUp, Type, Coffee, Sun, Moon, Eye, CheckCircle, AlertCircle, Info, Gift, RefreshCw, CloudSun, Command, X } from 'lucide-react';
 
 // --- 全局自定义光标 ---
 export const CustomCursor = () => {
@@ -72,39 +72,52 @@ export const CustomCursor = () => {
     );
 };
 
-// --- 动画主题切换 (日落 / 月升) ---
+// --- 动画主题切换 (三态：亮色/暗色/护眼) ---
 export const ThemeToggle = () => {
-  const { darkMode, toggleTheme } = useStore();
+  const { theme, toggleTheme } = useStore();
 
   return (
     <button
       onClick={toggleTheme}
       className="relative w-10 h-10 rounded-full overflow-hidden focus:outline-none transition-colors duration-500 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800"
       aria-label="切换主题"
+      title={`当前模式: ${theme === 'dark' ? '深色' : theme === 'eye' ? '护眼' : '浅色'}`}
     >
-       {/* 太阳和月亮的容器 */}
        <div className="absolute inset-0 flex items-center justify-center">
-          {/* 太阳: 浅色模式可见 (y=0), 深色模式下移 (y=100%) */}
+          
+          {/* 太阳 (浅色) */}
           <div 
             className="absolute transition-all duration-500 ease-out"
             style={{ 
-              transform: darkMode ? 'translateY(150%)' : 'translateY(0)',
-              opacity: darkMode ? 0 : 1
+              transform: theme === 'light' ? 'translateY(0) scale(1)' : 'translateY(150%) scale(0.5)',
+              opacity: theme === 'light' ? 1 : 0
             }}
           >
              <Sun className="text-orange-500 fill-orange-500" size={24} />
           </div>
 
-          {/* 月亮: 浅色模式隐藏 (y=100%), 深色模式上移 (y=0) */}
+          {/* 月亮 (深色) */}
           <div 
             className="absolute transition-all duration-500 ease-out"
             style={{ 
-              transform: darkMode ? 'translateY(0)' : 'translateY(150%)',
-              opacity: darkMode ? 1 : 0
+              transform: theme === 'dark' ? 'translateY(0) scale(1)' : theme === 'light' ? 'translateY(150%) scale(0.5)' : 'translateY(-150%) scale(0.5)',
+              opacity: theme === 'dark' ? 1 : 0
             }}
           >
              <Moon className="text-yellow-300 fill-yellow-300" size={24} />
           </div>
+
+          {/* 眼睛 (护眼) */}
+          <div 
+            className="absolute transition-all duration-500 ease-out"
+            style={{ 
+              transform: theme === 'eye' ? 'translateY(0) scale(1)' : 'translateY(-150%) scale(0.5)',
+              opacity: theme === 'eye' ? 1 : 0
+            }}
+          >
+             <Eye className="text-green-600 fill-green-100" size={24} />
+          </div>
+
        </div>
     </button>
   );
@@ -127,13 +140,10 @@ export const Pagination = ({ page, totalPages, totalItems, onPageChange }: { pag
 
   return (
     <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-8">
-      {/* ... keeping Pagination JSX ... */}
-      {/* Shortened for brevity as no logic changes requested here, ensuring it renders correctly */}
       {totalItems !== undefined && (
           <span className="text-sm text-gray-500">共 {totalItems} 条内容</span>
       )}
       <div className="flex items-center space-x-2">
-         {/* ... render buttons ... */}
          {getPageNumbers().map((p, idx) => (
             <button
                 key={idx}
@@ -275,7 +285,6 @@ export const FloatingMenu = () => {
 
 // --- 表情选择器 (简单版) ---
 export const EmojiPicker = ({ onSelect }: { onSelect: (emoji: string) => void }) => {
-    // ... kept same
     const emojis = ["👍", "❤️", "😂", "😮", "😢", "😡", "🎉", "🔥", "👀", "🚀", "💯", "🤔", "👏", "💩", "👻"];
     return (
         <div className="p-2 grid grid-cols-5 gap-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700">
@@ -288,7 +297,6 @@ export const EmojiPicker = ({ onSelect }: { onSelect: (emoji: string) => void })
 
 // --- 真实验证码组件 ---
 export const Captcha = ({ onRefresh }: { onRefresh: (key: string) => void }) => {
-    // ... kept same
     const [imgSrc, setImgSrc] = useState('');
     const [loading, setLoading] = useState(false);
     const refreshCaptcha = async () => {

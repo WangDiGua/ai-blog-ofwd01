@@ -25,14 +25,14 @@ export const Modal = ({ isOpen, onClose, title, children, className = '', hideHe
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-24 px-4">
-      {/* 背景遮罩 - 增加模糊度到 xl */}
+      {/* 背景遮罩 - 增加模糊度到 xl，使用 fade-in-ios */}
       <div 
-        className="absolute inset-0 bg-black/40 backdrop-blur-xl transition-opacity animate-in fade-in duration-300"
+        className="absolute inset-0 bg-black/40 backdrop-blur-xl transition-opacity animate-fade-in-ios"
         onClick={onClose}
       />
       
-      {/* 内容 */}
-      <div className={`relative bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl p-6 transform transition-all animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-800 ${className}`}>
+      {/* 内容 - 使用 modal-spring 动画 */}
+      <div className={`relative bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl p-6 transform transition-all animate-modal-spring max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-800 ${className}`}>
         {!hideHeader && (
             <div className="flex justify-between items-center mb-4 sticky top-0 bg-inherit z-10 pb-2">
                 {title && <h3 className="text-xl font-bold text-apple-text dark:text-apple-dark-text">{title}</h3>}
@@ -57,16 +57,32 @@ export const SearchModal = () => {
     const inputRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
 
-    // 禁止背景滚动
+    const handleClose = () => {
+        setSearchOpen(false);
+        setQuery('');
+        setResults([]);
+    };
+
+    // 禁止背景滚动 & 监听 ESC
     useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                handleClose();
+            }
+        };
+
         if (isSearchOpen) {
             systemApi.getHotSearches().then(setHotSearches);
             setTimeout(() => inputRef.current?.focus(), 100);
             document.body.style.overflow = 'hidden';
+            window.addEventListener('keydown', handleKeyDown);
         } else {
             document.body.style.overflow = '';
         }
-        return () => { document.body.style.overflow = ''; };
+        return () => { 
+            document.body.style.overflow = ''; 
+            window.removeEventListener('keydown', handleKeyDown);
+        };
     }, [isSearchOpen]);
 
     const performSearch = async (q: string) => {
@@ -90,12 +106,6 @@ export const SearchModal = () => {
         debouncedSearch(e.target.value);
     };
 
-    const handleClose = () => {
-        setSearchOpen(false);
-        setQuery('');
-        setResults([]);
-    };
-
     const goToArticle = (id: string) => {
         navigate(`/article/${id}`);
         handleClose();
@@ -105,9 +115,10 @@ export const SearchModal = () => {
 
     return (
         <div className="fixed inset-0 z-[100] flex items-start justify-center pt-24 px-4">
-             <div className="absolute inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-xl transition-opacity animate-in fade-in" onClick={handleClose} />
+             <div className="absolute inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-xl transition-opacity animate-fade-in-ios" onClick={handleClose} />
              
-             <div className="relative w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden animate-in slide-in-from-top-4 duration-300">
+             {/* Search box uses slide-up-ios for a smoother entry from top area or just fade-scale */}
+             <div className="relative w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden animate-modal-spring">
                  <div className="flex items-center p-4 border-b border-gray-100 dark:border-gray-800">
                      <Search className="text-gray-400 ml-2" size={20} />
                      <input 
@@ -180,7 +191,7 @@ export const AdminLoginModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="系统访问">
             <div className="flex flex-col items-center justify-center mb-6">
-                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4 animate-modal-spring">
                     <Lock size={32} className="text-red-500" />
                 </div>
                 <p className="text-center text-sm text-gray-500">受限区域。仅限授权人员。</p>
@@ -192,10 +203,10 @@ export const AdminLoginModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
                         placeholder="输入管理员密码" 
                         value={password}
                         onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                        className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-red-500 outline-none text-apple-text dark:text-apple-dark-text text-center tracking-widest"
+                        className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-red-500 outline-none text-apple-text dark:text-apple-dark-text text-center tracking-widest transition-all ease-ios focus:scale-[1.02]"
                         autoFocus
                     />
-                    {error && <p className="text-red-500 text-xs text-center mt-2">{error}</p>}
+                    {error && <p className="text-red-500 text-xs text-center mt-2 animate-pulse">{error}</p>}
                 </div>
                 <Button variant="danger" type="submit" className="w-full">
                     验证
@@ -276,20 +287,20 @@ export const FeedbackModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: (
                 <div className="flex space-x-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
                     <button 
                         onClick={() => setType('suggestion')}
-                        className={`flex-1 flex items-center justify-center py-2 rounded-md text-sm font-medium transition-all ${type === 'suggestion' ? 'bg-white dark:bg-gray-700 shadow-sm text-apple-blue' : 'text-gray-500'}`}
+                        className={`flex-1 flex items-center justify-center py-2 rounded-md text-sm font-medium transition-all ease-ios ${type === 'suggestion' ? 'bg-white dark:bg-gray-700 shadow-sm text-apple-blue scale-105' : 'text-gray-500 hover:text-gray-700'}`}
                     >
                         <Lightbulb size={16} className="mr-2"/> 建议
                     </button>
                     <button 
                         onClick={() => setType('bug')}
-                        className={`flex-1 flex items-center justify-center py-2 rounded-md text-sm font-medium transition-all ${type === 'bug' ? 'bg-white dark:bg-gray-700 shadow-sm text-red-500' : 'text-gray-500'}`}
+                        className={`flex-1 flex items-center justify-center py-2 rounded-md text-sm font-medium transition-all ease-ios ${type === 'bug' ? 'bg-white dark:bg-gray-700 shadow-sm text-red-500 scale-105' : 'text-gray-500 hover:text-gray-700'}`}
                     >
                         <Bug size={16} className="mr-2"/> Bug 反馈
                     </button>
                 </div>
                 
                 <textarea 
-                    className="w-full h-32 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none resize-none text-apple-text dark:text-apple-dark-text"
+                    className="w-full h-32 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-apple-blue outline-none resize-none text-apple-text dark:text-apple-dark-text transition-all duration-300 focus:scale-[1.01]"
                     placeholder="告诉我们要改进的地方..."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}

@@ -26,6 +26,19 @@ const ScrollToTop = () => {
   return null;
 };
 
+// Wrapper to animate page transitions
+const PageTransitionWrapper = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  return (
+    <div 
+      key={location.pathname} // Key change triggers the animation
+      className="animate-page-enter w-full"
+    >
+      {children}
+    </div>
+  );
+};
+
 // Layout wrapper to conditionally hide Navbar/Footer for fullscreen pages like StartPage
 const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
     const location = useLocation();
@@ -35,8 +48,11 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
         <>
             {!isFullScreenPage && <Navbar />}
             
-            <main className={`flex-grow ${!isFullScreenPage ? 'pt-20' : ''}`}>
-                {children}
+            <main className={`flex-grow min-h-screen ${!isFullScreenPage ? 'pt-20' : ''}`}>
+               {/* Apply page transition animation here */}
+               <PageTransitionWrapper>
+                  {children}
+               </PageTransitionWrapper>
             </main>
 
             <MiniPlayer />
@@ -56,7 +72,7 @@ const App = () => {
   return (
     <AppProvider>
       <Router>
-        <div className="min-h-screen flex flex-col bg-apple-bg text-apple-text dark:bg-apple-dark-bg dark:text-apple-dark-text font-sans selection:bg-apple-blue selection:text-white transition-colors duration-300">
+        <div className="min-h-screen flex flex-col bg-apple-bg text-apple-text dark:bg-apple-dark-bg dark:text-apple-dark-text font-sans selection:bg-apple-blue selection:text-white transition-colors duration-500 ease-ios">
           <ScrollToTop />
           <CustomCursor />
           

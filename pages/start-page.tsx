@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Globe, Command, Home, Settings, Grid, Terminal } from 'lucide-react';
-import { useStore } from '../context/store';
 
 const ENGINES = [
     { name: 'Google', url: 'https://www.google.com/search?q=', placeholder: '在 Google 上搜索...' },
@@ -12,7 +11,6 @@ const ENGINES = [
 
 export const StartPage = () => {
     const navigate = useNavigate();
-    const { darkMode } = useStore();
     const [time, setTime] = useState(new Date());
     const [query, setQuery] = useState('');
     const [engineIdx, setEngineIdx] = useState(0);
