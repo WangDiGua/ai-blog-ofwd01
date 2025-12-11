@@ -37,3 +37,23 @@ export function calculateReadingTime(content: string): string {
     const minutes = Math.ceil(textLength / wordsPerMinute);
     return `${minutes} 分钟阅读`;
 }
+
+/**
+ * 校验文件 (主要用于图片)
+ * @param file 
+ * @param options max size in MB, allowed types
+ */
+export function validateImage(file: File, options: { maxSizeMB?: number, allowedTypes?: string[] } = {}): { valid: boolean, error?: string } {
+    const maxSizeMB = options.maxSizeMB || 2;
+    const allowedTypes = options.allowedTypes || ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+    if (!allowedTypes.includes(file.type)) {
+        return { valid: false, error: '不支持的文件格式。请上传 JPG, PNG, GIF 或 WEBP。' };
+    }
+
+    if (file.size > maxSizeMB * 1024 * 1024) {
+        return { valid: false, error: `文件大小不能超过 ${maxSizeMB}MB。` };
+    }
+
+    return { valid: true };
+}

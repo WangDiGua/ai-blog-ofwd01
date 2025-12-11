@@ -32,6 +32,16 @@
 - **参数**: `{ title: string, content: string }`
 - **返回**: 新创建的 `Article`
 
+#### 获取标签列表
+- **方法**: `GET`
+- **路径**: `/tags`
+- **返回**: `string[]`
+
+#### 获取分类列表
+- **方法**: `GET`
+- **路径**: `/categories`
+- **返回**: `Category[]`
+
 ### 2. 用户 (User)
 
 #### 登录
@@ -62,12 +72,23 @@
 - **参数**: `{ userId: string, isFollowing: boolean }`
 - **返回**: `{ success: boolean, isFollowing: boolean }`
 
+#### 提交打赏
+- **方法**: `POST`
+- **路径**: `/user/donation`
+- **参数**: `{ userId?: string, nickname?: string, avatar?: string, screenshot: string }`
+- **返回**: `{ success: boolean }`
+
 ### 3. 社区 (Community)
 
 #### 获取帖子列表
 - **方法**: `GET`
 - **路径**: `/community`
 - **返回**: `CommunityPost[]`
+
+#### 获取弹幕
+- **方法**: `GET`
+- **路径**: `/danmaku`
+- **返回**: `string[]`
 
 ### 4. 音乐 (Music)
 
@@ -87,6 +108,17 @@
 - **方法**: `GET`
 - **路径**: `/search/hot`
 - **返回**: `string[]`
+
+#### 获取友情链接
+- **方法**: `GET`
+- **路径**: `/friend-links`
+- **返回**: `FriendLink[]`
+
+#### 申请友链
+- **方法**: `POST`
+- **路径**: `/friend-links/apply`
+- **参数**: `{ name: string, url: string, avatar: string, desc: string }`
+- **返回**: `{ success: boolean }`
 
 ### 6. AI 助手
 

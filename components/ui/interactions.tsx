@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { useStore, ThemeMode } from '../../context/store';
 import { Button } from './atoms';
@@ -6,70 +6,149 @@ import { Modal } from './modals';
 import { authApi } from '../../services/api/auth';
 import { ArrowUp, Type, Coffee, Sun, Moon, Eye, CheckCircle, AlertCircle, Info, Gift, RefreshCw, CloudSun, Command, X, Cloud } from 'lucide-react';
 
-// --- 全局自定义光标 ---
-export const CustomCursor = () => {
-    const cursorRef = useRef<HTMLDivElement>(null);
-    const followerRef = useRef<HTMLDivElement>(null);
+// --- 自定义滚动条 (Global) ---
+// 需求：滚动条高度为当前页面高度的 10%
+export const CustomScrollbar = () => {
+    const [thumbTop, setThumbTop] = useState(0);
+    const [thumbHeight, setThumbHeight] = useState(0);
+    const [isVisible, setIsVisible] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    
+    // 使用 Ref 存储瞬时值，避免事件闭包问题
+    const stateRef = useRef({
+        startY: 0,
+        startScrollTop: 0,
+        thumbHeight: 0,
+        availableTrackHeight: 0
+    });
+    
+    const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    const updateDimensions = useCallback(() => {
+        const vh = window.innerHeight;
+        const scrollHeight = document.documentElement.scrollHeight;
+        const scrollTop = window.scrollY;
+
+        // 如果内容高度小于等于视口，隐藏滚动条
+        if (scrollHeight <= vh) {
+            setThumbHeight(0);
+            return;
+        }
+
+        // 核心需求：滚动条高度占当前页高度的 10%
+        // "current page height" 既可以解释为 document height 也可以是 viewport height。
+        // 在 UI 语境下，通常指视口高度的 10% 为固定滑块大小，这样视觉上更美观且易于点击。
+        const targetHeight = vh * 0.1; 
+        
+        // 限制最小高度，防止过小无法点击 (虽然需求说是 10%，但加个最小值是工程最佳实践，这里设为 40px)
+        const finalHeight = Math.max(targetHeight, 40);
+        
+        setThumbHeight(finalHeight);
+
+        // 计算位置
+        // 可滚动的最大距离
+        const maxScroll = scrollHeight - vh;
+        // 滑块可移动的最大距离
+        const maxThumbTop = vh - finalHeight;
+
+        if (maxScroll > 0) {
+            const currentTop = (scrollTop / maxScroll) * maxThumbTop;
+            setThumbTop(currentTop);
+            
+            // 更新 ref 供拖拽使用
+            stateRef.current.thumbHeight = finalHeight;
+            stateRef.current.availableTrackHeight = maxThumbTop;
+        }
+    }, []);
+
+    // 监听滚动与尺寸变化
     useEffect(() => {
-        // 如果是触摸设备，不启用自定义光标
-        if (window.matchMedia("(pointer: coarse)").matches) return;
-
-        const moveCursor = (e: MouseEvent) => {
-            const { clientX, clientY } = e;
+        const handleScroll = () => {
+            updateDimensions();
+            setIsVisible(true);
             
-            // 主光标直接跟随
-            if (cursorRef.current) {
-                cursorRef.current.style.transform = `translate3d(${clientX - 4}px, ${clientY - 4}px, 0)`;
-            }
-            
-            // 跟随圆环带有延迟动画
-            if (followerRef.current) {
-                followerRef.current.animate({
-                    transform: `translate3d(${clientX - 16}px, ${clientY - 16}px, 0)`
-                }, {
-                    duration: 500,
-                    fill: "forwards"
-                });
+            if (!stateRef.current.startY) { // 只有非拖拽状态才自动隐藏
+                if (hideTimeout.current) clearTimeout(hideTimeout.current);
+                hideTimeout.current = setTimeout(() => setIsVisible(false), 1500);
             }
         };
 
-        const handleMouseDown = () => {
-             if (cursorRef.current) cursorRef.current.style.transform += ' scale(0.8)';
-             if (followerRef.current) followerRef.current.style.transform += ' scale(1.5)';
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('resize', updateDimensions);
+        
+        // 使用 ResizeObserver 监听文档高度变化 (如动态加载内容)
+        const resizeObserver = new ResizeObserver(updateDimensions);
+        resizeObserver.observe(document.body);
+
+        updateDimensions();
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', updateDimensions);
+            resizeObserver.disconnect();
+            if (hideTimeout.current) clearTimeout(hideTimeout.current);
+        };
+    }, [updateDimensions]);
+
+    // 拖拽逻辑
+    const handleMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+        setIsVisible(true);
+        if (hideTimeout.current) clearTimeout(hideTimeout.current);
+
+        stateRef.current.startY = e.clientY;
+        stateRef.current.startScrollTop = window.scrollY;
+
+        const handleMouseMove = (ev: MouseEvent) => {
+            const deltaY = ev.clientY - stateRef.current.startY;
+            const vh = window.innerHeight;
+            const scrollHeight = document.documentElement.scrollHeight;
+            const maxScroll = scrollHeight - vh;
+            const availableTrack = stateRef.current.availableTrackHeight;
+
+            if (availableTrack > 0) {
+                const ratio = deltaY / availableTrack;
+                const scrollDelta = ratio * maxScroll;
+                window.scrollTo(0, stateRef.current.startScrollTop + scrollDelta);
+            }
         };
 
         const handleMouseUp = () => {
-             // Reset logic handled by next move event implicitly or could be explicit
-        };
-
-        window.addEventListener('mousemove', moveCursor);
-        window.addEventListener('mousedown', handleMouseDown);
-        window.addEventListener('mouseup', handleMouseUp);
-
-        return () => {
-            window.removeEventListener('mousemove', moveCursor);
-            window.removeEventListener('mousedown', handleMouseDown);
+            setIsDragging(false);
+            stateRef.current.startY = 0; // Reset drag flag
+            window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
+            
+            // 恢复自动隐藏
+            hideTimeout.current = setTimeout(() => setIsVisible(false), 1500);
         };
-    }, []);
 
-    // 仅在桌面端显示
-    return (
-        <div className="hidden md:block pointer-events-none fixed inset-0 z-[9999] overflow-hidden">
-            {/* 核心点 */}
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+    };
+
+    if (thumbHeight === 0) return null;
+
+    return ReactDOM.createPortal(
+        <div className="fixed top-0 right-0 h-full w-3 z-[9999] pointer-events-none mix-blend-difference">
             <div 
-                ref={cursorRef}
-                className="absolute w-2 h-2 bg-white rounded-full mix-blend-difference will-change-transform"
-                style={{ left: 0, top: 0 }}
+                className={`
+                    absolute right-[2px] w-1.5 rounded-full bg-gray-400/80 hover:bg-gray-500/90
+                    backdrop-blur-md transition-opacity duration-300 ease-out pointer-events-auto cursor-default
+                    ${isVisible || isDragging ? 'opacity-100' : 'opacity-0'}
+                    ${isDragging ? 'bg-gray-600/90 w-2 right-[1px]' : ''}
+                `}
+                style={{
+                    height: `${thumbHeight}px`,
+                    transform: `translateY(${thumbTop}px)`,
+                    willChange: 'transform' // 性能优化
+                }}
+                onMouseDown={handleMouseDown}
             />
-            {/* 跟随圆环 */}
-            <div 
-                ref={followerRef}
-                className="absolute w-8 h-8 border border-white rounded-full mix-blend-difference will-change-transform opacity-50"
-                style={{ left: 0, top: 0 }}
-            />
-        </div>
+        </div>,
+        document.body
     );
 };
 
@@ -261,7 +340,7 @@ export const Pagination = ({ page, totalPages, totalItems, onPageChange }: { pag
 export const ToastContainer = () => {
     const { toasts } = useStore();
     return ReactDOM.createPortal(
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] space-y-2 pointer-events-none">
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[50000] space-y-2 pointer-events-none">
             {toasts.map(toast => (
                 <div 
                     key={toast.id}
@@ -280,7 +359,7 @@ export const ToastContainer = () => {
 
 // --- 悬浮菜单 (精修版 - Portal) ---
 export const FloatingMenu = () => {
-    const { cycleFontSize, showFestive, toggleFestive, cycleSeasonMode, seasonMode } = useStore();
+    const { cycleFontSize, showFestive, toggleFestive, cycleSeasonMode, seasonMode, currentSong } = useStore();
     const [showDonate, setShowDonate] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
@@ -309,7 +388,8 @@ export const FloatingMenu = () => {
 
     return ReactDOM.createPortal(
         <>
-            <div className="fixed right-6 bottom-10 z-[90] flex flex-col items-center">
+            {/* 动态调整 bottom 位置，如果 Mini 播放器存在，则向上移动以避免遮挡 */}
+            <div className={`fixed right-6 z-[90] flex flex-col items-center transition-all duration-500 ease-in-out ${currentSong ? 'bottom-28' : 'bottom-10'}`}>
                 {/* 菜单项容器 */}
                 <div className={`flex flex-col-reverse items-center space-y-reverse space-y-4 mb-4`}>
                     {menuItems.map((item, index) => (

@@ -2,14 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Menu, X, ShieldAlert, ChevronDown } from 'lucide-react';
 import { useStore } from '../../context/store';
-import { Button, Avatar, ThemeToggle, Modal, ToastContainer, FloatingMenu, SearchModal, FullPlayerModal, AdminLoginModal, FestiveWidget } from '../ui';
-import { AuthForm } from '../auth/AuthForm';
+import { Button, Avatar, ThemeToggle, AdminLoginModal } from '../ui';
 import { throttle } from '../../utils/lib'; // Import throttle
 
 export const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isLoggedIn, logout, setSearchOpen, isAuthModalOpen, setAuthModalOpen } = useStore();
+  const { user, isLoggedIn, logout, setSearchOpen, setAuthModalOpen } = useStore();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAdminModalOpen, setAdminModalOpen] = useState(false);
@@ -34,6 +33,7 @@ export const Navbar = () => {
       hasSubmenu: true, 
       subItems: [
         {name: '首页', path: '/'}, 
+        {name: '文章分类', path: '/categories'}, // 新增分类页面入口
         {name: '时间线', path: '/timeline'},
         {name: '起始页', path: '/start'}
       ] 
@@ -102,11 +102,7 @@ export const Navbar = () => {
 
   return (
     <>
-      <ToastContainer />
-      <SearchModal />
-      <FloatingMenu />
-      <FestiveWidget />
-      <FullPlayerModal />
+      {/* Global components (Toast, Search, etc.) moved to App.tsx LayoutWrapper */}
       <AdminLoginModal isOpen={isAdminModalOpen} onClose={() => setAdminModalOpen(false)} />
 
       <nav 
@@ -311,10 +307,6 @@ export const Navbar = () => {
           </div>
         </div>
       </nav>
-
-      <Modal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)}>
-         <AuthForm onClose={() => setAuthModalOpen(false)} />
-      </Modal>
     </>
   );
 };

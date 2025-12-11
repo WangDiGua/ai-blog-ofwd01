@@ -25,4 +25,10 @@ export const userApi = {
         
     submitFeedback: (data: { userId?: string, content: string, type: 'bug' | 'suggestion' }) =>
         request.post('/user/feedback', data),
+
+    submitDonation: (data: { userId?: string; nickname?: string; avatar?: string; screenshot: string }) =>
+        request.post<{ success: boolean }>('/user/donation', data),
+
+    reportContent: (data: { targetId: string; type: string; reason: string; description?: string }) =>
+        request.post<{ success: boolean }>('/user/report', data),
 };

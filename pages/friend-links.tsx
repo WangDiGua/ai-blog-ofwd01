@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Avatar, Modal } from '../components/ui';
 import { useStore } from '../context/store';
 import { systemApi } from '../services/api';
-import { Copy, Mail, Send, CheckCircle, AtSign, Link as LinkIcon, Image as ImageIcon, PenTool, ExternalLink, AlertTriangle } from 'lucide-react';
+import { Copy, Mail, AtSign, Link as LinkIcon, Image as ImageIcon, PenTool, ExternalLink, AlertTriangle } from 'lucide-react';
+import { validateImage } from '../utils/lib';
 
 const MY_SITE_INFO = {
     name: 'iBlog',
@@ -32,13 +33,11 @@ export const FriendLinks = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({ name: '', url: '', avatar: '', desc: '' });
     const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+    const [links, setLinks] = useState<any[]>([]);
 
-    // 模拟已有友链
-    const links = [
-        { name: 'React 官方', url: 'https://react.dev', avatar: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/1200px-React-icon.svg.png', desc: '用于构建 Web 和原生交互界面的库' },
-        { name: 'Tailwind CSS', url: 'https://tailwindcss.com', avatar: 'https://pic1.zhimg.com/v2-8e6df6459345c22530c34e00b86a3471_720w.jpg?source=172ae18b', desc: '只需 HTML 即可快速构建现代网站' },
-        { name: 'Vite', url: 'https://vitejs.dev', avatar: 'https://vitejs.dev/logo.svg', desc: '下一代前端开发与构建工具' },
-    ];
+    useEffect(() => {
+        systemApi.getFriendLinks().then(setLinks);
+    }, []);
 
     const copyInfo = (text: string) => {
         navigator.clipboard.writeText(text);

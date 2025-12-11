@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, Pagination, Img } from '../components/ui';
 import { articleApi } from '../services/api';
 import { Article } from '../types';
-import { Eye, Clock, Hash } from 'lucide-react';
+import { Eye, Clock, Hash, RotateCw } from 'lucide-react';
 import { calculateReadingTime } from '../utils/lib';
 import { CategoryCarousel, TagCarousel } from '../components/ui/Carousels';
 import { ArticleSkeleton, FlipAboutCard, Announcements, RecommendedAuthors } from '../components/HomeWidgets';
@@ -16,32 +16,41 @@ export const Home = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [trendingTags, setTrendingTags] = useState(['#React19', '#TailwindCSS', '#UXDesign']);
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [trendingTags, setTrendingTags] = useState<string[]>([]);
+  const [allCategories, setAllCategories] = useState<string[]>([]);
   
   // React 18 Concurrent Feature
   const [isPending, startTransition] = useTransition();
   
   const searchParams = new URLSearchParams(location.search);
-  
   const LIMIT = 5;
-  const ALL_TAGS = ['#React19', '#TailwindCSS', '#UXDesign', '#AppleEvent', '#CodingLife', '#WebAssembly', '#NextJS', '#Figma', '#Minimalism', '#Darkmode', '#AI', '#ThreeJS', '#Rust', '#Cyberpunk'];
-  
-  // 扩充分类列表以演示轮播效果
-  const ALL_CATEGORIES = ['Tech', 'Design', 'Life', 'AI', 'Mobile', 'Game', 'Cloud'];
 
   // 当前过滤器
   const currentCategory = searchParams.get('category') || 'All';
   const currentTag = searchParams.get('tag');
 
+  // 获取分类和标签数据
+  useEffect(() => {
+      articleApi.getTags().then(tags => {
+          setAllTags(tags);
+          setTrendingTags(tags.slice(0, 5));
+      });
+      articleApi.getCategories().then(cats => {
+          setAllCategories(cats.map(c => c.id));
+      });
+  }, []);
+
   // 轮播标签动画
   useEffect(() => {
+    if (allTags.length === 0) return;
     const interval = setInterval(() => {
         // 简单洗牌
-        const shuffled = [...ALL_TAGS].sort(() => 0.5 - Math.random());
+        const shuffled = [...allTags].sort(() => 0.5 - Math.random());
         setTrendingTags(shuffled.slice(0, 5));
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [allTags]);
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -130,7 +139,7 @@ export const Home = () => {
                
                {/* 轮播其余分类 */}
                <CategoryCarousel 
-                  categories={ALL_CATEGORIES} 
+                  categories={allCategories} 
                   current={currentCategory} 
                   onClick={handleCategoryClick} 
                />
@@ -161,15 +170,24 @@ export const Home = () => {
                         </div>
                         <div className="p-4 md:p-6 md:w-3/5 flex flex-col justify-between">
                         <div>
-                            <div className="flex items-center space-x-2 mb-2">
-                            <span 
-                                onClick={(e) => { e.stopPropagation(); handleCategoryClick(article.category); }}
-                                className="text-xs font-semibold text-apple-blue uppercase tracking-wider hover:underline"
-                            >
-                                {article.category}
-                            </span>
-                            <span className="text-gray-300">•</span>
-                            <span className="text-xs text-gray-500">{article.date}</span>
+                            <div className="flex flex-wrap items-center gap-2 mb-2 text-xs">
+                                <span 
+                                    onClick={(e) => { e.stopPropagation(); handleCategoryClick(article.category); }}
+                                    className="font-semibold text-apple-blue uppercase tracking-wider hover:underline cursor-pointer"
+                                >
+                                    {article.category}
+                                </span>
+                                <span className="text-gray-300">•</span>
+                                <span className="text-gray-500">{article.date}</span>
+                                {article.updatedAt && (
+                                    <>
+                                        <span className="text-gray-300 hidden sm:inline">•</span>
+                                        <span className="text-gray-400 flex items-center hidden sm:flex" title={`更新于 ${article.updatedAt}`}>
+                                            <RotateCw size={10} className="mr-1" />
+                                            {article.updatedAt}
+                                        </span>
+                                    </>
+                                )}
                             </div>
                             <h3 className="text-lg md:text-2xl font-bold text-apple-text dark:text-apple-dark-text mb-2 leading-tight group-hover:text-apple-blue transition-colors">
                             {article.title}

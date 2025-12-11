@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Avatar } from '../components/ui';
+import { Button, Avatar, ReportModal } from '../components/ui';
 import { Send, MessageSquare, ChevronLeft, Heart, Flag } from 'lucide-react';
 import { useStore } from '../context/store';
+import { communityApi } from '../services/api';
 
 interface Danmaku {
     id: number;
@@ -14,11 +15,6 @@ interface Danmaku {
 }
 
 const COLORS = ['text-white', 'text-yellow-300', 'text-green-300', 'text-blue-300', 'text-pink-300', 'text-purple-300'];
-
-const INITIAL_MESSAGES = [
-    "网站做得真棒！", "前排围观", "博主更新好快", "这是什么神仙特效", "Hello World!", 
-    "React 19 太强了", "求源码！", "UI 设计很有品味", "打卡滴滴滴", "期待更多内容"
-];
 
 // 独立弹幕组件以处理自身的交互状态
 const DanmakuItem = ({ 
@@ -82,25 +78,34 @@ const DanmakuItem = ({
 
 export const MessageBoard = () => {
     const navigate = useNavigate();
-    const { showToast } = useStore();
+    const { showToast, requireAuth } = useStore();
     const [messages, setMessages] = useState<Danmaku[]>([]);
     const [inputValue, setInputValue] = useState('');
+    const [initialMessages, setInitialMessages] = useState<string[]>([]);
+    
+    // Report Modal State
+    const [reportTarget, setReportTarget] = useState<string | null>(null);
 
     // 初始化弹幕
     useEffect(() => {
-        const initial = INITIAL_MESSAGES.map((msg, i) => createDanmaku(msg, i * 2000));
-        setMessages(initial);
+        communityApi.getDanmaku().then(data => {
+            setInitialMessages(data);
+            const initial = data.map((msg, i) => createDanmaku(msg, i * 2000));
+            setMessages(initial);
+        });
+    }, []);
 
-        // 持续生成模拟弹幕
+    // 持续生成模拟弹幕
+    useEffect(() => {
+        if (initialMessages.length === 0) return;
         const interval = setInterval(() => {
             if (Math.random() > 0.7) {
-                const randomMsg = INITIAL_MESSAGES[Math.floor(Math.random() * INITIAL_MESSAGES.length)];
+                const randomMsg = initialMessages[Math.floor(Math.random() * initialMessages.length)];
                 addDanmaku(randomMsg);
             }
         }, 3000);
-
         return () => clearInterval(interval);
-    }, []);
+    }, [initialMessages]);
 
     const createDanmaku = (text: string, delay = 0): Danmaku => ({
         id: Date.now() + Math.random(),
@@ -143,14 +148,22 @@ export const MessageBoard = () => {
     };
 
     const handleReport = (id: number) => {
-        showToast('已举报该弹幕', 'info');
+        requireAuth(() => {
+            setReportTarget(String(id));
+        });
     };
 
     return (
-        // 修改: 使用 relative 和 min-h-screen，避免在 transform 父级中 fixed 失效的问题
-        // 同时确保它能铺满全屏，因为该页面没有 Navbar 和 Footer
-        <div className="relative w-full min-h-screen overflow-hidden bg-gray-900 flex flex-col items-center justify-end pb-24 md:pb-32 z-[100]">
+        // Removed unnecessary z-[100] to prevent masking global modals (now in App.tsx layout)
+        <div className="relative w-full min-h-screen overflow-hidden bg-gray-900 flex flex-col items-center justify-end pb-24 md:pb-32">
             
+            <ReportModal 
+                isOpen={!!reportTarget}
+                onClose={() => setReportTarget(null)}
+                targetId={reportTarget || ''}
+                targetType="danmaku"
+            />
+
             {/* 背景 */}
             <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900 to-indigo-950 -z-20" />
             

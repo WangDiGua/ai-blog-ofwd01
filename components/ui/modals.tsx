@@ -5,7 +5,7 @@ import { useStore } from '../../context/store';
 import { debounce } from '../../utils/lib';
 import { articleApi, userApi, systemApi } from '../../services/api';
 import { Article, Announcement } from '../../types';
-import { X, Search, Hash, Lock, Send, Bug, Lightbulb, Clock, ArrowUpRight, User } from 'lucide-react';
+import { X, Search, Hash, Lock, Send, Bug, Lightbulb, Clock, ArrowUpRight, User, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button, Spinner, MarkdownRenderer } from './atoms';
 
 // --- 基础模态框组件 (Portal 版本) ---
@@ -72,6 +72,132 @@ export const Modal = ({
     </div>,
     document.body
   );
+};
+
+// --- 举报模态框 ---
+const REPORT_REASONS = [
+    "垃圾广告",
+    "违法违规内容",
+    "色情低俗",
+    "人身攻击 / 谩骂",
+    "侵犯版权",
+    "其他"
+];
+
+export const ReportModal = ({ 
+    isOpen, 
+    onClose, 
+    targetId, 
+    targetType 
+}: { 
+    isOpen: boolean, 
+    onClose: () => void, 
+    targetId: string, 
+    targetType: string 
+}) => {
+    const { showToast } = useStore();
+    const [selectedReason, setSelectedReason] = useState('');
+    const [customReason, setCustomReason] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    // 重置状态
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedReason('');
+            setCustomReason('');
+            setSubmitting(false);
+        }
+    }, [isOpen]);
+
+    const handleSubmit = async () => {
+        if (!selectedReason) {
+            showToast('请选择举报原因', 'error');
+            return;
+        }
+        if (selectedReason === '其他' && !customReason.trim()) {
+            showToast('请填写具体的举报详情', 'error');
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            await userApi.reportContent({
+                targetId,
+                type: targetType,
+                reason: selectedReason,
+                description: customReason
+            });
+            showToast('举报已提交，我们会尽快处理', 'success');
+            onClose();
+        } catch (e) {
+            showToast('提交失败，请稍后重试', 'error');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title="举报内容">
+            <div className="space-y-4">
+                <div className="bg-red-50 dark:bg-red-900/10 p-3 rounded-lg flex items-start space-x-2 text-sm text-red-600 dark:text-red-400">
+                    <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
+                    <span>请选择举报原因，恶意举报将导致账号被封禁。</span>
+                </div>
+
+                <div className="space-y-2">
+                    {REPORT_REASONS.map((reason) => (
+                        <label 
+                            key={reason} 
+                            className={`
+                                flex items-center p-3 rounded-xl border cursor-pointer transition-all
+                                ${selectedReason === reason 
+                                    ? 'border-apple-blue bg-blue-50 dark:bg-blue-900/20 text-apple-blue' 
+                                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'}
+                            `}
+                        >
+                            <div className={`
+                                w-4 h-4 rounded-full border flex items-center justify-center mr-3 transition-colors
+                                ${selectedReason === reason ? 'border-apple-blue bg-apple-blue' : 'border-gray-400'}
+                            `}>
+                                {selectedReason === reason && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                            </div>
+                            <input 
+                                type="radio" 
+                                name="reportReason" 
+                                value={reason} 
+                                className="hidden" 
+                                checked={selectedReason === reason}
+                                onChange={(e) => setSelectedReason(e.target.value)}
+                            />
+                            <span className="text-sm font-medium">{reason}</span>
+                        </label>
+                    ))}
+                </div>
+
+                {/* 其他原因输入框 */}
+                <div className={`transition-all duration-300 overflow-hidden ${selectedReason === '其他' ? 'max-h-32 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+                    <textarea 
+                        className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-apple-blue outline-none resize-none"
+                        placeholder="请描述具体违规情况..."
+                        rows={3}
+                        value={customReason}
+                        onChange={(e) => setCustomReason(e.target.value)}
+                    />
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+                    <Button variant="secondary" onClick={onClose} disabled={submitting}>取消</Button>
+                    <Button 
+                        variant="danger" 
+                        onClick={handleSubmit} 
+                        disabled={submitting || !selectedReason || (selectedReason === '其他' && !customReason.trim())}
+                    >
+                        {submitting ? '提交中...' : '确认举报'}
+                    </Button>
+                </div>
+            </div>
+        </Modal>
+    );
 };
 
 // --- 搜索模态框 ---

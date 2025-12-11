@@ -53,6 +53,33 @@ export const MOCK_USERS: User[] = [
     }
 ];
 
+// --- 模拟标签数据 ---
+export const MOCK_TAGS = ['#React19', '#TailwindCSS', '#UXDesign', '#AppleEvent', '#CodingLife', '#WebAssembly', '#NextJS', '#Figma', '#Minimalism', '#Darkmode', '#AI', '#ThreeJS', '#Rust', '#Cyberpunk'];
+
+// --- 模拟分类数据 ---
+export const MOCK_CATEGORIES = [
+    { id: 'Tech', name: '前沿科技', desc: '探索代码与未来的边界', color: 'from-blue-500 to-cyan-400', img: 'https://picsum.photos/seed/tech/600/400' },
+    { id: 'Design', name: '设计美学', desc: '像素间的艺术哲学', color: 'from-purple-500 to-pink-400', img: 'https://picsum.photos/seed/design/600/400' },
+    { id: 'Life', name: '生活随笔', desc: '记录时光的温柔', color: 'from-green-500 to-emerald-400', img: 'https://picsum.photos/seed/life/600/400' },
+    { id: 'AI', name: '人工智能', desc: '智慧的奇点', color: 'from-orange-500 to-amber-400', img: 'https://picsum.photos/seed/ai/600/400' },
+    { id: 'Mobile', name: '移动开发', desc: '掌心里的世界', color: 'from-indigo-500 to-blue-400', img: 'https://picsum.photos/seed/mobile/600/400' },
+    { id: 'Game', name: '游戏开发', desc: '构建虚拟梦想', color: 'from-red-500 to-rose-400', img: 'https://picsum.photos/seed/game/600/400' },
+    { id: 'Cloud', name: '云计算', desc: '云端架构', color: 'from-sky-500 to-blue-600', img: 'https://picsum.photos/seed/cloud/600/400' }
+];
+
+// --- 模拟友情链接数据 ---
+export const MOCK_FRIEND_LINKS = [
+    { name: 'React 官方', url: 'https://react.dev', avatar: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/1200px-React-icon.svg.png', desc: '用于构建 Web 和原生交互界面的库' },
+    { name: 'Tailwind CSS', url: 'https://tailwindcss.com', avatar: 'https://pic1.zhimg.com/v2-8e6df6459345c22530c34e00b86a3471_720w.jpg?source=172ae18b', desc: '只需 HTML 即可快速构建现代网站' },
+    { name: 'Vite', url: 'https://vitejs.dev', avatar: 'https://vitejs.dev/logo.svg', desc: '下一代前端开发与构建工具' },
+];
+
+// --- 模拟弹幕数据 ---
+export const MOCK_DANMAKU = [
+    "网站做得真棒！", "前排围观", "博主更新好快", "这是什么神仙特效", "Hello World!", 
+    "React 19 太强了", "求源码！", "UI 设计很有品味", "打卡滴滴滴", "期待更多内容"
+];
+
 // --- 模拟文章数据 ---
 const CONTENT_TEMPLATE = `
 ## 现代前端开发的未来
@@ -77,8 +104,6 @@ console.log(greeting);
 我们正处于一个激动人心的时代。
 `;
 
-const TAG_POOL = ['Frontend', 'React', 'Design', 'Performance', 'Web', 'CSS', 'JS', 'TS', 'Vite', 'NextJS', 'AI', 'Rust', 'UI/UX'];
-
 export const MOCK_ARTICLES: Article[] = Array.from({ length: 10 }).map((_, i) => ({
     id: `art-${i + 1}`,
     title: [
@@ -100,8 +125,9 @@ export const MOCK_ARTICLES: Article[] = Array.from({ length: 10 }).map((_, i) =>
     likes: Math.floor(Math.random() * 1000) + 50,
     category: i % 3 === 0 ? 'Tech' : i % 3 === 1 ? 'Design' : 'Life',
     // 随机生成 2-5 个标签
-    tags: TAG_POOL.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 4) + 2),
-    date: new Date(Date.now() - i * 86400000).toLocaleDateString(),
+    tags: MOCK_TAGS.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 4) + 2),
+    date: new Date(Date.now() - i * 86400000 * 5).toLocaleDateString(),
+    updatedAt: new Date(Date.now() - i * 86400000).toLocaleDateString(), // 模拟更新时间
     comments: [], // 评论单独模拟
     authorId: MOCK_USERS[i % MOCK_USERS.length].id,
     authorName: MOCK_USERS[i % MOCK_USERS.length].name,

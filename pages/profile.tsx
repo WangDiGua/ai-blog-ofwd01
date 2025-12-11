@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '../context/store';
-import { Button, Avatar, Card, FeedbackModal, Modal, Spinner, MarkdownEditor, RankBadge } from '../components/ui';
+import { Button, Avatar, Card, FeedbackModal, Modal, Spinner, MarkdownEditor, RankBadge, ReportModal } from '../components/ui';
 import { userApi, articleApi } from '../services/api';
-import { Settings, Award, Edit3, Image as ImageIcon, Crown, LogOut, MessageSquare, Users, Heart, AlertTriangle, Zap, Calendar, CheckCircle, Gem } from 'lucide-react';
+import { Settings, Award, Edit3, Image as ImageIcon, Crown, LogOut, MessageSquare, Users, Heart, AlertTriangle, Zap, Calendar, CheckCircle, Gem, Flag } from 'lucide-react';
 import { User, CULTIVATION_LEVELS, CultivationLevel } from '../types';
+import { validateImage } from '../utils/lib';
 
 // --- 用户列表模态框 ---
 const UserListModal = ({ isOpen, onClose, title, type }: { isOpen: boolean, onClose: () => void, title: string, type: 'followers' | 'following' }) => {
@@ -240,6 +241,9 @@ export const Profile = () => {
     const [showQuizModal, setShowQuizModal] = useState(false);
     const [showSignInModal, setShowSignInModal] = useState(false);
     
+    // Report Modal
+    const [reportTarget, setReportTarget] = useState<string | null>(null);
+    
     // 编辑表单状态
     const [name, setName] = useState('');
     const [bio, setBio] = useState('');
@@ -288,6 +292,19 @@ export const Profile = () => {
             setCoverUrl(displayUser.coverImage || 'https://picsum.photos/seed/cover/1200/400');
         }
     }, [displayUser]);
+
+    const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if(e.target.files?.[0]) {
+            const file = e.target.files[0];
+            const validation = validateImage(file);
+            if (!validation.valid) {
+                showToast(validation.error || '上传失败', 'error');
+                return;
+            }
+            const url = URL.createObjectURL(file);
+            setCoverUrl(url);
+        }
+    };
 
     const handleUpdate = async () => {
         if (isMe) {
@@ -348,6 +365,12 @@ export const Profile = () => {
         showToast('恭喜突破瓶颈，晋升筑基期！', 'success');
     };
 
+    const handleReport = () => {
+        requireAuth(() => {
+            setReportTarget(displayUser?.id || '');
+        });
+    };
+
     const handlePublish = async () => {
         if (!newArticleTitle || !newArticleContent) return;
         try {
@@ -379,6 +402,13 @@ export const Profile = () => {
             <CultivationQuizModal isOpen={showQuizModal} onClose={() => setShowQuizModal(false)} onPass={handleLevelUp} />
             <SignInHistoryModal isOpen={showSignInModal} onClose={() => setShowSignInModal(false)} history={displayUser.signInHistory || []} />
             
+            <ReportModal 
+                isOpen={!!reportTarget} 
+                onClose={() => setReportTarget(null)} 
+                targetId={reportTarget || ''} 
+                targetType="profile_cover"
+            />
+
             {/* 登出确认弹窗 */}
             <Modal isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} title="确认退出">
                 <div className="flex flex-col items-center text-center p-4">
@@ -394,26 +424,34 @@ export const Profile = () => {
             </Modal>
 
             {/* 头部 / 封面区域 */}
-            <div className="relative mb-8 rounded-3xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-800">
+            <div className="relative mb-8 rounded-3xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-800 group/cover">
                 <div className="h-48 md:h-64 relative bg-gray-200 dark:bg-gray-700">
                     <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
-                    {isMe && isEditing && (
+                    
+                    {/* 操作按钮：如果是本人显示更换，非本人显示举报 */}
+                    {isMe && isEditing ? (
                         <div className="absolute top-4 right-4 flex space-x-2">
                              <input 
                                 className="hidden" 
                                 type="file" 
                                 id="coverUpload" 
-                                onChange={(e) => {
-                                    if(e.target.files?.[0]) {
-                                        const url = URL.createObjectURL(e.target.files[0]);
-                                        setCoverUrl(url);
-                                    }
-                                }}
+                                accept="image/*"
+                                onChange={handleCoverChange}
                              />
                              <label htmlFor="coverUpload" className="bg-black/50 hover:bg-black/70 text-white p-2 rounded-lg cursor-pointer backdrop-blur-md flex items-center text-sm">
                                 <ImageIcon size={16} className="mr-2"/> 更换封面
                              </label>
                         </div>
+                    ) : (
+                        !isMe && (
+                            <button 
+                                onClick={handleReport}
+                                className="absolute top-4 right-4 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full backdrop-blur-md transition-all opacity-0 group-hover/cover:opacity-100"
+                                title="举报封面"
+                            >
+                                <Flag size={16} />
+                            </button>
+                        )
                     )}
                 </div>
 

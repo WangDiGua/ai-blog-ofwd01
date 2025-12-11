@@ -1,14 +1,16 @@
 import React, { Suspense, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AppProvider } from './context/store';
+import { AppProvider, useStore } from './context/store';
 import { Navbar, Footer, MiniPlayer } from './components/layout';
-import { Spinner, CustomCursor, ThemeTransitionOverlay } from './components/ui';
+import { Spinner, ThemeTransitionOverlay, CustomScrollbar, ToastContainer, SearchModal, FloatingMenu, FullPlayerModal, FestiveWidget, Modal } from './components/ui';
+import { AuthForm } from './components/auth/AuthForm';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 // --- Lazy Load Pages ---
 // 使用 React.lazy 动态导入组件，实现代码分割，减小首屏体积
 const Home = React.lazy(() => import('./pages/home').then(module => ({ default: module.Home })));
 const ArticleDetail = React.lazy(() => import('./pages/article-detail').then(module => ({ default: module.ArticleDetail })));
+const CategoryPage = React.lazy(() => import('./pages/categories').then(module => ({ default: module.CategoryPage }))); // 新增
 const Profile = React.lazy(() => import('./pages/profile').then(module => ({ default: module.Profile })));
 const Community = React.lazy(() => import('./pages/community').then(module => ({ default: module.Community })));
 const MusicPage = React.lazy(() => import('./pages/music').then(module => ({ default: module.MusicPage })));
@@ -49,10 +51,21 @@ const PageTransitionWrapper = ({ children }: { children: React.ReactNode }) => {
 // Layout wrapper to conditionally hide Navbar/Footer for fullscreen pages like StartPage
 const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
     const location = useLocation();
+    const { isAuthModalOpen, setAuthModalOpen } = useStore();
     const isFullScreenPage = location.pathname === '/start' || location.pathname === '/message-board';
 
     return (
         <>
+            {/* Global UI Components that should persist across all pages */}
+            <ToastContainer />
+            <SearchModal />
+            <FloatingMenu />
+            <FestiveWidget />
+            <FullPlayerModal />
+            <Modal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)}>
+                <AuthForm onClose={() => setAuthModalOpen(false)} />
+            </Modal>
+
             {!isFullScreenPage && <Navbar />}
             
             <main className={`flex-grow min-h-screen ${!isFullScreenPage ? 'pt-20' : ''}`}>
@@ -82,7 +95,8 @@ const App = () => {
       <Router>
         <div className="min-h-screen flex flex-col bg-apple-bg text-apple-text dark:bg-apple-dark-bg dark:text-apple-dark-text font-sans selection:bg-apple-blue selection:text-white transition-colors duration-500 ease-ios">
           <ScrollToTop />
-          <CustomCursor />
+          {/* <CustomCursor /> removed per request */}
+          <CustomScrollbar />
           
           <LayoutWrapper>
             <Suspense fallback={
@@ -97,6 +111,7 @@ const App = () => {
                 <Route path="/timeline" element={<Timeline />} />
                 <Route path="/friend-links" element={<FriendLinks />} />
                 <Route path="/album" element={<Album />} />
+                <Route path="/categories" element={<CategoryPage />} /> {/* 新增路由 */}
                 <Route path="/article/:id" element={<ArticleDetail />} />
                 <Route path="/community" element={<Community />} />
                 <Route path="/music" element={<MusicPage />} />

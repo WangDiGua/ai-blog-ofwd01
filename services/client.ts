@@ -5,7 +5,11 @@ import {
     MOCK_SONGS, 
     MOCK_ANNOUNCEMENTS, 
     MOCK_HOT_SEARCHES,
-    MOCK_AI_HISTORY 
+    MOCK_AI_HISTORY,
+    MOCK_TAGS,
+    MOCK_CATEGORIES,
+    MOCK_FRIEND_LINKS,
+    MOCK_DANMAKU
 } from './mockData';
 import { User } from '../types';
 
@@ -237,6 +241,10 @@ class HttpClient {
                         case '/announcements': resolve(MOCK_ANNOUNCEMENTS); break;
                         case '/search/hot': resolve(MOCK_HOT_SEARCHES); break;
                         case '/ai/history': resolve(MOCK_AI_HISTORY); break;
+                        case '/tags': resolve(MOCK_TAGS); break;
+                        case '/categories': resolve(MOCK_CATEGORIES); break;
+                        case '/friend-links': resolve(MOCK_FRIEND_LINKS); break;
+                        case '/danmaku': resolve(MOCK_DANMAKU); break;
                         default: resolve({});
                     }
                     return;
@@ -279,6 +287,11 @@ class HttpClient {
 
                     if (endpoint === '/articles/create') {
                         resolve({ id: `art-${Date.now()}`, ...data });
+                        return;
+                    }
+
+                    if (endpoint === '/user/donation') {
+                        resolve({ success: true });
                         return;
                     }
                     

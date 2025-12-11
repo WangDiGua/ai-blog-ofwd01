@@ -10,4 +10,8 @@ export const articleApi = {
     
     create: (data: { title: string; content: string }) => 
         request.post<Article>('/articles/create', data),
+
+    getTags: () => request.get<string[]>('/tags'),
+
+    getCategories: () => request.get<{id: string, name: string, desc: string, color: string, img: string}[]>('/categories'),
 };

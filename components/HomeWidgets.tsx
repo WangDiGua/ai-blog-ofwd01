@@ -180,8 +180,15 @@ export const FlipAboutCard = () => {
 
         const fetchData = async () => {
             try {
-                // 1. 获取详细位置 (使用 ipapi.co，支持 HTTPS)
-                const locRes = await fetch('https://ipapi.co/json/');
+                // Add a timeout for the fetch to prevent long hanging if API is blocked
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+
+                // 1. 获取详细位置 (使用 ipapi.co)
+                // Note: external APIs might be blocked by adblockers or network policies.
+                const locRes = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+                clearTimeout(timeoutId);
+
                 if (!locRes.ok) throw new Error('Location fetch failed');
                 const locData = await locRes.json();
                 
@@ -203,10 +210,9 @@ export const FlipAboutCard = () => {
                     });
                 }
             } catch (e) {
-                console.error("Fetch info failed", e);
-                // Fallback for demo
-                setLocationInfo({ ip: '未知 IP', city: 'Unknown', region: 'Unknown' });
-                setWeatherData({ temp: 20, code: 1, desc: '多云' });
+                // Quietly fallback to mock data on error
+                setLocationInfo({ ip: '127.0.0.1', city: 'Mars', region: 'Universe' });
+                setWeatherData({ temp: 22, code: 0, desc: '晴朗' });
             } finally {
                 setLoading(false);
             }

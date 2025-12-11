@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStore } from '../context/store';
-import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, MarkdownEditor, ImageViewer, Modal, RankBadge, Img } from '../components/ui';
+import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, MarkdownEditor, ImageViewer, Modal, RankBadge, Img, ReportModal } from '../components/ui';
 import { articleApi } from '../services/api';
 import { Article, Comment, CULTIVATION_LEVELS, CultivationLevel } from '../types';
-import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash, ShieldAlert, Share2, Download, ExternalLink, Hourglass, Lock } from 'lucide-react';
+import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash, ShieldAlert, Share2, Download, ExternalLink, Hourglass, Lock, Flag } from 'lucide-react';
 import { calculateReadingTime } from '../utils/lib';
 
 // 免责声明组件
@@ -32,7 +32,7 @@ const Disclaimer = () => (
 );
 
 // 递归评论组件 - 移动端优化版
-const CommentItem = ({ comment, depth = 0 }: { comment: Comment, depth?: number }) => {
+const CommentItem = ({ comment, depth = 0, onReport }: { comment: Comment, depth?: number, onReport: (id: string) => void }) => {
     const [replyOpen, setReplyOpen] = useState(false);
     
     // 移动端减少缩进 (ml-3 vs md:ml-12)
@@ -41,11 +41,22 @@ const CommentItem = ({ comment, depth = 0 }: { comment: Comment, depth?: number 
             <div className="flex-shrink-0">
                 <Avatar src={comment.user.avatar} alt={comment.user.name} size={depth > 0 ? 'sm' : 'md'} />
             </div>
-            <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2 mb-1 flex-wrap gap-y-1">
-                    <span className="font-semibold text-sm text-apple-text dark:text-apple-dark-text truncate max-w-[120px] md:max-w-xs">{comment.user.name}</span>
-                    <RankBadge level={comment.user.level} />
-                    <span className="text-xs text-gray-400 flex-shrink-0 ml-auto md:ml-0">{comment.date}</span>
+            <div className="flex-1 min-w-0 group">
+                <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                        <span className="font-semibold text-sm text-apple-text dark:text-apple-dark-text truncate max-w-[120px] md:max-w-xs">{comment.user.name}</span>
+                        <RankBadge level={comment.user.level} />
+                        <span className="text-xs text-gray-400 flex-shrink-0 ml-auto md:ml-0">{comment.date}</span>
+                    </div>
+                    
+                    {/* Report button */}
+                    <button 
+                        onClick={() => onReport(comment.id)}
+                        className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1"
+                        title="举报"
+                    >
+                        <Flag size={12} />
+                    </button>
                 </div>
                 {/* 使用 MarkdownRenderer 渲染评论内容 */}
                 <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
@@ -69,7 +80,7 @@ const CommentItem = ({ comment, depth = 0 }: { comment: Comment, depth?: number 
                 )}
 
                 {comment.replies && comment.replies.map(reply => (
-                    <CommentItem key={reply.id} comment={reply} depth={depth + 1} />
+                    <CommentItem key={reply.id} comment={reply} depth={depth + 1} onReport={onReport} />
                 ))}
             </div>
         </div>
@@ -87,6 +98,9 @@ export const ArticleDetail = () => {
   const [showEmoji, setShowEmoji] = useState(false);
   const [previewCover, setPreviewCover] = useState(false); // 封面预览状态
   const [readingSeconds, setReadingSeconds] = useState(0); // 阅读时长(秒)
+  
+  // Report Modal State
+  const [reportCommentId, setReportCommentId] = useState<string | null>(null);
   
   const { user, requireAuth, showToast } = useStore();
 
@@ -154,6 +168,12 @@ export const ArticleDetail = () => {
       });
   };
 
+  const handleReportComment = (commentId: string) => {
+      requireAuth(() => {
+          setReportCommentId(commentId);
+      });
+  };
+
   const insertEmoji = (emoji: string) => {
       setCommentText(prev => prev + emoji);
       setShowEmoji(false);
@@ -177,6 +197,14 @@ export const ArticleDetail = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-10 mb-20">
+      
+      <ReportModal 
+          isOpen={!!reportCommentId}
+          onClose={() => setReportCommentId(null)}
+          targetId={reportCommentId || ''}
+          targetType="comment"
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
         
         {/* 左侧侧边栏 (互动) - 桌面端 */}
@@ -334,7 +362,7 @@ export const ArticleDetail = () => {
 
                <div className="space-y-6">
                   {article.comments?.map(comment => (
-                     <CommentItem key={comment.id} comment={comment} />
+                     <CommentItem key={comment.id} comment={comment} onReport={handleReportComment} />
                   ))}
                </div>
             </div>

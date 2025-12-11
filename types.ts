@@ -43,6 +43,7 @@ export interface Article {
   likes: number;
   category: string;
   date: string;
+  updatedAt?: string; // 新增更新时间
   tags?: string[];
   comments?: Comment[];
   authorId?: string;
@@ -68,6 +69,9 @@ export interface Song {
   duration: number; // in seconds
   lyrics?: string[];
 }
+
+// 新增播放模式类型
+export type PlayMode = 'order' | 'loop' | 'random';
 
 export interface CommunityPost {
   id: string;

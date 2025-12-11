@@ -25,6 +25,16 @@ const registerSchema = z.object({
   captchaCode: z.string().length(4, "图形验证码必须是4位"),
 });
 
+// Input wrapper with icon - Defined outside to prevent re-creation on render
+const InputGroup = ({ icon: Icon, children }: { icon: any, children: React.ReactNode }) => (
+    <div className="relative group">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-apple-blue transition-colors duration-300">
+            <Icon size={18} />
+        </div>
+        {children}
+    </div>
+);
+
 export const AuthForm = ({ onClose }: { onClose: () => void }) => {
   const { showToast } = useStore();
   const [isRegister, setIsRegister] = useState(false);
@@ -205,16 +215,6 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
           setAnimating(false);
       }, 300);
   };
-
-  // Input wrapper with icon
-  const InputGroup = ({ icon: Icon, children }: { icon: any, children: React.ReactNode }) => (
-      <div className="relative group">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-apple-blue transition-colors duration-300">
-              <Icon size={18} />
-          </div>
-          {children}
-      </div>
-  );
 
   return (
     <div className="space-y-6 overflow-hidden">

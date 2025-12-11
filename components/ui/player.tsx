@@ -1,11 +1,17 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { useStore } from '../../context/store';
-import { ChevronLeft, SkipBack, SkipForward, Play, Pause, X } from 'lucide-react';
+import { ChevronLeft, SkipBack, SkipForward, Play, Pause, X, Repeat, Repeat1, Shuffle, Volume2, Volume1, VolumeX } from 'lucide-react';
 
 // --- 全屏音乐播放器 ---
 export const FullPlayerModal = () => {
-    const { currentSong, isPlaying, togglePlay, isFullPlayerOpen, setFullPlayerOpen } = useStore();
+    const { 
+        currentSong, isPlaying, togglePlay, 
+        isFullPlayerOpen, setFullPlayerOpen,
+        playNext, playPrev,
+        playMode, togglePlayMode,
+        volume, setVolume
+    } = useStore();
     
     // 禁止背景滚动
     useEffect(() => {
@@ -18,6 +24,8 @@ export const FullPlayerModal = () => {
     }, [isFullPlayerOpen]);
 
     if (!isFullPlayerOpen || !currentSong) return null;
+
+    const VolumeIcon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
     return ReactDOM.createPortal(
         <div className="fixed inset-0 z-[100] bg-white/30 dark:bg-black/30 backdrop-blur-xl flex flex-col animate-in slide-in-from-bottom-10 duration-300">
@@ -40,7 +48,7 @@ export const FullPlayerModal = () => {
              {/* 内容 */}
              <div className="flex-1 flex flex-col md:flex-row items-center justify-center p-6 gap-10 md:gap-20 overflow-hidden z-10">
                  {/* 封面 */}
-                 <div className="w-64 h-64 md:w-96 md:h-96 rounded-2xl shadow-2xl overflow-hidden flex-shrink-0">
+                 <div className="w-64 h-64 md:w-96 md:h-96 rounded-2xl shadow-2xl overflow-hidden flex-shrink-0 animate-in zoom-in duration-500">
                      <img src={currentSong.cover} alt="Art" className="w-full h-full object-cover" />
                  </div>
 
@@ -62,23 +70,65 @@ export const FullPlayerModal = () => {
              </div>
 
              {/* 控制器 */}
-             <div className="pb-12 px-8 max-w-3xl mx-auto w-full z-20">
+             <div className="pb-12 px-8 max-w-3xl mx-auto w-full z-20 space-y-8">
                  {/* 进度条 (模拟) */}
-                 <div className="w-full bg-gray-300/50 dark:bg-gray-700/50 h-1.5 rounded-full mb-8 cursor-pointer relative group">
+                 <div className="w-full bg-gray-300/50 dark:bg-gray-700/50 h-1.5 rounded-full cursor-pointer relative group">
                      <div className="absolute top-0 left-0 h-full bg-apple-text dark:bg-white w-1/3 rounded-full">
                          <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-md scale-0 group-hover:scale-100 transition-transform" />
                      </div>
                  </div>
 
+                 {/* 播放控制按钮 */}
                  <div className="flex items-center justify-between">
-                     <button className="text-gray-500 hover:text-gray-900 dark:hover:text-white"><SkipBack size={32} /></button>
                      <button 
-                        onClick={togglePlay}
-                        className="w-20 h-20 bg-apple-text dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-transform"
+                        onClick={togglePlayMode}
+                        className="p-2 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                        title="切换模式"
                      >
-                         {isPlaying ? <Pause size={36} className="fill-current" /> : <Play size={36} className="fill-current ml-2" />}
+                         {playMode === 'order' && <Repeat size={24} />}
+                         {playMode === 'loop' && <Repeat1 size={24} className="text-apple-blue" />}
+                         {playMode === 'random' && <Shuffle size={24} className="text-apple-blue" />}
                      </button>
-                     <button className="text-gray-500 hover:text-gray-900 dark:hover:text-white"><SkipForward size={32} /></button>
+
+                     <div className="flex items-center space-x-8">
+                        <button onClick={playPrev} className="text-gray-800 dark:text-white hover:scale-110 transition-transform"><SkipBack size={36} /></button>
+                        <button 
+                            onClick={togglePlay}
+                            className="w-20 h-20 bg-apple-text dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-transform"
+                        >
+                            {isPlaying ? <Pause size={36} className="fill-current" /> : <Play size={36} className="fill-current ml-2" />}
+                        </button>
+                        <button onClick={playNext} className="text-gray-800 dark:text-white hover:scale-110 transition-transform"><SkipForward size={36} /></button>
+                     </div>
+
+                     {/* 音量控制 - 移动端可能需要隐藏或作为弹窗，这里简单展示 */}
+                     <div className="hidden md:flex items-center group relative w-24">
+                         <VolumeIcon size={24} className="text-gray-500 mr-2" />
+                         <input 
+                            type="range" 
+                            min="0" 
+                            max="1" 
+                            step="0.01" 
+                            value={volume}
+                            onChange={(e) => setVolume(parseFloat(e.target.value))}
+                            className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-apple-blue"
+                         />
+                     </div>
+                     <div className="md:hidden w-6"></div> {/* Placeholder for layout balance on mobile */}
+                 </div>
+                 
+                 {/* 移动端音量单独行 */}
+                 <div className="md:hidden flex items-center px-4">
+                     <VolumeIcon size={20} className="text-gray-500 mr-3" />
+                     <input 
+                        type="range" 
+                        min="0" 
+                        max="1" 
+                        step="0.01" 
+                        value={volume}
+                        onChange={(e) => setVolume(parseFloat(e.target.value))}
+                        className="flex-1 h-1 bg-gray-300 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-apple-blue"
+                     />
                  </div>
              </div>
         </div>,

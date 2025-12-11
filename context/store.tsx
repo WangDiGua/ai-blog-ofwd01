@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useMemo, useCallback } from 'react';
-import { User, ToastMessage, ToastType, Song } from '../types';
-import { aiApi } from '../services/api';
+import { User, ToastMessage, ToastType, Song, PlayMode } from '../types';
+import { aiApi, musicApi } from '../services/api';
 
 export type ThemeMode = 'light' | 'dark' | 'eye';
 export type SeasonMode = 'auto' | 'spring' | 'summer' | 'autumn' | 'winter';
@@ -18,9 +18,9 @@ interface AppContextType {
   // Theme & UI Settings
   theme: ThemeMode;
   toggleTheme: () => void;
-  isThemeAnimating: boolean; // 新增：是否正在进行主题动画
-  transitionStage: 'idle' | 'setting' | 'rising'; // 新增：动画阶段
-  previousTheme: ThemeMode; // 新增：用于判断动画起始状态
+  isThemeAnimating: boolean;
+  transitionStage: 'idle' | 'setting' | 'rising';
+  previousTheme: ThemeMode;
   fontSize: FontSize;
   cycleFontSize: () => void;
   
@@ -43,8 +43,14 @@ interface AppContextType {
   // Music Player
   currentSong: Song | null;
   isPlaying: boolean;
+  playMode: PlayMode; // 新增
+  volume: number; // 新增 0-1
   playSong: (song: Song) => void;
   togglePlay: () => void;
+  playNext: () => void; // 新增
+  playPrev: () => void; // 新增
+  togglePlayMode: () => void; // 新增
+  setVolume: (val: number) => void; // 新增
   closePlayer: () => void;
   isFullPlayerOpen: boolean;
   setFullPlayerOpen: (open: boolean) => void;
@@ -82,12 +88,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isFullPlayerOpen, setFullPlayerOpen] = useState(false);
+  const [playlist, setPlaylist] = useState<Song[]>([]); // 内部维护播放列表
+  const [playMode, setPlayMode] = useState<PlayMode>('order');
+  const [volume, setVolume] = useState(0.7);
+  
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // --- Effects: Theme Application ---
   useEffect(() => {
-    // 这里的 DOM 操作仅在 theme 状态真正改变时执行
-    // 我们将在动画的中间阶段改变这个状态
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark', 'eye-protection');
     
@@ -98,7 +106,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // Load persisted theme & user
+  // Load persisted theme & user & Fetch Initial Music
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as ThemeMode;
     if (savedTheme) {
@@ -118,6 +126,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             console.error("Failed to parse user", e);
         }
     }
+
+    // 初始化获取音乐列表以便全局播放
+    musicApi.getList().then(songs => setPlaylist(songs));
   }, []);
 
   // --- Effects: Font Size ---
@@ -173,25 +184,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   // --- Actions: Theme & Settings ---
   const toggleTheme = useCallback(() => {
-    if (isThemeAnimating) return; // 防止动画过程中重复点击
+    if (isThemeAnimating) return; 
 
-    setPreviousTheme(theme); // 记录当前主题
+    setPreviousTheme(theme); 
     setIsThemeAnimating(true);
-    setTransitionStage('setting'); // 开始第一阶段：落日/落月
+    setTransitionStage('setting'); 
 
-    // 计算下一个主题
     let nextTheme: ThemeMode;
     if (theme === 'light') nextTheme = 'dark';
     else if (theme === 'dark') nextTheme = 'eye';
     else nextTheme = 'light';
 
-    // 动画时序控制
-    // 1.5秒后（下落完成），切换实际主题，并开始升起
     setTimeout(() => {
-        setTheme(nextTheme); // 切换 React 状态，触发 DOM 变更
-        setTransitionStage('rising'); // 开始第二阶段：升起
+        setTheme(nextTheme); 
+        setTransitionStage('rising'); 
         
-        // 再过 1.5秒（升起完成），结束动画
         setTimeout(() => {
             setIsThemeAnimating(false);
             setTransitionStage('idle');
@@ -232,12 +239,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const incrementAiUsage = useCallback(async () => {
       setUser(currentUser => {
           if (!currentUser) return null;
-          // Optimistic update locally? Or better fetch.
-          // For now, keep as is but wrap in callback logic
-          aiApi.updateUsage(currentUser.id).then(() => {
-               // Assuming API success
-          }).catch(console.error);
-          
+          aiApi.updateUsage(currentUser.id).catch(console.error);
           const newUsage = (currentUser.aiUsage || 0) + 1;
           const updated = { ...currentUser, aiUsage: newUsage };
           localStorage.setItem('user', JSON.stringify(updated));
@@ -245,23 +247,101 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       });
   }, []);
 
-  // --- Actions: Music ---
+  // --- Actions: Music Logic ---
+  
+  // 播放下一首
+  const playNext = useCallback(() => {
+      if (playlist.length === 0) return;
+      
+      setCurrentSong(current => {
+          const currentIndex = playlist.findIndex(s => s.id === current?.id);
+          let nextIndex = 0;
+
+          if (playMode === 'random') {
+              nextIndex = Math.floor(Math.random() * playlist.length);
+          } else if (playMode === 'loop') {
+              // 单曲循环逻辑通常在 onEnded 处理，但如果用户点击下一首，也应该切歌还是重播？通常切歌
+              // 这里如果手动点击下一首，我们切换到列表下一首
+              nextIndex = (currentIndex + 1) % playlist.length;
+          } else {
+              // 顺序播放
+              nextIndex = (currentIndex + 1) % playlist.length;
+          }
+          
+          setIsPlaying(true);
+          return playlist[nextIndex];
+      });
+  }, [playlist, playMode]);
+
+  // 播放上一首
+  const playPrev = useCallback(() => {
+      if (playlist.length === 0) return;
+      
+      setCurrentSong(current => {
+          const currentIndex = playlist.findIndex(s => s.id === current?.id);
+          let prevIndex = 0;
+          
+          if (playMode === 'random') {
+               prevIndex = Math.floor(Math.random() * playlist.length);
+          } else {
+               prevIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+          }
+          
+          setIsPlaying(true);
+          return playlist[prevIndex];
+      });
+  }, [playlist, playMode]);
+
+  // 切换播放模式
+  const togglePlayMode = useCallback(() => {
+      setPlayMode(prev => {
+          const next = prev === 'order' ? 'loop' : prev === 'loop' ? 'random' : 'order';
+          const labels: Record<PlayMode, string> = { order: '顺序播放', loop: '单曲循环', random: '随机播放' };
+          showToast(labels[next], 'info');
+          return next;
+      });
+  }, [showToast]);
+
   useEffect(() => {
       if (!audioRef.current) {
           audioRef.current = new Audio();
-          audioRef.current.onended = () => setIsPlaying(false);
+          // 监听播放结束事件，实现自动播放逻辑
+          audioRef.current.onended = () => {
+              // 在 useEffect 内部无法直接获取最新的 playMode 状态（闭包陷阱）
+              // 解决方法：使用 ref 追踪 playMode 或 依赖项重新绑定
+              // 这里为了简单，我们在 handleEnded 中做逻辑判断，但因为 playNext 已经使用了 useCallback 且依赖了 playMode
+              // 我们需要确保 onEnded 调用的是最新的 playNext
+          };
       }
   }, []);
 
+  // 专门处理 onEnded 的 Effect
   useEffect(() => {
-      if (currentSong && audioRef.current) {
-           if (isPlaying) {
-               // Audio playing logic would go here
-           } else {
-               // Audio pausing logic would go here
-           }
+      if (audioRef.current) {
+          audioRef.current.onended = () => {
+              if (playMode === 'loop') {
+                  audioRef.current!.currentTime = 0;
+                  audioRef.current!.play();
+              } else {
+                  playNext();
+              }
+          };
       }
-  }, [currentSong, isPlaying]);
+  }, [playMode, playNext]);
+
+  // 处理音量
+  useEffect(() => {
+      if (audioRef.current) {
+          audioRef.current.volume = volume;
+      }
+  }, [volume]);
+
+  // 处理播放/暂停/切歌
+  useEffect(() => {
+      // 这里的逻辑主要处理 playSong 改变 currentSong 后触发播放
+      // 实际的 play/pause 操作可以在组件层面控制，或者在这里监听
+      // 简单起见，我们仅做辅助
+  }, [currentSong]);
 
   const playSong = useCallback((song: Song) => {
       setCurrentSong(curr => {
@@ -285,7 +365,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setFullPlayerOpen(false);
   }, []);
 
-  // 使用 useMemo 缓存 Context Value，避免不必要的重渲染
   const contextValue = useMemo(() => ({
         user, isLoggedIn: !!user, login, logout, updateUser, requireAuth,
         theme, toggleTheme, isThemeAnimating, transitionStage, previousTheme,
@@ -293,13 +372,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         showFestive, toggleFestive, seasonMode, cycleSeasonMode,
         isSearchOpen, setSearchOpen, isAuthModalOpen, setAuthModalOpen,
         toasts, showToast,
-        currentSong, isPlaying, playSong, togglePlay, closePlayer, isFullPlayerOpen, setFullPlayerOpen,
+        currentSong, isPlaying, playMode, volume, 
+        playSong, togglePlay, playNext, playPrev, togglePlayMode, setVolume, closePlayer, isFullPlayerOpen, setFullPlayerOpen,
         incrementAiUsage
   }), [
         user, theme, isThemeAnimating, transitionStage, previousTheme, fontSize, showFestive, seasonMode, 
-        isSearchOpen, isAuthModalOpen, toasts, currentSong, isPlaying, isFullPlayerOpen,
+        isSearchOpen, isAuthModalOpen, toasts, 
+        currentSong, isPlaying, isFullPlayerOpen, playMode, volume,
         login, logout, updateUser, requireAuth, toggleTheme, cycleFontSize, toggleFestive, cycleSeasonMode,
-        showToast, playSong, togglePlay, closePlayer, incrementAiUsage
+        showToast, playSong, togglePlay, playNext, playPrev, togglePlayMode, setVolume, closePlayer, incrementAiUsage
   ]);
 
   return (
