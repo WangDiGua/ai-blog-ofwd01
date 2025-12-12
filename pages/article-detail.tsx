@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStore } from '../context/store';
-import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, MarkdownEditor, ImageViewer, Modal, RankBadge, Img, ReportModal } from '../components/ui';
+import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, ImageViewer, Modal, RankBadge, Img, ReportModal } from '../components/ui';
 import { articleApi } from '../services/api';
 import { Article, Comment, CULTIVATION_LEVELS, CultivationLevel } from '../types';
 import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash, ShieldAlert, Share2, Download, ExternalLink, Hourglass, Lock, Flag } from 'lucide-react';
@@ -72,7 +72,7 @@ const CommentItem = ({ comment, depth = 0, onReport }: { comment: Comment, depth
 
                 {replyOpen && (
                     <div className="mt-3">
-                         <textarea className="w-full p-2 text-sm bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-apple-blue dark:text-white" placeholder="写下回复..." rows={2}/>
+                         <textarea className="w-full p-3 text-sm bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-apple-blue dark:text-white resize-none" placeholder="写下回复..." rows={3}/>
                          <div className="flex justify-end mt-2">
                              <Button size="sm" onClick={() => setReplyOpen(false)}>发送</Button>
                          </div>
@@ -323,7 +323,7 @@ export const ArticleDetail = () => {
                <div className="mb-8 flex space-x-3 md:space-x-4">
                   <Avatar src={user?.avatar || 'https://ui-avatars.com/api/?name=Guest'} alt="me" />
                   <div className="flex-1 relative">
-                      {/* 如果没有权限评论，显示遮罩提示 */}
+                      {/* 如果没有权限评论(且已登录)，显示遮罩提示；如果未登录，则不显示遮罩，允许点击输入框触发登录 */}
                       {user && !canComment() && (
                           <div className="absolute inset-0 z-10 bg-white/60 dark:bg-black/60 backdrop-blur-[1px] rounded-xl flex flex-col items-center justify-center text-center cursor-not-allowed border border-gray-200 dark:border-gray-700">
                                 <Lock className="text-gray-500 mb-2" size={24} />
@@ -335,13 +335,15 @@ export const ArticleDetail = () => {
                           </div>
                       )}
 
-                      {/* 使用 MarkdownEditor 替代简单文本框 */}
-                      <div onClick={() => { if(!user) requireAuth(()=>{}) }}>
-                          <MarkdownEditor 
-                            value={commentText} 
-                            onChange={setCommentText} 
-                            placeholder={canComment() ? "写下一条友善的评论... (支持 Markdown)" : "修炼中..."}
-                            height="150px"
+                      {/* 普通长文本输入框 (替代富文本) */}
+                      <div onClick={() => !user && requireAuth(()=>{})}>
+                          <textarea
+                            className="w-full p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-apple-blue outline-none resize-none text-sm transition-all text-apple-text dark:text-apple-dark-text shadow-sm placeholder-gray-400"
+                            rows={4}
+                            placeholder={user ? (canComment() ? "写下一条友善的评论..." : "修炼中...") : "登录后参与讨论..."}
+                            value={commentText}
+                            onChange={e => setCommentText(e.target.value)}
+                            disabled={user && !canComment()} // 仅在已登录但等级不足时禁用，未登录时不禁用以便触发onClick
                           />
                       </div>
 
@@ -349,7 +351,7 @@ export const ArticleDetail = () => {
                          <button onClick={() => setShowEmoji(!showEmoji)} className="text-gray-400 hover:text-apple-blue p-2">
                               <Smile size={20} />
                          </button>
-                         <Button size="sm" onClick={handlePostComment} disabled={!commentText.trim() || !canComment()}>发表评论</Button>
+                         <Button size="sm" onClick={handlePostComment} disabled={!commentText.trim() || (user && !canComment())}>发表评论</Button>
                       </div>
 
                       {showEmoji && (

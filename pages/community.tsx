@@ -227,8 +227,9 @@ export const Community = () => {
                                 )}
                             </div>
 
-                            <div className="flex space-x-2 items-end relative">
-                                {!canComment() && (
+                            <div className="flex space-x-2 items-end relative" onClick={() => !user && requireAuth(() => {})}>
+                                {/* 仅当已登录但等级不足时显示遮罩；未登录时不显示遮罩，允许点击 textarea 触发 auth */}
+                                {user && !canComment() && (
                                     <div className="absolute inset-0 z-10 bg-white/60 dark:bg-black/60 backdrop-blur-[1px] rounded-lg flex items-center justify-center cursor-not-allowed">
                                         <span className="text-xs font-bold text-gray-600 flex items-center bg-white dark:bg-black px-2 py-1 rounded-full border border-gray-200">
                                             <Lock size={10} className="mr-1"/> 筑基期方可回复
@@ -238,15 +239,16 @@ export const Community = () => {
                                 <Avatar src={user?.avatar || 'https://ui-avatars.com/api/?name=Guest'} alt="Me" size="sm" />
                                 <div className="flex-1 relative">
                                     <textarea 
-                                        className="w-full bg-white dark:bg-gray-800 border-none rounded-xl p-2 text-sm focus:ring-2 focus:ring-apple-blue outline-none resize-none text-apple-text dark:text-apple-dark-text"
+                                        className="w-full bg-white dark:bg-gray-800 border-none rounded-xl p-2 text-sm focus:ring-2 focus:ring-apple-blue outline-none resize-none text-apple-text dark:text-apple-dark-text placeholder-gray-400"
                                         rows={1}
-                                        placeholder="写下你的评论... (支持 Markdown)"
+                                        placeholder={user ? "写下你的评论..." : "登录后回复"}
                                         value={commentInput}
                                         onChange={(e) => setCommentInput(e.target.value)}
                                         onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(post.id); }}}
+                                        disabled={user && !canComment()}
                                     />
                                 </div>
-                                <Button size="sm" onClick={() => submitComment(post.id)} disabled={!commentInput.trim()}>
+                                <Button size="sm" onClick={() => submitComment(post.id)} disabled={!commentInput.trim() || (user && !canComment())}>
                                     <Send size={14} />
                                 </Button>
                             </div>

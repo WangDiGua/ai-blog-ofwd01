@@ -1,4 +1,4 @@
-import { Article, CommunityPost, Song, Announcement, User, Comment } from '../types';
+import { Article, CommunityPost, Song, Announcement, User, Comment, Album } from '../types';
 
 // --- 模拟用户数据 ---
 export const MOCK_USERS: User[] = [
@@ -159,6 +159,59 @@ export const MOCK_COMMENTS: Comment[] = [
         content: '这个观点很有趣，但我认为 Server Components 还有很长的路要走。',
         date: '5小时前',
         likes: 12
+    }
+];
+
+// --- 模拟相册数据 ---
+export const MOCK_ALBUMS: Album[] = [
+    {
+        id: 'album-1',
+        title: '京都之秋',
+        description: '漫步在京都的古老街道，感受红叶与寺庙的静谧之美。这是一次关于色彩与禅意的探索之旅。',
+        cover: 'https://picsum.photos/seed/kyoto/800/600',
+        author: MOCK_USERS[0],
+        date: '2023-11-20',
+        likes: 342,
+        views: 1205,
+        comments: MOCK_COMMENTS,
+        photos: [
+            { id: 'p-1', url: 'https://picsum.photos/seed/kyoto1/800/600', title: '清水寺的黄昏', caption: '夕阳西下，古老的木结构在金色的光线中显得格外庄重。' },
+            { id: 'p-2', url: 'https://picsum.photos/seed/kyoto2/800/1000', title: '岚山竹林', caption: '微风拂过，竹叶沙沙作响，仿佛在低语。' },
+            { id: 'p-3', url: 'https://picsum.photos/seed/kyoto3/800/600', title: '伏见稻荷大社', caption: '千本鸟居，通往神域的红色隧道。' },
+            { id: 'p-4', url: 'https://picsum.photos/seed/kyoto4/800/800', title: '街角的咖啡店', caption: '在繁忙的旅途中，寻找片刻的宁静。' }
+        ]
+    },
+    {
+        id: 'album-2',
+        title: '赛博朋克 2077 摄影集',
+        description: '夜之城的霓虹灯光下，隐藏着无数的故事。游戏摄影捕捉到的虚拟世界之美。',
+        cover: 'https://picsum.photos/seed/cyber/800/600',
+        author: MOCK_USERS[1],
+        date: '2024-01-15',
+        likes: 890,
+        views: 5600,
+        comments: [],
+        photos: [
+            { id: 'p-5', url: 'https://picsum.photos/seed/cyber1/800/500', title: 'V 的公寓', caption: '故事开始的地方。' },
+            { id: 'p-6', url: 'https://picsum.photos/seed/cyber2/800/1200', title: '荒坂塔', caption: '权力的象征，高耸入云。' },
+            { id: 'p-7', url: 'https://picsum.photos/seed/cyber3/800/600', title: '雨夜', caption: '在雨中，城市的倒影更加迷人。' }
+        ]
+    },
+    {
+        id: 'album-3',
+        title: '极简主义办公桌',
+        description: 'Setup Wars 投稿。展示我的高效工作环境，Less is More。',
+        cover: 'https://picsum.photos/seed/desk/800/600',
+        author: MOCK_USERS[0],
+        date: '2024-03-10',
+        likes: 120,
+        views: 450,
+        comments: MOCK_COMMENTS,
+        photos: [
+            { id: 'p-8', url: 'https://picsum.photos/seed/desk1/800/600', title: '整体视图', caption: '双屏显示器，无线外设，没有任何多余的线缆。' },
+            { id: 'p-9', url: 'https://picsum.photos/seed/desk2/800/600', title: '机械键盘', caption: 'Keychron Q1 Pro，手感极佳。' },
+            { id: 'p-10', url: 'https://picsum.photos/seed/desk3/800/600', title: '氛围灯', caption: 'ScreenBar 提供专注的光源。' }
+        ]
     }
 ];
 

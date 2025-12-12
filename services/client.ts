@@ -9,7 +9,8 @@ import {
     MOCK_TAGS,
     MOCK_CATEGORIES,
     MOCK_FRIEND_LINKS,
-    MOCK_DANMAKU
+    MOCK_DANMAKU,
+    MOCK_ALBUMS
 } from './mockData';
 import { User } from '../types';
 
@@ -245,6 +246,7 @@ class HttpClient {
                         case '/categories': resolve(MOCK_CATEGORIES); break;
                         case '/friend-links': resolve(MOCK_FRIEND_LINKS); break;
                         case '/danmaku': resolve(MOCK_DANMAKU); break;
+                        case '/albums': resolve(MOCK_ALBUMS); break; // Add mock router support
                         default: resolve({});
                     }
                     return;

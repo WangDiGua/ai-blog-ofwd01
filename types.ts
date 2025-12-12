@@ -61,6 +61,29 @@ export interface Comment {
   likes?: number;
 }
 
+// 相册相关类型
+export interface AlbumPhoto {
+    id: string;
+    url: string;
+    width?: number;
+    height?: number;
+    title?: string;   // 图片标题
+    caption?: string; // 图片描述
+}
+
+export interface Album {
+    id: string;
+    title: string;
+    description: string;
+    cover: string;
+    photos: AlbumPhoto[];
+    author: User;
+    date: string;
+    likes: number;
+    views: number;
+    comments: Comment[];
+}
+
 export interface Song {
   id: string;
   title: string;

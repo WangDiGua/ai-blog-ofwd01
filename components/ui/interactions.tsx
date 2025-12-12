@@ -36,11 +36,9 @@ export const CustomScrollbar = () => {
         }
 
         // 核心需求：滚动条高度占当前页高度的 10%
-        // "current page height" 既可以解释为 document height 也可以是 viewport height。
-        // 在 UI 语境下，通常指视口高度的 10% 为固定滑块大小，这样视觉上更美观且易于点击。
         const targetHeight = vh * 0.1; 
         
-        // 限制最小高度，防止过小无法点击 (虽然需求说是 10%，但加个最小值是工程最佳实践，这里设为 40px)
+        // 限制最小高度，防止过小无法点击
         const finalHeight = Math.max(targetHeight, 40);
         
         setThumbHeight(finalHeight);
@@ -362,10 +360,40 @@ export const FloatingMenu = () => {
     const { cycleFontSize, showFestive, toggleFestive, cycleSeasonMode, seasonMode, currentSong } = useStore();
     const [showDonate, setShowDonate] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+    const [scrollProgress, setScrollProgress] = useState(0);
+    const [showScrollTop, setShowScrollTop] = useState(false);
+
+    // 监听滚动事件：计算进度和显示状态
+    useEffect(() => {
+        const handleScroll = () => {
+            // 使用 window.scrollY 或 document.documentElement.scrollTop 兼容性更好
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight;
+            const clientHeight = window.innerHeight; // 使用 window.innerHeight 更准确反映视口
+            
+            // 可滚动的最大高度
+            const maxScroll = scrollHeight - clientHeight;
+            
+            // 计算进度 (防止除以0或负数)
+            const progress = maxScroll > 0 ? (scrollTop / maxScroll) * 100 : 0;
+            
+            setScrollProgress(Math.min(100, Math.max(0, progress)));
+            setShowScrollTop(scrollTop > 300);
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('resize', handleScroll); // 窗口大小改变时重新计算
+        
+        handleScroll(); // 初始化调用，确保初始状态正确
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', handleScroll);
+        };
+    }, []);
 
     const scrollToTop = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        setIsOpen(false);
     };
 
     const getSeasonIconColor = () => {
@@ -379,69 +407,119 @@ export const FloatingMenu = () => {
     };
 
     const menuItems = [
-        { icon: ArrowUp, action: scrollToTop, label: "回到顶部", color: "text-gray-600 dark:text-gray-300" },
         { icon: Coffee, action: () => setShowDonate(true), label: "打赏", color: "text-pink-500" },
         { icon: Type, action: cycleFontSize, label: "调整字号", color: "text-gray-600 dark:text-gray-300" },
         ...(showFestive ? [{ icon: CloudSun, action: cycleSeasonMode, label: `季节: ${seasonMode}`, color: getSeasonIconColor() }] : []),
         { icon: Gift, action: toggleFestive, label: "节日氛围", color: showFestive ? 'text-red-500' : 'text-gray-600 dark:text-gray-300' },
     ];
 
+    // 计算圆环属性
+    const radius = 18;
+    const circumference = 2 * Math.PI * radius;
+    // 进度为0时 offset应为circumference(全空)，进度100时offset为0(全满)
+    const strokeDashoffset = circumference - (scrollProgress / 100) * circumference;
+
     return ReactDOM.createPortal(
         <>
-            {/* 动态调整 bottom 位置，如果 Mini 播放器存在，则向上移动以避免遮挡 */}
-            <div className={`fixed right-6 z-[90] flex flex-col items-center transition-all duration-500 ease-in-out ${currentSong ? 'bottom-28' : 'bottom-10'}`}>
-                {/* 菜单项容器 */}
-                <div className={`flex flex-col-reverse items-center space-y-reverse space-y-4 mb-4`}>
-                    {menuItems.map((item, index) => (
-                        <div 
-                            key={index}
-                            className={`
-                                relative group flex items-center justify-end
-                                transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-                            `}
-                            style={{
-                                transform: isOpen ? `translateY(0) scale(1)` : `translateY(${20 * (index + 1)}px) scale(0.5)`,
-                                opacity: isOpen ? 1 : 0,
-                                pointerEvents: isOpen ? 'auto' : 'none',
-                                transitionDelay: isOpen ? `${index * 50}ms` : '0ms'
-                            }}
-                        >
-                            {/* Label Tooltip */}
-                            <span className="absolute right-14 px-3 py-1.5 bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 whitespace-nowrap pointer-events-none shadow-xl mr-2">
-                                {item.label}
-                            </span>
-
-                            <button 
-                                onClick={() => { item.action(); }}
-                                className={`w-12 h-12 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl border border-white/40 dark:border-gray-600 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all ${item.color}`}
-                            >
-                                <item.icon size={20} />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-
-                {/* 主触发按钮 (图标优化) */}
-                <button 
-                    onClick={() => setIsOpen(!isOpen)}
+            {/* 动态调整 bottom 位置 */}
+            <div className={`fixed right-6 z-[90] flex items-end transition-all duration-500 ease-in-out ${currentSong ? 'bottom-28' : 'bottom-10'}`}>
+                
+                {/* 独立的返回顶部按钮 (在菜单左侧) */}
+                <button
+                    onClick={scrollToTop}
                     className={`
-                        w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-2xl border border-white/20 
-                        transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-50
-                        hover:scale-105 active:scale-95 group
-                        ${isOpen ? 'bg-gray-900 dark:bg-white text-white dark:text-black' : 'bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white'}
+                        mr-4 w-12 h-12 rounded-full flex items-center justify-center bg-white/80 dark:bg-black/60 backdrop-blur-xl shadow-lg border border-gray-100 dark:border-gray-700
+                        transition-all duration-500 ease-out group overflow-hidden relative
+                        ${showScrollTop ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-50 pointer-events-none'}
                     `}
+                    title="回到顶部"
                 >
-                    <div className="relative w-6 h-6">
-                        <Command 
-                            size={24} 
-                            className={`absolute inset-0 transition-all duration-500 ${isOpen ? 'opacity-0 rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100'}`} 
+                    {/* 进度圆环 SVG */}
+                    <svg className="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none" viewBox="0 0 48 48">
+                        <circle
+                            cx="24" cy="24" r={radius}
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            className="text-gray-200 dark:text-gray-700"
                         />
-                        <X 
-                            size={24} 
-                            className={`absolute inset-0 transition-all duration-500 ${isOpen ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'}`} 
+                        <circle
+                            cx="24" cy="24" r={radius}
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={strokeDashoffset}
+                            strokeLinecap="round"
+                            className="text-apple-blue transition-all duration-300 ease-out"
                         />
-                    </div>
+                    </svg>
+
+                    {/* 内容: 默认显示百分比，悬浮显示箭头 */}
+                    <span className="text-[10px] font-bold text-apple-blue group-hover:opacity-0 transition-opacity duration-200 absolute">
+                        {Math.round(scrollProgress)}%
+                    </span>
+                    <ArrowUp 
+                        size={20} 
+                        className="text-apple-blue opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 absolute" 
+                    />
                 </button>
+
+                {/* 菜单部分 */}
+                <div className="flex flex-col items-center">
+                    {/* 菜单项容器 */}
+                    <div className={`flex flex-col-reverse items-center space-y-reverse space-y-4 mb-4 absolute bottom-full pb-4 right-1`}>
+                        {menuItems.map((item, index) => (
+                            <div 
+                                key={index}
+                                className={`
+                                    relative group flex items-center justify-end
+                                    transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                                `}
+                                style={{
+                                    transform: isOpen ? `translateY(0) scale(1)` : `translateY(${20 * (index + 1)}px) scale(0.5)`,
+                                    opacity: isOpen ? 1 : 0,
+                                    pointerEvents: isOpen ? 'auto' : 'none',
+                                    transitionDelay: isOpen ? `${index * 50}ms` : '0ms'
+                                }}
+                            >
+                                {/* Label Tooltip */}
+                                <span className="absolute right-14 px-3 py-1.5 bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 whitespace-nowrap pointer-events-none shadow-xl mr-2">
+                                    {item.label}
+                                </span>
+
+                                <button 
+                                    onClick={() => { item.action(); }}
+                                    className={`w-12 h-12 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl border border-white/40 dark:border-gray-600 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all ${item.color}`}
+                                >
+                                    <item.icon size={20} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* 主触发按钮 */}
+                    <button 
+                        onClick={() => setIsOpen(!isOpen)}
+                        className={`
+                            w-14 h-14 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-2xl border border-white/20 
+                            transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-50
+                            hover:scale-105 active:scale-95 group
+                            ${isOpen ? 'bg-gray-900 dark:bg-white text-white dark:text-black' : 'bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white'}
+                        `}
+                    >
+                        <div className="relative w-6 h-6">
+                            <Command 
+                                size={24} 
+                                className={`absolute inset-0 transition-all duration-500 ${isOpen ? 'opacity-0 rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100'}`} 
+                            />
+                            <X 
+                                size={24} 
+                                className={`absolute inset-0 transition-all duration-500 ${isOpen ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'}`} 
+                            />
+                        </div>
+                    </button>
+                </div>
             </div>
 
             <Modal isOpen={showDonate} onClose={() => setShowDonate(false)} title="请我喝杯咖啡">

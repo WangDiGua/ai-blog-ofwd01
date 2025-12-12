@@ -1,5 +1,5 @@
 import { request } from '../client';
-import { CommunityPost } from '../../types';
+import { CommunityPost, Album } from '../../types';
 
 export const communityApi = {
     getPosts: () => 
@@ -7,4 +7,7 @@ export const communityApi = {
     
     getDanmaku: () =>
         request.get<string[]>('/danmaku'),
+
+    getAlbums: () =>
+        request.get<Album[]>('/albums'),
 };

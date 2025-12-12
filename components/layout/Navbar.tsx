@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Menu, X, ShieldAlert, ChevronDown } from 'lucide-react';
 import { useStore } from '../../context/store';
-import { Button, Avatar, ThemeToggle, AdminLoginModal } from '../ui';
-import { throttle } from '../../utils/lib'; // Import throttle
+import { Button, Avatar, ThemeToggle, AdminLoginModal, LiquidLogo } from '../ui'; // Imported LiquidLogo
+import { throttle } from '../../utils/lib';
 
 export const Navbar = () => {
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ export const Navbar = () => {
       hasSubmenu: true, 
       subItems: [
         {name: '首页', path: '/'}, 
-        {name: '文章分类', path: '/categories'}, // 新增分类页面入口
+        {name: '文章分类', path: '/categories'}, 
         {name: '时间线', path: '/timeline'},
         {name: '起始页', path: '/start'}
       ] 
@@ -102,7 +102,6 @@ export const Navbar = () => {
 
   return (
     <>
-      {/* Global components (Toast, Search, etc.) moved to App.tsx LayoutWrapper */}
       <AdminLoginModal isOpen={isAdminModalOpen} onClose={() => setAdminModalOpen(false)} />
 
       <nav 
@@ -114,7 +113,8 @@ export const Navbar = () => {
           <div className="flex justify-between items-center h-16">
             
             <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => navigate('/')}>
-              <span className="text-2xl font-semibold tracking-tight text-black dark:text-white">iBlog</span>
+              {/* Replace text with LiquidLogo */}
+              <LiquidLogo />
             </div>
 
             {/* Desktop Menu with Sliding Background */}
