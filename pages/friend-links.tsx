@@ -3,7 +3,7 @@ import { Card, Button, Avatar, Modal } from '../components/ui';
 import { useStore } from '../context/store';
 import { systemApi } from '../services/api';
 import { Copy, Mail, AtSign, Link as LinkIcon, Image as ImageIcon, PenTool, ExternalLink, AlertTriangle } from 'lucide-react';
-import { validateImage } from '../utils/lib';
+import { validateImage, isValidUrl } from '../utils/lib';
 
 const MY_SITE_INFO = {
     name: 'iBlog',
@@ -50,6 +50,11 @@ export const FriendLinks = () => {
             showToast('请至少填写网站名称和地址', 'error');
             return;
         }
+        
+        if (!isValidUrl(formData.url)) {
+            showToast('请输入有效的网站地址 (http/https)', 'error');
+            return;
+        }
 
         setIsSubmitting(true);
         try {
@@ -65,12 +70,17 @@ export const FriendLinks = () => {
     };
 
     const handleLinkClick = (url: string) => {
-        setRedirectUrl(url);
+        if (isValidUrl(url)) {
+            setRedirectUrl(url);
+        } else {
+            showToast('无效的链接地址', 'error');
+        }
     };
 
     const confirmRedirect = () => {
         if (redirectUrl) {
-            window.open(redirectUrl, '_blank');
+            // Security: Use noopener noreferrer to prevent new window from accessing window.opener
+            window.open(redirectUrl, '_blank', 'noopener,noreferrer');
             setRedirectUrl(null);
         }
     };

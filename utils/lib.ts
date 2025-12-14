@@ -78,3 +78,16 @@ export function generateHeadingId(text: string): string {
         // 避免连续连字符
         .replace(/\-\-+/g, '-');
 }
+
+/**
+ * 校验是否为合法 URL (用于防止 Open Redirect)
+ * 仅允许 http/https 协议
+ */
+export function isValidUrl(string: string): boolean {
+    try {
+        const url = new URL(string);
+        return url.protocol === "http:" || url.protocol === "https:";
+    } catch (_) {
+        return false;
+    }
+}

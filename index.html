@@ -3,7 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Security Headers (Simplified for compatibility) -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    
     <title>iBlog</title>
+    
+    <!-- Anti-Clickjacking (Frame-busting) -->
+    <script>
+      if (window.self !== window.top) {
+        window.top.location = window.self.location;
+      }
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/@uiw/react-md-editor/markdown-editor.css" />
     <link rel="stylesheet" href="https://unpkg.com/@uiw/react-markdown-preview/markdown.css" />

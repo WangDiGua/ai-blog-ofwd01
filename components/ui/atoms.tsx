@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { X } from 'lucide-react';
 import { CultivationLevel } from '../../types';
 import MDEditor from '@uiw/react-md-editor';
+// import rehypeSanitize from 'rehype-sanitize';
 import { generateHeadingId } from '../../utils/lib';
 
 // --- 通用默认图片常量 ---
@@ -282,6 +283,7 @@ export const MarkdownRenderer = React.memo(({ content }: { content: string }) =>
                     fontSize: 'inherit'
                 }} 
                 components={components}
+                // rehypePlugins={[rehypeSanitize]}
             />
         </div>
     );
@@ -314,6 +316,9 @@ export const MarkdownEditor = ({ value, onChange, placeholder, height = "300px" 
                     color: isDark ? '#f5f5f7' : '#1d1d1f',
                     // borderColor is handled by class
                 }}
+                // previewOptions={{
+                //     rehypePlugins: [rehypeSanitize]
+                // }}
             />
         </div>
     );
