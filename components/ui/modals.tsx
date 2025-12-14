@@ -21,7 +21,7 @@ export const Modal = ({
     isOpen: boolean, 
     onClose: () => void, 
     title?: string, 
-    children: React.ReactNode, 
+    children?: React.ReactNode, 
     className?: string, 
     hideHeader?: boolean,
     variant?: 'default' | 'transparent'

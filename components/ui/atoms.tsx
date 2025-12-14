@@ -1,17 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Play, Code, Eye, X, Bold, Italic, List, Link as LinkIcon, Image as ImageIcon, Heading, Quote, Crown, ImageOff } from 'lucide-react';
-import DOMPurify from 'dompurify';
+import { X } from 'lucide-react';
 import { CultivationLevel } from '../../types';
-
-// --- 配置 DOMPurify ---
-// 允许部分安全的标签和属性，防止 XSS 攻击
-const sanitize = (html: string) => {
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'code', 'pre', 'blockquote', 'h1', 'h2', 'h3', 'span', 'div', 'img'],
-    ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'src', 'alt', 'style'],
-  });
-};
+import MDEditor from '@uiw/react-md-editor';
+import { generateHeadingId } from '../../utils/lib';
 
 // --- 通用默认图片常量 ---
 export const DEFAULT_IMAGE = "https://placehold.co/800x600/f3f4f6/9ca3af?text=No+Image";
@@ -20,6 +12,9 @@ export const DEFAULT_AVATAR = "https://ui-avatars.com/api/?name=User&background=
 // --- 增强版图片组件 (带自动回退) ---
 interface ImgProps extends React.ImgHTMLAttributes<HTMLImageElement> {
     fallbackSrc?: string;
+    src?: string;
+    alt?: string;
+    className?: string;
 }
 
 export const Img = React.memo(({ src, alt, className = '', fallbackSrc = DEFAULT_IMAGE, ...props }: ImgProps) => {
@@ -90,9 +85,9 @@ export const Card = React.memo(({ children, className = '', hover = false, ...pr
   return (
     <div 
       className={`
-        bg-apple-card dark:bg-apple-dark-card rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden
+        bg-apple-card dark:bg-apple-dark-card rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-sm overflow-hidden
         transition-all duration-300 ease-ios
-        ${hover ? 'hover:shadow-md hover:scale-[1.01] hover:-translate-y-1' : ''}
+        ${hover ? 'hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-700 hover:scale-[1.01] hover:-translate-y-1' : ''}
         ${className}
       `}
       {...props}
@@ -111,6 +106,8 @@ export const Skeleton = React.memo(({ className = '' }: { className?: string }) 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'vip';
   size?: 'sm' | 'md' | 'lg';
+  children?: React.ReactNode;
+  className?: string;
 }
 
 export const Button = React.memo(({ children, variant = 'primary', size = 'md', className = '', ...props }: ButtonProps) => {
@@ -171,7 +168,7 @@ export const Avatar = React.memo(({ src, alt, size = 'md', className = '' }: { s
               setHasError(true);
           }
       }}
-      className={`${sizes[size]} rounded-full object-cover border border-gray-100 dark:border-gray-800 shadow-sm transition-transform duration-300 ease-ios hover:scale-105 ${className}`}
+      className={`${sizes[size]} rounded-full object-cover border border-gray-200 dark:border-gray-800 shadow-sm transition-transform duration-300 ease-ios hover:scale-105 ${className}`}
     />
   );
 });
@@ -208,155 +205,89 @@ export const ImageViewer = React.memo(({ src, onClose }: { src: string | null, o
     );
 });
 
-// --- Helper: URL Sanitization (Prevent XSS) ---
-const sanitizeUrl = (url: string) => {
-    try {
-        const lower = url.toLowerCase().trim();
-        // Prevent javascript: vbscript: data: protocols (except images)
-        if (lower.startsWith('javascript:') || lower.startsWith('vbscript:')) {
-            return '#';
-        }
-        return url;
-    } catch (e) {
-        return '#';
-    }
-};
+// --- Hook: 自动检测当前暗黑模式状态 ---
+const useDarkMode = () => {
+    const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
 
-// --- Helper: Parse inline markdown (bold, italic, code, link) with Security ---
-const parseInline = (text: string) => {
-    // 1. Strictly Escape HTML characters first to prevent injection
-    let safeText = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
-    // 2. Apply Markdown syntax replacements
-
-    // Code: `code`
-    safeText = safeText.replace(/`([^`]+)`/g, '<code class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono text-pink-500">$1</code>');
-    
-    // Bold: **bold**
-    safeText = safeText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    
-    // Italic: *italic*
-    safeText = safeText.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-    // Link: [text](url) - Sanitized
-    safeText = safeText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, txt, url) => {
-        const cleanUrl = sanitizeUrl(url);
-        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-apple-blue hover:underline">${txt}</a>`;
-    });
-
-    // 3. Final Sanitize via DOMPurify before rendering
-    return <span dangerouslySetInnerHTML={{ __html: sanitize(safeText) }} />;
-};
-
-// --- Markdown/代码渲染器 (集成 Img 组件) ---
-export const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
-    if (!content) return null; // Safety check
-
-    const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
-    const [previewImage, setPreviewImage] = useState<string | null>(null);
-    
-    // Memoize the parsing logic so it doesn't run on every render unless content changes
-    const parsedContent = useMemo(() => {
-        const hasHtmlBlock = content.includes('```html');
-        
-        const extractHtml = (md: string) => {
-            const match = md.match(/```html([\s\S]*?)```/);
-            return match ? match[1] : '';
-        };
-
-        const renderLines = () => content.split('\n').map((line, i) => {
-            if (line.trim().startsWith('```')) return null; // 简单忽略代码块标记行
-            
-            if (line.startsWith('# ')) {
-                const text = line.substring(2).trim();
-                return <h1 key={i} id={text} className="text-xl font-bold my-4 text-apple-text dark:text-apple-dark-text scroll-mt-24">{parseInline(text)}</h1>;
-            }
-            if (line.startsWith('## ')) {
-                const text = line.substring(3).trim();
-                return <h2 key={i} id={text} className="text-lg font-bold my-3 text-apple-text dark:text-apple-dark-text scroll-mt-24">{parseInline(text)}</h2>;
-            }
-            if (line.startsWith('### ')) {
-                const text = line.substring(4).trim();
-                return <h3 key={i} id={text} className="text-base font-bold my-2 text-apple-text dark:text-apple-dark-text scroll-mt-24">{parseInline(text)}</h3>;
-            }
-            if (line.startsWith('* ') || line.startsWith('- ')) {
-                return <li key={i} className="ml-4 list-disc my-1">{parseInline(line.substring(2))}</li>;
-            }
-            if (line.startsWith('> ')) {
-                return <blockquote key={i} className="border-l-4 border-apple-blue pl-4 italic my-4 text-gray-600 dark:text-gray-400">{parseInline(line.replace('> ', ''))}</blockquote>
-            }
-            
-            // 图片检测: ![alt](url)
-            const imgMatch = line.match(/!\[(.*?)\]\((.*?)\)/);
-            if (imgMatch) {
-                const cleanSrc = sanitizeUrl(imgMatch[2]);
-                return (
-                    <div key={i} className="my-4 group">
-                        <Img 
-                            src={cleanSrc} 
-                            alt={imgMatch[1]} 
-                            className="rounded-xl shadow-md cursor-zoom-in max-h-96 w-auto mx-auto hover:opacity-90 transition-opacity object-contain"
-                            onClick={() => setPreviewImage(cleanSrc)}
-                        />
-                        {imgMatch[1] && <p className="text-center text-xs text-gray-500 mt-2">{imgMatch[1]}</p>}
-                    </div>
-                );
-            }
-
-            if (line.trim() === '') return <br key={i} />;
-
-            return <p key={i} className="my-2 leading-relaxed text-gray-700 dark:text-gray-300">{parseInline(line)}</p>;
+    useEffect(() => {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    setIsDark(document.documentElement.classList.contains('dark'));
+                }
+            });
         });
-
-        return { hasHtmlBlock, extractHtml, renderLines };
-    }, [content]);
-
-    const runCode = () => {
-        const html = parsedContent.extractHtml(content);
-        if (!html) return;
         
-        const newWindow = window.open();
-        if(newWindow) {
-            newWindow.document.write(html);
-            newWindow.document.close();
+        observer.observe(document.documentElement, { attributes: true });
+        
+        // 初始检查
+        setIsDark(document.documentElement.classList.contains('dark'));
+
+        return () => observer.disconnect();
+    }, []);
+
+    return isDark;
+};
+
+// Helper: 递归获取子元素的纯文本，用于生成 ID
+const getTextFromChildren = (children: React.ReactNode): string => {
+    if (typeof children === 'string') return children;
+    if (typeof children === 'number') return String(children);
+    if (Array.isArray(children)) return children.map(getTextFromChildren).join('');
+    if (React.isValidElement<{ children?: React.ReactNode }>(children) && children.props.children) {
+        return getTextFromChildren(children.props.children);
+    }
+    return '';
+};
+
+// --- Markdown 渲染器 (Powered by @uiw/react-md-editor) ---
+export const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
+    const isDark = useDarkMode();
+    
+    if (!content) return null;
+
+    // 自定义标题组件，自动生成 ID 以支持目录跳转
+    const components = {
+        h1: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => {
+            const text = getTextFromChildren(children);
+            const id = generateHeadingId(text);
+            return <h1 id={id} {...props}>{children}</h1>;
+        },
+        h2: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => {
+            const text = getTextFromChildren(children);
+            const id = generateHeadingId(text);
+            return <h2 id={id} {...props}>{children}</h2>;
+        },
+        h3: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => {
+            const text = getTextFromChildren(children);
+            const id = generateHeadingId(text);
+            return <h3 id={id} {...props}>{children}</h3>;
+        },
+        h4: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => {
+            const text = getTextFromChildren(children);
+            const id = generateHeadingId(text);
+            return <h4 id={id} {...props}>{children}</h4>;
         }
     };
 
     return (
-        <div className="w-full">
-            {parsedContent.hasHtmlBlock && (
-                <div className="flex justify-end space-x-2 mb-2">
-                     <button onClick={() => setViewMode(viewMode === 'preview' ? 'code' : 'preview')} className="text-xs flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-300">
-                         {viewMode === 'preview' ? <Code size={14} className="mr-1"/> : <Eye size={14} className="mr-1"/>}
-                         {viewMode === 'preview' ? '查看代码' : '预览'}
-                     </button>
-                     <button onClick={runCode} className="text-xs flex items-center bg-green-100 dark:bg-green-900 px-2 py-1 rounded text-green-600 dark:text-green-400 font-medium">
-                         <Play size={14} className="mr-1"/> 运行
-                     </button>
-                </div>
-            )}
-            
-            {viewMode === 'code' ? (
-                <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm font-mono whitespace-pre-wrap">
-                    {content}
-                </pre>
-            ) : (
-                <div className="prose prose-sm dark:prose-invert max-w-none text-apple-text dark:text-apple-dark-text">
-                     {parsedContent.renderLines()}
-                </div>
-            )}
-
-            <ImageViewer src={previewImage} onClose={() => setPreviewImage(null)} />
+        <div data-color-mode={isDark ? 'dark' : 'light'}>
+            <MDEditor.Markdown 
+                source={content} 
+                style={{ 
+                    whiteSpace: 'pre-wrap', 
+                    backgroundColor: 'transparent',
+                    color: 'inherit',
+                    fontFamily: 'inherit',
+                    fontSize: 'inherit'
+                }} 
+                components={components}
+            />
         </div>
     );
 });
 
-// --- Markdown 编辑器组件 (React版 v-md-editor 替代品) ---
+// --- Markdown 编辑器组件 (Powered by @uiw/react-md-editor) ---
 interface MarkdownEditorProps {
     value: string;
     onChange: (value: string) => void;
@@ -365,74 +296,25 @@ interface MarkdownEditorProps {
 }
 
 export const MarkdownEditor = ({ value, onChange, placeholder, height = "300px" }: MarkdownEditorProps) => {
-    const [preview, setPreview] = useState(false);
-    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-
-    const insertText = (before: string, after: string = '') => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
-
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const text = textarea.value;
-        const beforeText = text.substring(0, start);
-        const afterText = text.substring(end);
-        const selection = text.substring(start, end);
-
-        const newText = beforeText + before + selection + after + afterText;
-        onChange(newText);
-        
-        // Restore focus and cursor
-        setTimeout(() => {
-            textarea.focus();
-            textarea.setSelectionRange(start + before.length, end + before.length);
-        }, 0);
-    };
+    const isDark = useDarkMode();
 
     return (
-        <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-800 transition-colors">
-            {/* 工具栏 */}
-            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                <div className="flex items-center space-x-1">
-                    <button onClick={() => insertText('**', '**')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="加粗"><Bold size={16}/></button>
-                    <button onClick={() => insertText('*', '*')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="斜体"><Italic size={16}/></button>
-                    <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1"></div>
-                    <button onClick={() => insertText('## ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="标题"><Heading size={16}/></button>
-                    <button onClick={() => insertText('> ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="引用"><Quote size={16}/></button>
-                    <button onClick={() => insertText('* ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="列表"><List size={16}/></button>
-                    <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1"></div>
-                    <button onClick={() => insertText('[](url)')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="链接"><LinkIcon size={16}/></button>
-                    <button onClick={() => insertText('![alt](url)')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300" title="图片"><ImageIcon size={16}/></button>
-                </div>
-                <div className="flex items-center">
-                    <button 
-                        onClick={() => setPreview(!preview)} 
-                        className={`flex items-center px-3 py-1 text-xs font-medium rounded-full transition-colors ${preview ? 'bg-apple-blue text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
-                    >
-                        {preview ? <Eye size={14} className="mr-1"/> : <Code size={14} className="mr-1"/>}
-                        {preview ? '预览中' : '编辑中'}
-                    </button>
-                </div>
-            </div>
-
-            {/* 编辑区域 */}
-            <div className="relative" style={{ height }}>
-                {preview ? (
-                    <div className="w-full h-full p-4 overflow-y-auto bg-white dark:bg-gray-800">
-                         <div className="prose prose-sm dark:prose-invert max-w-none">
-                             <MarkdownRenderer content={value || '无内容预览'} />
-                         </div>
-                    </div>
-                ) : (
-                    <textarea 
-                        ref={textareaRef}
-                        className="w-full h-full p-4 bg-transparent border-none outline-none resize-none text-apple-text dark:text-apple-dark-text font-mono text-sm leading-relaxed"
-                        value={value}
-                        onChange={(e) => onChange(e.target.value)}
-                        placeholder={placeholder}
-                    />
-                )}
-            </div>
+        <div data-color-mode={isDark ? 'dark' : 'light'}>
+            <MDEditor
+                value={value}
+                onChange={(val) => onChange(val || '')}
+                height={parseInt(height) || 300}
+                preview="edit"
+                textareaProps={{
+                    placeholder: placeholder
+                }}
+                className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700"
+                style={{
+                    backgroundColor: isDark ? '#1c1c1e' : '#ffffff',
+                    color: isDark ? '#f5f5f7' : '#1d1d1f',
+                    // borderColor is handled by class
+                }}
+            />
         </div>
     );
 };

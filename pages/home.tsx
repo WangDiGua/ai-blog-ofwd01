@@ -323,8 +323,8 @@ export const Home = () => {
       {/* 极简版 Hero 区域 */}
       <InteractiveHero />
 
-      {/* Main Content Start - Added scroll-mt-32 for navbar offset adjustment */}
-      <div id="content-start" className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-4 scroll-mt-32">
+      {/* Main Content Start - Reduced scroll-mt to hide mouse indicator under navbar */}
+      <div id="content-start" className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-4 scroll-mt-20">
         {/* 主要内容 */}
         <div className={`lg:col-span-8 space-y-6 md:space-y-8 transition-opacity duration-300 ${isPending ? 'opacity-70' : 'opacity-100'}`}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 sm:gap-0 border-b border-gray-100 dark:border-gray-800 pb-4">
@@ -393,7 +393,7 @@ export const Home = () => {
                             <h3 className="text-lg md:text-2xl font-bold text-apple-text dark:text-apple-dark-text mb-2 leading-tight group-hover:text-apple-blue transition-colors">
                             {article.title}
                             </h3>
-                            <p className="text-apple-subtext dark:text-apple-dark-subtext line-clamp-2 text-sm leading-relaxed">
+                            <p className="text-apple-subtext dark:text-apple-dark-subtext line-clamp-2 text-sm leading-relaxed overflow-hidden">
                             {article.summary}
                             </p>
                         </div>
@@ -410,7 +410,15 @@ export const Home = () => {
                 )}
                 
                 {articles.length > 0 && (
-                    <Pagination page={page} totalPages={totalPages} totalItems={totalItems} onPageChange={setPage} />
+                    <Pagination 
+                        page={page} 
+                        totalPages={totalPages} 
+                        totalItems={totalItems} 
+                        onPageChange={(p) => {
+                            setPage(p);
+                            document.getElementById('content-start')?.scrollIntoView({ behavior: 'smooth' });
+                        }} 
+                    />
                 )}
             </>
           )}

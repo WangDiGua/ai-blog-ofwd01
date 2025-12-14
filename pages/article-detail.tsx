@@ -4,12 +4,12 @@ import { useStore } from '../context/store';
 import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, ImageViewer, Modal, RankBadge, Img, ReportModal } from '../components/ui';
 import { articleApi } from '../services/api';
 import { Article, Comment, CULTIVATION_LEVELS, CultivationLevel } from '../types';
-import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash, ShieldAlert, Share2, Download, ExternalLink, Hourglass, Lock, Flag } from 'lucide-react';
-import { calculateReadingTime } from '../utils/lib';
+import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash, ShieldAlert, Share2, Download, ExternalLink, Hourglass, Lock, Flag, FileText, ChevronRight } from 'lucide-react';
+import { calculateReadingTime, generateHeadingId } from '../utils/lib';
 
 // 免责声明组件
 const Disclaimer = () => (
-    <div className="mb-12 p-4 md:p-6 bg-gray-50 dark:bg-gray-900/40 rounded-2xl border border-gray-100 dark:border-gray-800">
+    <div className="mb-12 p-4 md:p-6 bg-gray-50 dark:bg-gray-900/40 rounded-2xl border border-gray-200 dark:border-gray-800">
         <div className="flex items-center mb-4 space-x-2 border-b border-gray-200 dark:border-gray-700 pb-3">
             <ShieldAlert size={20} className="text-gray-400 dark:text-gray-500" />
             <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300">免责声明 & 版权许可</h3>
@@ -32,7 +32,7 @@ const Disclaimer = () => (
 );
 
 // 递归评论组件 - 移动端优化版
-const CommentItem = ({ comment, depth = 0, onReport }: { comment: Comment, depth?: number, onReport: (id: string) => void }) => {
+const CommentItem = ({ comment, depth = 0, onReport }: { comment: Comment, depth?: number, onReport: (id: string) => void, key?: any }) => {
     const [replyOpen, setReplyOpen] = useState(false);
     
     // 移动端减少缩进 (ml-3 vs md:ml-12)
@@ -99,6 +99,10 @@ export const ArticleDetail = () => {
   const [previewCover, setPreviewCover] = useState(false); // 封面预览状态
   const [readingSeconds, setReadingSeconds] = useState(0); // 阅读时长(秒)
   
+  // Rating State
+  const [ratings, setRatings] = useState<Record<number, number>>({ 1: 5, 2: 3, 3: 12, 4: 89, 5: 230 });
+  const [myRating, setMyRating] = useState<number | null>(null);
+
   // Report Modal State
   const [reportCommentId, setReportCommentId] = useState<string | null>(null);
   
@@ -146,6 +150,28 @@ export const ArticleDetail = () => {
       });
   };
 
+  const handleRate = (score: number) => {
+      requireAuth(() => {
+          // 乐观更新
+          setRatings(prev => {
+              const next = { ...prev };
+              if (myRating !== null) {
+                  next[myRating]--;
+              }
+              if (myRating !== score) {
+                  next[score]++;
+                  setMyRating(score);
+                  showToast('感谢您的评价！', 'success');
+              } else {
+                  // 如果点击已选的，视为取消
+                  setMyRating(null);
+                  showToast('已取消评价', 'info');
+              }
+              return next;
+          });
+      });
+  };
+
   const canComment = () => {
       if (!user) return false;
       // 等级索引 >= 1 (筑基期) 才能评论
@@ -184,16 +210,52 @@ export const ArticleDetail = () => {
       setTimeout(() => setIsShareOpen(false), 800);
   };
 
+  // 平滑滚动到标题
+  const scrollToHeading = (id: string) => {
+      const element = document.getElementById(id);
+      if (element) {
+          // 顶部导航栏高度偏移 + 一些额外 padding
+          const headerOffset = 100;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+          
+          window.scrollTo({
+              top: offsetPosition,
+              behavior: "smooth"
+          });
+      } else {
+          console.warn(`Element with id ${id} not found`);
+      }
+  };
+
   if (loading) return <div className="flex justify-center h-[50vh] items-center"><Spinner /></div>;
   if (!article) return <div className="text-center py-20">文章未找到</div>;
 
   // 提取目录 (## Heading)
-  const toc = article.content.split('\n')
-    .filter(l => l.startsWith('## '))
-    .map(l => l.replace('## ', '').trim());
+  const toc = article.content.split('\n').reduce<{id: string, text: string, level: number}[]>((acc, line) => {
+      // 匹配 ## (h2) 或 ### (h3)
+      const match = line.match(/^(#{2,3})\s+(.*)$/);
+      if (match) {
+          const level = match[1].length;
+          // 清除 Markdown 格式（如 **粗体**）
+          const rawText = match[2];
+          const text = rawText.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').trim();
+          const id = generateHeadingId(text);
+          acc.push({ id, text, level });
+      }
+      return acc;
+  }, []);
 
   // 生成当前页面的二维码 (使用公开API)
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.href)}&color=000000&bgcolor=ffffff`;
+
+  const EMOJI_RATINGS = [
+      { score: 1, emoji: '😠', label: '不喜欢' },
+      { score: 2, emoji: '😞', label: '一般' },
+      { score: 3, emoji: '😐', label: '还可以' },
+      { score: 4, emoji: '🙂', label: '不错' },
+      { score: 5, emoji: '😍', label: '力荐' },
+  ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-10 mb-20">
@@ -266,10 +328,10 @@ export const ArticleDetail = () => {
                             John Developer
                             <RankBadge level="真仙/渡劫期" />
                         </div>
-                        <div className="text-xs text-gray-500 flex items-center">
-                           <Calendar size={12} className="mr-1"/> {article.date}
-                           <span className="mx-2">•</span>
-                           <Clock size={12} className="mr-1"/> {calculateReadingTime(article.content)}
+                        <div className="text-xs text-gray-500 flex items-center flex-wrap gap-y-1">
+                           <span className="flex items-center mr-3"><Calendar size={12} className="mr-1"/> {article.date}</span>
+                           <span className="flex items-center mr-3"><Clock size={12} className="mr-1"/> {calculateReadingTime(article.content)}</span>
+                           <span className="flex items-center"><FileText size={12} className="mr-1"/> {article.content.length} 字</span>
                         </div>
                      </div>
                   </div>
@@ -308,16 +370,57 @@ export const ArticleDetail = () => {
                 </div>
             </div>
 
+            {/* 摘要显示 */}
+            <div className="mb-8 p-4 md:p-6 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border-l-4 border-apple-blue">
+                <h4 className="text-sm font-bold text-blue-800 dark:text-blue-300 mb-2 uppercase tracking-wider opacity-80">摘要</h4>
+                <p className="text-gray-700 dark:text-gray-300 text-sm md:text-base leading-relaxed">
+                    {article.summary}
+                </p>
+            </div>
+
             {/* 内容主体 (使用 MarkdownRenderer 替代手动循环) */}
             <article className="mb-12 md:mb-16">
                <MarkdownRenderer content={article.content} />
             </article>
 
+            {/* 文章评分模块 */}
+            <div className="mb-12 py-8 border-t border-b border-gray-200 dark:border-gray-800 text-center">
+                <h3 className="text-base font-bold text-gray-800 dark:text-gray-200 mb-6">觉得这篇文章怎么样？打个分吧</h3>
+                <div className="flex justify-center items-center gap-4 md:gap-8 flex-wrap">
+                    {EMOJI_RATINGS.map((item) => (
+                        <button 
+                            key={item.score}
+                            onClick={() => handleRate(item.score)}
+                            className={`
+                                relative group flex flex-col items-center p-3 md:p-4 rounded-2xl transition-all duration-300
+                                ${myRating === item.score ? 'bg-apple-blue/10 scale-110' : 'hover:bg-gray-50 dark:hover:bg-gray-800 hover:scale-105'}
+                            `}
+                        >
+                            <span className="text-3xl md:text-4xl mb-2 filter grayscale group-hover:grayscale-0 transition-all" style={{ filter: myRating === item.score ? 'none' : '' }}>
+                                {item.emoji}
+                            </span>
+                            <span className={`text-xs font-medium ${myRating === item.score ? 'text-apple-blue' : 'text-gray-500'}`}>
+                                {item.label}
+                            </span>
+                            
+                            {/* 计数徽标 */}
+                            <div className={`
+                                absolute -top-2 -right-1 bg-white dark:bg-gray-900 shadow-sm border border-gray-200 dark:border-gray-700 
+                                text-[10px] font-bold px-2 py-0.5 rounded-full text-gray-500 min-w-[24px] text-center
+                                ${myRating === item.score ? 'text-apple-blue border-apple-blue/30' : ''}
+                            `}>
+                                {ratings[item.score] || 0}
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
             {/* 免责声明 */}
             <Disclaimer />
 
             {/* 评论区 - 添加 ID 用于跳转 */}
-            <div id="comments-section" className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl md:rounded-3xl p-4 md:p-8 scroll-mt-24">
+            <div id="comments-section" className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl md:rounded-3xl p-4 md:p-8 scroll-mt-24 border border-gray-100 dark:border-gray-800">
                <h3 className="text-lg md:text-xl font-bold mb-6 text-apple-text dark:text-apple-dark-text">评论 ({article.comments?.length || 0})</h3>
                
                <div className="mb-8 flex space-x-3 md:space-x-4">
@@ -376,24 +479,37 @@ export const ArticleDetail = () => {
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
                  <List size={14} className="mr-2"/> 目录
               </h3>
-              <ul className="space-y-3 border-l-2 border-gray-100 dark:border-gray-800">
-                 {toc.map(header => (
-                    <li key={header} className="pl-4">
-                       <a 
-                         href={`#${header}`} 
-                         className="text-sm text-gray-500 dark:text-gray-400 hover:text-apple-blue transition-colors flex items-center"
-                         onClick={(e) => {
-                             e.preventDefault();
-                             // 现在 header 直接对应了 MarkdownRenderer 中生成的 id
-                             document.getElementById(header)?.scrollIntoView({ behavior: 'smooth' });
-                         }}
-                       >
-                         <Hash size={12} className="mr-2 text-gray-300 dark:text-gray-600 flex-shrink-0" />
-                         {header}
-                       </a>
-                    </li>
-                 ))}
-              </ul>
+              {toc.length > 0 ? (
+                  <ul className="space-y-1 relative">
+                     {/* 左侧装饰线 */}
+                     <div className="absolute left-[5px] top-0 bottom-0 w-[2px] bg-gray-100 dark:bg-gray-800"></div>
+                     
+                     {toc.map((header, idx) => (
+                        <li key={`${header.id}-${idx}`} className={`pl-${header.level === 2 ? '4' : '8'} py-1`}>
+                           <a 
+                             href={`#${header.id}`} 
+                             className={`
+                                text-sm transition-all duration-200 block truncate flex items-center group
+                                ${header.level === 2 ? 'font-medium text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400 text-xs'}
+                                hover:text-apple-blue hover:translate-x-1
+                             `}
+                             onClick={(e) => {
+                                 e.preventDefault();
+                                 scrollToHeading(header.id);
+                             }}
+                             title={header.text}
+                           >
+                             {header.level === 2 && (
+                                <div className="absolute left-0 w-2.5 h-2.5 bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-600 rounded-full group-hover:border-apple-blue transition-colors z-10" style={{ marginTop: '4px' }}></div>
+                             )}
+                             {header.text}
+                           </a>
+                        </li>
+                     ))}
+                  </ul>
+              ) : (
+                  <p className="text-sm text-gray-400 italic">本文暂无目录</p>
+              )}
            </div>
         </div>
 

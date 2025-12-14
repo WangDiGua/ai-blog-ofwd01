@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, ImageViewer, DEFAULT_IMAGE, Avatar, MarkdownRenderer, ReportModal } from '../components/ui';
+import { Button, ImageViewer, DEFAULT_IMAGE, Avatar, MarkdownRenderer, ReportModal, Pagination } from '../components/ui';
 import { Download, Heart, Maximize2, ArrowLeft, Image as ImageIcon, MessageCircle, Clock, Eye, Flag, ThumbsUp, Lock } from 'lucide-react';
 import { useStore } from '../context/store';
 import { communityApi } from '../services/api';
@@ -96,7 +96,7 @@ const AlbumCard = ({ album, onClick }: { album: AlbumType, onClick: () => void }
 };
 
 // --- 评论组件 (复用版) ---
-const CommentItem = ({ comment, onReport }: { comment: Comment, onReport: (id: string) => void }) => {
+const CommentItem = ({ comment, onReport }: { comment: Comment, onReport: (id: string) => void, key?: any }) => {
     return (
         <div className="flex space-x-3 group">
             <div className="flex-shrink-0">
@@ -130,6 +130,10 @@ export const Album = () => {
     const [albums, setAlbums] = useState<AlbumType[]>([]);
     const [loading, setLoading] = useState(true);
     
+    // Pagination State
+    const [page, setPage] = useState(1);
+    const ITEMS_PER_PAGE = 6;
+    
     // View State
     const [selectedAlbum, setSelectedAlbum] = useState<AlbumType | null>(null);
     const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
@@ -150,6 +154,11 @@ export const Album = () => {
             window.scrollTo(0, 0);
         }
     }, [selectedAlbum]);
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     // 权限检查
     const canComment = () => {
@@ -330,6 +339,10 @@ export const Album = () => {
         );
     }
 
+    // Pagination Logic
+    const totalPages = Math.ceil(albums.length / ITEMS_PER_PAGE);
+    const currentAlbums = albums.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
     // --- 列表视图 ---
     return (
         <div className="max-w-7xl mx-auto px-4 py-6 md:py-10 mb-20">
@@ -343,7 +356,7 @@ export const Album = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-2 md:px-0">
-                {albums.map((album, index) => (
+                {currentAlbums.map((album, index) => (
                     <div 
                         key={album.id} 
                         className="animate-in fade-in slide-in-from-bottom-8 duration-700"
@@ -359,6 +372,16 @@ export const Album = () => {
             
             {albums.length === 0 && !loading && (
                 <div className="text-center py-20 text-gray-400">暂无相册</div>
+            )}
+
+            {/* 分页器 */}
+            {albums.length > ITEMS_PER_PAGE && (
+                <Pagination 
+                    page={page} 
+                    totalPages={totalPages} 
+                    totalItems={albums.length} 
+                    onPageChange={handlePageChange} 
+                />
             )}
         </div>
     );

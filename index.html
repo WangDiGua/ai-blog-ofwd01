@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>iBlog</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@uiw/react-md-editor/markdown-editor.css" />
+    <link rel="stylesheet" href="https://unpkg.com/@uiw/react-markdown-preview/markdown.css" />
     <script>
       tailwind.config = {
         darkMode: 'class', // Enable class-based dark mode
@@ -71,13 +73,14 @@
     <style>
       /* CSS Variables for Theming */
       :root {
-        /* Default Light Mode */
-        --apple-bg: #f5f5f7;
+        /* Default Light Mode - slightly darkened background for better card contrast */
+        --apple-bg: #f2f2f7; 
         --apple-card: #ffffff;
         --apple-blue: #0071e3;
         --apple-text: #1d1d1f;
         --apple-subtext: #86868b;
         --apple-gray: #6e6e73;
+        --apple-border: rgba(0,0,0,0.12); /* Slightly darker border */
       }
 
       /* Eye Protection Mode (Warm / Paper-like) */
@@ -88,6 +91,7 @@
         --apple-text: #4a453a;    /* 深褐灰色文字，比纯黑柔和 */
         --apple-subtext: #969082; /* 暖灰色副文本 */
         --apple-gray: #a39e93;
+        --apple-border: rgba(74, 69, 58, 0.1);
       }
 
       /* Globally Hide Native Scrollbars but allow scrolling */
@@ -108,6 +112,7 @@
       body.dark {
         background-color: #000000;
         color: #f5f5f7;
+        --apple-border: rgba(255,255,255,0.1);
       }
       
       /* Smooth background transition for whole page */
@@ -118,6 +123,168 @@
       /* Utility for masking text/images */
       .mask-gradient {
         mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+      }
+
+      /* --- Enhanced Markdown Styles (Apple Style) --- */
+      .w-md-editor {
+        border-radius: 16px !important;
+        box-shadow: none !important;
+        border: 1px solid var(--apple-border) !important;
+        overflow: hidden;
+      }
+      body.dark .w-md-editor {
+        border-color: rgba(255,255,255,0.1) !important;
+      }
+      
+      .w-md-editor-toolbar {
+        border-bottom: 1px solid var(--apple-border) !important;
+        padding: 10px 12px !important;
+        background-color: var(--apple-card) !important;
+      }
+      body.dark .w-md-editor-toolbar {
+        border-bottom-color: rgba(255,255,255,0.1) !important;
+        background-color: #1c1c1e !important;
+      }
+
+      /* Typographical Improvements for the Content */
+      .wmde-markdown {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+        background-color: transparent !important;
+        color: inherit !important;
+        font-size: 1.05rem !important;
+        line-height: 1.8 !important;
+        letter-spacing: -0.01em;
+      }
+
+      /* Headings */
+      .wmde-markdown h1, .wmde-markdown h2, .wmde-markdown h3, .wmde-markdown h4 {
+        border-bottom: none !important;
+        font-weight: 700 !important;
+        color: var(--apple-text);
+        margin-top: 2em !important;
+        margin-bottom: 0.8em !important;
+        line-height: 1.3 !important;
+        scroll-margin-top: 100px; /* Offset for sticky header */
+      }
+      body.dark .wmde-markdown h1, body.dark .wmde-markdown h2 { color: #f5f5f7 !important; }
+      
+      .wmde-markdown h1 { font-size: 2.2em !important; letter-spacing: -0.025em; }
+      .wmde-markdown h2 { font-size: 1.75em !important; }
+      .wmde-markdown h3 { font-size: 1.4em !important; }
+
+      /* Paragraphs */
+      .wmde-markdown p {
+        margin-bottom: 1.5em !important;
+        color: inherit !important;
+      }
+
+      /* Code Blocks */
+      .wmde-markdown pre {
+        background-color: #f1f5f9 !important; /* Slightly darker in light mode for contrast */
+        border-radius: 12px !important;
+        padding: 1.25em !important;
+        margin: 1.5em 0 !important;
+        border: 1px solid rgba(0,0,0,0.06);
+      }
+      body.dark .wmde-markdown pre {
+        background-color: #151516 !important;
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+      .wmde-markdown code {
+        background-color: rgba(0, 113, 227, 0.08) !important;
+        color: #0071e3 !important;
+        padding: 0.2em 0.4em !important;
+        border-radius: 6px !important;
+        font-family: "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+        font-size: 0.9em !important;
+        border: 1px solid rgba(0, 113, 227, 0.1);
+      }
+      .wmde-markdown pre code {
+        background-color: transparent !important;
+        color: inherit !important;
+        padding: 0 !important;
+        border: none !important;
+      }
+
+      /* Blockquotes */
+      .wmde-markdown blockquote {
+        margin: 1.5em 0 !important;
+        padding: 1em 1.5em !important;
+        border-left: 4px solid var(--apple-blue) !important;
+        background-color: rgba(0, 113, 227, 0.04) !important;
+        border-radius: 0 12px 12px 0 !important;
+        color: var(--apple-gray) !important;
+        font-style: italic;
+        border: 1px solid rgba(0, 113, 227, 0.05); /* Subtle border */
+      }
+      body.dark .wmde-markdown blockquote {
+        background-color: rgba(0, 113, 227, 0.15) !important;
+        color: #a1a1a6 !important;
+        border: none;
+      }
+
+      /* Lists */
+      .wmde-markdown ul, .wmde-markdown ol {
+        padding-left: 1.5em !important;
+        margin-bottom: 1.5em !important;
+      }
+      .wmde-markdown li {
+        margin-bottom: 0.5em !important;
+        padding-left: 0.5em !important;
+      }
+      
+      /* Images */
+      .wmde-markdown img {
+        border-radius: 12px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+        display: block !important;
+        margin: 2em auto !important;
+        max-width: 100% !important;
+        border: 1px solid rgba(0,0,0,0.05);
+      }
+
+      /* Tables */
+      .wmde-markdown table {
+        display: table !important;
+        width: 100% !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(0,0,0,0.12) !important;
+        margin: 2em 0 !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      }
+      body.dark .wmde-markdown table { border-color: rgba(255,255,255,0.1) !important; }
+      
+      .wmde-markdown th, .wmde-markdown td {
+        padding: 12px 16px !important;
+        border-bottom: 1px solid rgba(0,0,0,0.08) !important;
+        border-right: 1px solid rgba(0,0,0,0.08) !important;
+      }
+      body.dark .wmde-markdown th, body.dark .wmde-markdown td {
+        border-color: rgba(255,255,255,0.05) !important;
+      }
+      .wmde-markdown th {
+        background-color: rgba(0,0,0,0.03) !important;
+        font-weight: 600 !important;
+      }
+      body.dark .wmde-markdown th { background-color: rgba(255,255,255,0.05) !important; }
+      
+      .wmde-markdown tr:last-child td { border-bottom: none !important; }
+      .wmde-markdown tr td:last-child, .wmde-markdown tr th:last-child { border-right: none !important; }
+
+      /* Links */
+      .wmde-markdown a {
+        color: var(--apple-blue) !important;
+        text-decoration: none !important;
+        transition: opacity 0.2s;
+        font-weight: 500;
+        border-bottom: 1px solid rgba(0, 113, 227, 0.3);
+      }
+      .wmde-markdown a:hover {
+        border-bottom-color: var(--apple-blue);
+        opacity: 0.8;
       }
     </style>
   <script type="importmap">
@@ -132,10 +299,10 @@
     "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
     "vite": "https://aistudiocdn.com/vite@^7.2.6",
     "zod": "https://aistudiocdn.com/zod@^3.22.4",
-    "dompurify": "https://aistudiocdn.com/dompurify@^3.0.8",
     "react-dom": "https://aistudiocdn.com/react-dom@^19.2.1",
     "three": "https://esm.sh/three@^0.182.0",
-    "gsap": "https://esm.sh/gsap@^3.14.1"
+    "gsap": "https://esm.sh/gsap@^3.14.1",
+    "@uiw/react-md-editor": "https://esm.sh/@uiw/react-md-editor@4.0.4?bundle&external=react,react-dom"
   }
 }
 </script>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button, Avatar, MarkdownRenderer, RankBadge } from '../components/ui';
+import { Card, Button, Avatar, MarkdownRenderer, RankBadge, Pagination } from '../components/ui';
 import { communityApi } from '../services/api';
 import { CommunityPost, CULTIVATION_LEVELS } from '../types';
 import { useStore } from '../context/store';
@@ -16,6 +16,10 @@ interface CommentMock {
 export const Community = () => {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const { isLoggedIn, requireAuth, showToast, user } = useStore();
+  
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [activePostId, setActivePostId] = useState<string | null>(null);
@@ -35,6 +39,11 @@ export const Community = () => {
         setCommentsMap(initialComments);
     });
   }, []);
+
+  const handlePageChange = (newPage: number) => {
+      setPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const canComment = () => {
       if (!user) return false;
@@ -149,6 +158,10 @@ export const Community = () => {
       });
   };
 
+  // Pagination Logic
+  const totalPages = Math.ceil(posts.length / ITEMS_PER_PAGE);
+  const currentPosts = posts.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 md:py-10 mb-20">
       <div className="flex justify-between items-end mb-6 md:mb-8">
@@ -162,7 +175,7 @@ export const Community = () => {
       </div>
 
       <div className="space-y-4 md:space-y-6">
-        {posts.map((post) => (
+        {currentPosts.map((post) => (
           <Card key={post.id} className="p-4 md:p-6 transition-all duration-300">
             <div className="flex items-start space-x-3 md:space-x-4">
               <Avatar src={post.author.avatar} alt={post.author.name} />
@@ -260,6 +273,16 @@ export const Community = () => {
           </Card>
         ))}
       </div>
+      
+      {/* 分页器 */}
+      {posts.length > ITEMS_PER_PAGE && (
+          <Pagination 
+              page={page} 
+              totalPages={totalPages} 
+              totalItems={posts.length} 
+              onPageChange={handlePageChange} 
+          />
+      )}
     </div>
   );
 };

@@ -21,12 +21,14 @@ const DanmakuItem = ({
     item, 
     onAnimationEnd, 
     onLike, 
-    onReport 
+    onReport,
+    key
 }: { 
     item: Danmaku, 
     onAnimationEnd: (id: number) => void,
     onLike: (id: number) => void,
-    onReport: (id: number) => void
+    onReport: (id: number) => void,
+    key?: any
 }) => {
     const [isHovered, setIsHovered] = useState(false);
 

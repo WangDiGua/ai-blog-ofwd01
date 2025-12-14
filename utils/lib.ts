@@ -57,3 +57,24 @@ export function validateImage(file: File, options: { maxSizeMB?: number, allowed
 
     return { valid: true };
 }
+
+/**
+ * 生成标题 ID (用于目录跳转)
+ * 移除特殊字符，保留中文、字母、数字、连字符
+ */
+export function generateHeadingId(text: string): string {
+    return text
+        .toString()
+        .trim()
+        .toLowerCase()
+        // 移除 Markdown 符号 (如 **bold**)
+        .replace(/\*\*(.*?)\*\*/g, '$1') 
+        .replace(/\*(.*?)\*/g, '$1')
+        .replace(/\[(.*?)\]\(.*?\)/g, '$1') // 移除链接
+        // 替换空格为连字符
+        .replace(/\s+/g, '-')
+        // 仅保留 字母、数字、中文、连字符
+        .replace(/[^\w\-\u4e00-\u9fa5]/g, '')
+        // 避免连续连字符
+        .replace(/\-\-+/g, '-');
+}

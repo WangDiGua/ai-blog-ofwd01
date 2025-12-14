@@ -4,7 +4,7 @@ import { useStore } from '../../context/store';
 import { Spinner } from '../ui/atoms';
 
 interface ProtectedRouteProps {
-    children: React.ReactNode;
+    children?: React.ReactNode;
 }
 
 /**

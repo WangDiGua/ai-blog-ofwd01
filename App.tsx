@@ -36,7 +36,7 @@ const ScrollToTop = () => {
 };
 
 // Wrapper to animate page transitions
-const PageTransitionWrapper = ({ children }: { children: React.ReactNode }) => {
+const PageTransitionWrapper = ({ children }: { children?: React.ReactNode }) => {
   const location = useLocation();
   return (
     <div 
@@ -49,7 +49,7 @@ const PageTransitionWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 // Layout wrapper to conditionally hide Navbar/Footer for fullscreen pages like StartPage
-const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
+const LayoutWrapper = ({ children }: { children?: React.ReactNode }) => {
     const location = useLocation();
     const { isAuthModalOpen, setAuthModalOpen } = useStore();
     const isFullScreenPage = location.pathname === '/start' || location.pathname === '/message-board';

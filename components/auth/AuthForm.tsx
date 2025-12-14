@@ -26,7 +26,7 @@ const registerSchema = z.object({
 });
 
 // Input wrapper with icon - Defined outside to prevent re-creation on render
-const InputGroup = ({ icon: Icon, children }: { icon: any, children: React.ReactNode }) => (
+const InputGroup = ({ icon: Icon, children }: { icon: any, children?: React.ReactNode }) => (
     <div className="relative group">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-apple-blue transition-colors duration-300">
             <Icon size={18} />

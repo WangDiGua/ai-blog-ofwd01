@@ -152,6 +152,7 @@ export const WeatherScene = ({ code, isDay = true }: { code: number, isDay?: boo
 
 // --- 3D 翻转关于我卡片组件 ---
 export const FlipAboutCard = () => {
+    const navigate = useNavigate();
     const [isFlipped, setIsFlipped] = useState(false);
     const [weatherData, setWeatherData] = useState<{temp: number, code: number, desc: string} | null>(null);
     const [locationInfo, setLocationInfo] = useState<{ip: string, city: string, region: string} | null>(null);
@@ -272,7 +273,14 @@ export const FlipAboutCard = () => {
                             <MessageCircle size={20} className="text-blue-500"/>
                         </a>
                     </div>
-                    <Button variant="secondary" size="sm" className="w-full">完整资料</Button>
+                    <Button 
+                        variant="secondary" 
+                        size="sm" 
+                        className="w-full"
+                        onClick={() => navigate('/about')}
+                    >
+                        完整资料
+                    </Button>
                 </Card>
 
                 {/* 背面：访客信息 & 动态天气 */}
