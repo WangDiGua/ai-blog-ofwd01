@@ -87,7 +87,7 @@ export const Community = () => {
     }
 
     const shareData = {
-      title: 'iBlog 社区',
+      title: 'Sweet Potato 社区',
       text: `${post.author.name}: ${post.content}`,
       url: url
     };

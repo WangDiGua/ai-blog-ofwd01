@@ -199,7 +199,7 @@ export const LiquidLogo = () => {
         if (!containerRef.current) return;
 
         // 1. Setup Scene
-        const width = 120; // Logo Width
+        const width = 180; // Logo Width (Increased for Sweet Potato)
         const height = 40; // Logo Height
         const scene = new THREE.Scene();
         
@@ -233,11 +233,12 @@ export const LiquidLogo = () => {
         textCanvas.width = width * 2;
         textCanvas.height = height * 2;
         
-        ctx.font = '700 48px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        // Adjusted font size to fit "Sweet Potato"
+        ctx.font = '700 40px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
         ctx.fillStyle = 'white'; // Keep white for shader, we use filter for coloring
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('iBlog', textCanvas.width / 2, textCanvas.height / 2);
+        ctx.fillText('Sweet Potato', textCanvas.width / 2, textCanvas.height / 2);
 
         const texture = new THREE.CanvasTexture(textCanvas);
         texture.minFilter = THREE.LinearFilter;
@@ -348,7 +349,7 @@ export const LiquidLogo = () => {
     return (
         <div 
             ref={containerRef} 
-            className="w-[120px] h-[40px] select-none"
+            className="w-[180px] h-[40px] select-none"
             style={{ 
                 filter: theme === 'dark' ? 'none' : 'invert(1)',
                 cursor: 'pointer'

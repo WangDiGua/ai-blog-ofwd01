@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Avatar, Button, Card, Modal, Img } from '../components/ui';
-import { Gift, Coffee, Upload, User as UserIcon, Image as ImageIcon, CheckCircle, AlertCircle } from 'lucide-react';
+import { Gift, Coffee, Upload, User as UserIcon, Image as ImageIcon, CheckCircle, AlertCircle, Heart } from 'lucide-react';
 import { useStore } from '../context/store';
 import { userApi } from '../services/api';
 import { validateImage } from '../utils/lib';
@@ -215,15 +215,129 @@ const DonationFormModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () =
 };
 
 export const About = () => {
+    const { showToast } = useStore();
     const [showDonationModal, setShowDonationModal] = useState(false);
+    const [clickCount, setClickCount] = useState(0);
+
+    // 生成飘落爱心的逻辑
+    const createFallingHearts = (rect: DOMRect, count: number) => {
+        for (let i = 0; i < count; i++) {
+            const heart = document.createElement('div');
+            heart.innerText = ['❤️', '💖', '💘', '💝'][Math.floor(Math.random() * 4)];
+            heart.style.position = 'fixed';
+            // 随机分布在按钮宽度范围内
+            heart.style.left = `${rect.left + Math.random() * rect.width}px`;
+            heart.style.top = `${rect.top}px`;
+            heart.style.fontSize = `${Math.random() * 15 + 10}px`;
+            heart.style.pointerEvents = 'none';
+            heart.style.zIndex = '9999';
+            heart.style.transition = `all ${1 + Math.random()}s ease-in`;
+            heart.style.opacity = '1';
+            document.body.appendChild(heart);
+
+            // 强制重绘后触发动画
+            requestAnimationFrame(() => {
+                // 飘落位移：向下 200px ~ 400px，左右随机偏移
+                heart.style.transform = `translate(${Math.random() * 100 - 50}px, ${Math.random() * 200 + 200}px) rotate(${Math.random() * 360}deg)`;
+                heart.style.opacity = '0';
+            });
+
+            // 动画结束后移除
+            setTimeout(() => {
+                if(document.body.contains(heart)) {
+                    document.body.removeChild(heart);
+                }
+            }, 2000);
+        }
+    };
+
+    const handleBadgeClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        e.stopPropagation(); // 防止触发头像的其他点击事件
+        
+        const newCount = clickCount + 1;
+        setClickCount(newCount);
+
+        // 获取元素位置用于生成粒子
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+
+        if (newCount < 10) {
+            // 阶段1: 飘落爱心，数量随点击次数增加 (限制最大数量防止卡顿)
+            createFallingHearts(rect, Math.min(newCount, 15));
+        } else if (newCount < 15) {
+            // 阶段2: 警告提示
+            showToast('别点了，点了也没用！', 'error');
+            // 偶尔飘一颗碎心
+            if (newCount % 2 === 0) {
+                const brokenHeart = document.createElement('div');
+                brokenHeart.innerText = '💔';
+                brokenHeart.style.position = 'fixed';
+                brokenHeart.style.left = `${rect.left + rect.width / 2}px`;
+                brokenHeart.style.top = `${rect.top}px`;
+                brokenHeart.style.fontSize = '20px';
+                brokenHeart.style.pointerEvents = 'none';
+                brokenHeart.style.zIndex = '9999';
+                brokenHeart.style.transition = 'all 0.5s ease-out';
+                document.body.appendChild(brokenHeart);
+                requestAnimationFrame(() => {
+                    brokenHeart.style.transform = `translateY(-50px) scale(1.5)`;
+                    brokenHeart.style.opacity = '0';
+                });
+                setTimeout(() => document.body.removeChild(brokenHeart), 500);
+            }
+        } 
+        // 阶段3: 大于15次，只增加计数器，不再提示也不飘心
+    };
 
     return (
         <div className="max-w-3xl mx-auto px-4 py-10 md:py-16 text-center mb-16">
             <DonationFormModal isOpen={showDonationModal} onClose={() => setShowDonationModal(false)} />
 
             <div className="animate-in slide-in-from-bottom-4 duration-700">
-                <Avatar src="https://picsum.photos/id/1005/200/200" alt="Me" size="xl" className="mx-auto" />
-                <h1 className="text-3xl md:text-4xl font-bold mt-6 mb-2 text-apple-text dark:text-apple-dark-text">John Developer</h1>
+                {/* 
+                    Avatar with Interactive Frame 
+                    Added specific container with spinning rings and hover interactions
+                */}
+                <div className="relative group w-fit mx-auto mb-8 cursor-default">
+                    {/* Glowing Gradient Ring (Spinning) */}
+                    <div className="absolute -inset-[4px] rounded-full bg-gradient-to-tr from-blue-400 via-purple-500 to-pink-500 opacity-60 group-hover:opacity-100 blur-[3px] transition-all duration-700 group-hover:blur-[8px] animate-[spin_4s_linear_infinite]" />
+                    
+                    {/* Dashed Decorative Ring (Counter-Spinning) */}
+                    <div className="absolute -inset-[12px] rounded-full border-2 border-dashed border-gray-300 dark:border-gray-700 opacity-30 group-hover:opacity-60 transition-opacity duration-500 animate-[spin_12s_linear_infinite_reverse]" />
+
+                    {/* 
+                        "Follow Me" Badge (Pops up on hover) 
+                        Changed to be clickable (pointer-events-auto) for the easter egg
+                    */}
+                    <div 
+                        className="absolute -top-12 left-1/2 -translate-x-1/2 z-20 transition-all duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 cursor-pointer pointer-events-auto"
+                        onClick={handleBadgeClick}
+                    >
+                        <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-xl flex items-center whitespace-nowrap select-none active:scale-90 transition-transform">
+                            <Heart size={12} className={`mr-1.5 fill-white ${clickCount < 10 ? 'animate-pulse' : ''}`} /> 
+                            关注我
+                            {/* Easter Egg Counter (Shows after 15 clicks) */}
+                            {clickCount >= 15 && (
+                                <span className="ml-2 bg-white text-pink-600 px-1.5 py-0.5 rounded-full text-[10px] min-w-[20px] text-center font-mono">
+                                    {clickCount}
+                                </span>
+                            )}
+                        </div>
+                        {/* Little triangle arrow */}
+                        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-pink-500 mx-auto mt-[-1px]"></div>
+                    </div>
+
+                    {/* Inner Avatar Container */}
+                    <div className="relative rounded-full p-1.5 bg-white dark:bg-gray-900 transition-transform duration-500 ease-out group-hover:scale-105 z-10">
+                        <Avatar src="https://picsum.photos/id/1005/200/200" alt="Me" size="xl" className="mx-auto" />
+                    </div>
+
+                    {/* Verified Badge */}
+                    <div className="absolute bottom-1 right-1 bg-blue-500 text-white p-1.5 rounded-full border-4 border-white dark:border-gray-900 shadow-sm z-20 group-hover:scale-110 transition-transform" title="Verified Creator">
+                        <CheckCircle size={16} strokeWidth={3} />
+                    </div>
+                </div>
+
+                <h1 className="text-3xl md:text-4xl font-bold mt-6 mb-2 text-apple-text dark:text-apple-dark-text">王地瓜</h1>
                 <p className="text-lg md:text-xl text-apple-subtext dark:text-apple-dark-subtext mb-8">用像素和爱构建数字体验。</p>
                 
                 <div className="flex justify-center space-x-4 mb-12">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '../context/store';
-import { Button, Avatar, Card, FeedbackModal, Modal, Spinner, MarkdownEditor, RankBadge, ReportModal } from '../components/ui';
+import { Button, Avatar, Card, FeedbackModal, Modal, Spinner, MarkdownEditor, RankBadge, ReportModal, BlackHoleBackground } from '../components/ui';
 import { userApi, articleApi } from '../services/api';
 import { Settings, Award, Edit3, Image as ImageIcon, Crown, LogOut, MessageSquare, Users, Heart, AlertTriangle, Zap, Calendar, CheckCircle, Gem, Flag } from 'lucide-react';
 import { User, CULTIVATION_LEVELS, CultivationLevel } from '../types';
@@ -426,11 +426,12 @@ export const Profile = () => {
             {/* 头部 / 封面区域 */}
             <div className="relative mb-8 rounded-3xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-800 group/cover">
                 <div className="h-48 md:h-64 relative bg-gray-200 dark:bg-gray-700">
-                    <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
+                    {/* 使用 BlackHoleBackground 替换静态图片 */}
+                    <BlackHoleBackground />
                     
                     {/* 操作按钮：如果是本人显示更换，非本人显示举报 */}
                     {isMe && isEditing ? (
-                        <div className="absolute top-4 right-4 flex space-x-2">
+                        <div className="absolute top-4 right-4 flex space-x-2 z-10">
                              <input 
                                 className="hidden" 
                                 type="file" 
@@ -446,7 +447,7 @@ export const Profile = () => {
                         !isMe && (
                             <button 
                                 onClick={handleReport}
-                                className="absolute top-4 right-4 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full backdrop-blur-md transition-all opacity-0 group-hover/cover:opacity-100"
+                                className="absolute top-4 right-4 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full backdrop-blur-md transition-all opacity-0 group-hover/cover:opacity-100 z-10"
                                 title="举报封面"
                             >
                                 <Flag size={16} />
@@ -456,7 +457,7 @@ export const Profile = () => {
                 </div>
 
                 <div className="px-8 pb-8 pt-0 relative flex flex-col md:flex-row items-center md:items-end">
-                     <div className="relative -mt-16 mb-4 md:mb-0 md:mr-6 group">
+                     <div className="relative -mt-16 mb-4 md:mb-0 md:mr-6 group z-10">
                          <div className="p-1 bg-white dark:bg-gray-800 rounded-full relative">
                             <Avatar src={displayUser.avatar} alt={displayUser.name} size="xl" />
                             {(displayUser.role === 'vip' || displayUser.role === 'admin') && (
@@ -467,7 +468,7 @@ export const Profile = () => {
                          </div>
                      </div>
                      
-                     <div className="flex-1 text-center md:text-left mb-4 md:mb-0">
+                     <div className="flex-1 text-center md:text-left mb-4 md:mb-0 z-10">
                         {isMe && isEditing ? (
                             <div className="space-y-3 mt-4 max-w-md">
                                 <input className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900" value={name} onChange={e => setName(e.target.value)} placeholder="Name"/>
@@ -517,7 +518,7 @@ export const Profile = () => {
                         )}
                      </div>
 
-                     <div className="flex flex-col space-y-2 items-center md:items-end mt-4 md:mt-0">
+                     <div className="flex flex-col space-y-2 items-center md:items-end mt-4 md:mt-0 z-10">
                         {isMe ? (
                             // 当前用户的操作按钮
                             <>

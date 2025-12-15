@@ -325,8 +325,8 @@ export const ArticleDetail = () => {
                      <Avatar src="https://picsum.photos/id/1005/50/50" alt="Author" />
                      <div>
                         <div className="font-medium text-apple-text dark:text-apple-dark-text flex items-center gap-2">
-                            John Developer
-                            <RankBadge level="真仙/渡劫期" />
+                            {article.authorName || "王地瓜"}
+                            <RankBadge level={article.authorLevel || "真仙/渡劫期"} />
                         </div>
                         <div className="text-xs text-gray-500 flex items-center flex-wrap gap-y-1">
                            <span className="flex items-center mr-3"><Calendar size={12} className="mr-1"/> {article.date}</span>
@@ -538,16 +538,16 @@ export const ArticleDetail = () => {
                       <div className="flex items-center space-x-3 mb-5">
                           <Avatar src="https://picsum.photos/id/1005/50/50" alt="Author" size="md" />
                           <div>
-                              <p className="font-bold text-apple-text dark:text-apple-dark-text">John Developer</p>
+                              <p className="font-bold text-apple-text dark:text-apple-dark-text">王地瓜</p>
                               <div className="flex items-center text-xs text-gray-500 space-x-2">
                                   <span>{article.date}</span>
                                   <span>·</span>
-                                  <span>iBlog 认证作者</span>
+                                  <span>Sweet Potato 认证作者</span>
                               </div>
                           </div>
                       </div>
 
-                      {/* 封面图 */}
+                      {/* 封面图片 */}
                       <div className="rounded-2xl overflow-hidden mb-5 shadow-lg relative aspect-video">
                           <Img src={article.cover} alt="Cover" className="w-full h-full object-cover" />
                           <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-md font-bold tracking-wider">
@@ -567,7 +567,7 @@ export const ArticleDetail = () => {
                       <div className="flex justify-between items-end pt-5 border-t border-dashed border-gray-200 dark:border-gray-700">
                           <div>
                               <div className="flex items-center space-x-2 mb-1">
-                                  <span className="font-bold text-lg text-apple-blue font-serif italic">iBlog</span>
+                                  <span className="font-bold text-lg text-apple-blue font-serif italic">Sweet Potato</span>
                                   <span className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-500">阅读 · 分享 · 创造</span>
                               </div>
                               <p className="text-[10px] text-gray-400">长按识别二维码阅读全文</p>

@@ -2,15 +2,14 @@ import React, { Suspense, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AppProvider, useStore } from './context/store';
 import { Navbar, Footer, MiniPlayer } from './components/layout';
-import { Spinner, ThemeTransitionOverlay, CustomScrollbar, ToastContainer, SearchModal, FloatingMenu, FullPlayerModal, FestiveWidget, Modal } from './components/ui';
+import { Spinner, ThemeTransitionOverlay, CustomScrollbar, ToastContainer, SearchModal, FloatingMenu, FullPlayerModal, FestiveWidget, Modal, PageLoader } from './components/ui';
 import { AuthForm } from './components/auth/AuthForm';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 // --- Lazy Load Pages ---
-// 使用 React.lazy 动态导入组件，实现代码分割，减小首屏体积
 const Home = React.lazy(() => import('./pages/home').then(module => ({ default: module.Home })));
 const ArticleDetail = React.lazy(() => import('./pages/article-detail').then(module => ({ default: module.ArticleDetail })));
-const CategoryPage = React.lazy(() => import('./pages/categories').then(module => ({ default: module.CategoryPage }))); // 新增
+const CategoryPage = React.lazy(() => import('./pages/categories').then(module => ({ default: module.CategoryPage })));
 const Profile = React.lazy(() => import('./pages/profile').then(module => ({ default: module.Profile })));
 const Community = React.lazy(() => import('./pages/community').then(module => ({ default: module.Community })));
 const MusicPage = React.lazy(() => import('./pages/music').then(module => ({ default: module.MusicPage })));
@@ -19,7 +18,7 @@ const About = React.lazy(() => import('./pages/about').then(module => ({ default
 const Contact = React.lazy(() => import('./pages/contact').then(module => ({ default: module.Contact })));
 const AIAssistant = React.lazy(() => import('./pages/ai').then(module => ({ default: module.AIAssistant })));
 
-// 批量导入 views 中的组件 (也需要 Lazy Load)
+// 批量导入 views 中的组件
 const StartPage = React.lazy(() => import('./pages/views').then(module => ({ default: module.StartPage })));
 const MessageBoard = React.lazy(() => import('./pages/views').then(module => ({ default: module.MessageBoard })));
 const Album = React.lazy(() => import('./pages/views').then(module => ({ default: module.Album })));
@@ -99,11 +98,7 @@ const App = () => {
           <CustomScrollbar />
           
           <LayoutWrapper>
-            <Suspense fallback={
-              <div className="flex items-center justify-center h-[60vh] w-full">
-                <Spinner />
-              </div>
-            }>
+            <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/start" element={<StartPage />} />
@@ -111,7 +106,7 @@ const App = () => {
                 <Route path="/timeline" element={<Timeline />} />
                 <Route path="/friend-links" element={<FriendLinks />} />
                 <Route path="/album" element={<Album />} />
-                <Route path="/categories" element={<CategoryPage />} /> {/* 新增路由 */}
+                <Route path="/categories" element={<CategoryPage />} />
                 <Route path="/article/:id" element={<ArticleDetail />} />
                 <Route path="/community" element={<Community />} />
                 <Route path="/music" element={<MusicPage />} />

@@ -6,7 +6,7 @@ import { Copy, Mail, AtSign, Link as LinkIcon, Image as ImageIcon, PenTool, Exte
 import { validateImage, isValidUrl } from '../utils/lib';
 
 const MY_SITE_INFO = {
-    name: 'iBlog',
+    name: 'Sweet Potato',
     url: 'https://iblog.app',
     avatar: 'https://iblog.app/logo.png',
     desc: '用像素和爱构建数字体验。'

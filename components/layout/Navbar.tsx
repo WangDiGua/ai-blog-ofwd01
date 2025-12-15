@@ -1,30 +1,79 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Menu, X, ShieldAlert, ChevronDown } from 'lucide-react';
+import { Search, Menu, X, ShieldAlert, ChevronDown, Sparkles, Layout } from 'lucide-react';
 import { useStore } from '../../context/store';
-import { Button, Avatar, ThemeToggle, AdminLoginModal, LiquidLogo } from '../ui'; // Imported LiquidLogo
+import { Button, Avatar, ThemeToggle, AdminLoginModal, LiquidLogo } from '../ui';
 import { throttle } from '../../utils/lib';
 
 export const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isLoggedIn, logout, setSearchOpen, setAuthModalOpen } = useStore();
-  const [isScrolled, setIsScrolled] = useState(false);
+  
+  // 状态管理
+  const [isCompact, setIsCompact] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAdminModalOpen, setAdminModalOpen] = useState(false);
   const [expandedMobileMenus, setExpandedMobileMenus] = useState<string[]>([]);
+  const [pageTitle, setPageTitle] = useState('Sweet Potato');
   
-  // Sliding Background State
+  // Ref 记录滚动位置
+  const lastScrollY = useRef(0);
+
+  // Sliding Background State (Pill)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, opacity: 0 });
   const navRefs = useRef<(HTMLAnchorElement | HTMLDivElement | null)[]>([]);
-  
+
+  // --- 路由标题映射 ---
   useEffect(() => {
-    // 节流滚动事件，每 100ms 触发一次，减少重渲染频率
-    const handleScroll = throttle(() => setIsScrolled(window.scrollY > 20), 100);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+      const getPageContext = (pathname: string) => {
+          if (pathname === '/' || pathname === '/start') return '探索首页';
+          if (pathname.startsWith('/article/')) return '深度阅读';
+          if (pathname === '/categories') return '知识分类';
+          if (pathname === '/timeline') return '时光轴';
+          if (pathname.startsWith('/user/') || pathname === '/profile') return '个人中心';
+          if (pathname === '/community') return '社区互动';
+          if (pathname === '/music') return '聆听音乐';
+          if (pathname === '/album') return '光影画廊';
+          if (pathname === '/tools') return '开发者工具';
+          if (pathname === '/contact') return '即时通讯';
+          if (pathname === '/friend-links') return '友情链接';
+          if (pathname === '/message-board') return '留言板';
+          if (pathname === '/ai') return 'AI 助手';
+          if (pathname === '/about') return '关于我';
+          return 'Sweet Potato';
+      };
+      setPageTitle(getPageContext(location.pathname));
+  }, [location.pathname]);
+  
+  // --- 核心逻辑: 滚动监听 ---
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (isMobileMenuOpen) {
+          setIsCompact(false);
+          return;
+      }
+
+      // 只有当滚动超过一定阈值，并且向下滚动时才收缩
+      // 向上滚动时立即展开
+      if (currentScrollY < 60) {
+          setIsCompact(false);
+      } else if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+          setIsCompact(true);
+      } else if (currentScrollY < lastScrollY.current) {
+          setIsCompact(false);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    const throttledScroll = throttle(handleScroll, 100);
+    window.addEventListener('scroll', throttledScroll);
+    return () => window.removeEventListener('scroll', throttledScroll);
+  }, [isMobileMenuOpen]);
 
   const navLinks = [
     { 
@@ -53,32 +102,26 @@ export const Navbar = () => {
       ] 
     },
     { name: '关于', path: '/about' },
-    { name: 'AI 助手', path: '/ai' },
+    { name: 'AI', path: '/ai' },
   ];
 
   // Update sliding pill position
   useEffect(() => {
     const updatePill = () => {
         let targetIndex = -1;
-
-        // Determine target: hovered item takes precedence, otherwise active item
         if (hoveredIndex !== null) {
             targetIndex = hoveredIndex;
         } else {
-            // Logic to find active tab including sub-routes
             targetIndex = navLinks.findIndex(link => {
                 if (link.path === location.pathname) return true;
                 if (link.hasSubmenu && link.subItems?.some(sub => sub.path === location.pathname)) return true;
                 return false;
             });
-            
-            // Default to home active only if exactly home
             if (targetIndex === -1 && location.pathname === '/') targetIndex = 0;
         }
 
         const targetEl = navRefs.current[targetIndex];
-
-        if (targetEl) {
+        if (targetEl && !isCompact) { 
             setPillStyle({
                 left: targetEl.offsetLeft,
                 width: targetEl.offsetWidth,
@@ -92,7 +135,7 @@ export const Navbar = () => {
     updatePill();
     window.addEventListener('resize', updatePill);
     return () => window.removeEventListener('resize', updatePill);
-  }, [hoveredIndex, location.pathname, navLinks.length]);
+  }, [hoveredIndex, location.pathname, navLinks.length, isCompact]);
 
   const toggleMobileSubmenu = (name: string) => {
       setExpandedMobileMenus(prev => 
@@ -104,165 +147,183 @@ export const Navbar = () => {
     <>
       <AdminLoginModal isOpen={isAdminModalOpen} onClose={() => setAdminModalOpen(false)} />
 
+      {/* 
+          Navbar Container 
+          - 使用 fixed + transform: translate-x-1/2 居中，避免 width 变化时的布局抖动
+          - 宽度过渡使用 cubic-bezier(0.32, 0.72, 0, 1) 实现 iOS 风格的平滑感
+      */}
       <nav 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-transparent
-          ${isScrolled || isMobileMenuOpen ? 'bg-white/80 dark:bg-black/80 backdrop-blur-xl border-gray-200/50 dark:border-gray-800/50 shadow-sm' : 'bg-transparent py-2'}
+        className={`
+          fixed z-50 left-1/2 -translate-x-1/2 
+          transition-[width,top,border-radius,background-color,shadow] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-[width,top]
+          ${isCompact 
+            ? 'top-4 w-[92%] max-w-[800px] rounded-full bg-white/90 dark:bg-gray-900/90 shadow-2xl border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-xl' 
+            : 'top-0 w-full rounded-none bg-white/80 dark:bg-black/80 shadow-sm border-b border-gray-200/50 dark:border-gray-800/50 backdrop-blur-md'
+          }
         `}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className={`mx-auto h-14 md:h-16 relative flex items-center justify-between transition-all duration-500 ${isCompact ? 'px-4' : 'px-4 sm:px-6 lg:px-8 max-w-7xl'}`}>
             
-            <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => navigate('/')}>
-              {/* Replace text with LiquidLogo */}
-              <LiquidLogo />
+            {/* Left: Logo */}
+            <div className="flex-shrink-0 flex items-center cursor-pointer z-20" onClick={() => navigate('/')}>
+                {/* 缩放 Logo 而不是改变其布局空间 */}
+                <div className={`transition-all duration-500 origin-left ${isCompact ? 'scale-75' : 'scale-100'}`}>
+                    <LiquidLogo />
+                </div>
             </div>
 
-            {/* Desktop Menu with Sliding Background */}
-            <div className="hidden md:flex relative space-x-1 items-center bg-gray-100/50 dark:bg-gray-800/50 p-1 rounded-full border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-md">
-              
-              {/* The Sliding Pill */}
-              <div 
-                className="absolute bg-white dark:bg-gray-700 rounded-full shadow-sm transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]"
-                style={{ 
-                    left: pillStyle.left, 
-                    width: pillStyle.width, 
-                    height: 'calc(100% - 8px)',
-                    top: 4,
-                    opacity: pillStyle.opacity 
-                }}
-              />
-
-              {navLinks.map((link, index) => {
-                const isActive = location.pathname === link.path || (link.hasSubmenu && link.subItems?.some(sub => sub.path === location.pathname));
+            {/* Center Zone: 叠加布局，避免布局挤压 */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
                 
-                // Render items with submenu
-                if (link.hasSubmenu) {
-                    return (
-                        <div
-                            key={link.name}
-                            ref={(el) => { navRefs.current[index] = el; }}
-                            onMouseEnter={() => setHoveredIndex(index)}
-                            onMouseLeave={() => setHoveredIndex(null)}
-                            className="relative group z-20"
-                        >
+                {/* 1. Page Title (Compact Mode Only) */}
+                <div 
+                    className={`
+                        absolute whitespace-nowrap flex items-center
+                        transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
+                        ${isCompact 
+                            ? 'opacity-100 translate-y-0 scale-100 delay-100' 
+                            : 'opacity-0 translate-y-4 scale-90 pointer-events-none'}
+                    `}
+                >
+                    <span className="text-sm font-bold text-apple-text dark:text-apple-dark-text tracking-wide flex items-center bg-gray-100/80 dark:bg-gray-800/80 px-4 py-1.5 rounded-full backdrop-blur-md">
+                        <Sparkles size={12} className="mr-2 text-apple-blue" />
+                        {pageTitle}
+                    </span>
+                </div>
+
+                {/* 2. Navigation Links (Full Mode Only) */}
+                <div 
+                    className={`
+                        hidden md:flex relative items-center
+                        transition-all duration-300 ease-out
+                        ${isCompact ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100 pointer-events-auto'}
+                    `}
+                >
+                    {/* Sliding Pill Background */}
+                    <div 
+                        className="absolute bg-gray-100 dark:bg-gray-800 rounded-full transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]"
+                        style={{ 
+                            left: pillStyle.left, 
+                            width: pillStyle.width, 
+                            height: '80%',
+                            top: '10%',
+                            opacity: pillStyle.opacity 
+                        }}
+                    />
+                    
+                    {navLinks.map((link, index) => {
+                        const isActive = location.pathname === link.path || (link.hasSubmenu && link.subItems?.some(sub => sub.path === location.pathname));
+                        if (link.hasSubmenu) {
+                            return (
+                                <div
+                                    key={link.name}
+                                    ref={(el) => { navRefs.current[index] = el; }}
+                                    onMouseEnter={() => setHoveredIndex(index)}
+                                    onMouseLeave={() => setHoveredIndex(null)}
+                                    className="relative group z-10"
+                                >
+                                    <Link
+                                        to={link.path}
+                                        className={`relative px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200 flex items-center ${isActive ? 'text-black dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'}`}
+                                    >
+                                        {link.name}
+                                        <ChevronDown size={10} className="ml-1 opacity-50 group-hover:opacity-100 transition-opacity" />
+                                    </Link>
+                                    {/* Dropdown */}
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 w-36 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
+                                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 p-1.5 overflow-hidden ring-1 ring-black/5">
+                                            {link.subItems?.map(sub => (
+                                                <Link key={sub.name} to={sub.path} className="block px-3 py-2 text-xs font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-apple-blue transition-colors text-center">{sub.name}</Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        }
+                        return (
                             <Link
+                                key={link.name}
                                 to={link.path}
-                                className={`
-                                    relative px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200 flex items-center
-                                    ${isActive ? 'text-black dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'}
-                                `}
+                                ref={(el) => { navRefs.current[index] = el; }}
+                                onMouseEnter={() => setHoveredIndex(index)}
+                                onMouseLeave={() => setHoveredIndex(null)}
+                                className={`relative z-10 px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200 ${isActive ? 'text-black dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'}`}
                             >
                                 {link.name}
-                                <ChevronDown size={12} className="ml-1 opacity-50 group-hover:opacity-100 transition-opacity" />
                             </Link>
-
-                            {/* Dropdown Menu */}
-                            <div className="absolute top-full left-0 pt-2 w-32 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
-                                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-1 overflow-hidden">
-                                    {link.subItems?.map(sub => (
-                                        <Link 
-                                            key={sub.name}
-                                            to={sub.path} 
-                                            className="block px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
-                                        >
-                                            {sub.name}
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    );
-                }
-
-                return (
-                    <Link
-                    key={link.name}
-                    to={link.path}
-                    ref={(el) => { navRefs.current[index] = el; }}
-                    onMouseEnter={() => setHoveredIndex(index)}
-                    onMouseLeave={() => setHoveredIndex(null)}
-                    className={`
-                        relative z-10 px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200
-                        ${isActive ? 'text-black dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'}
-                    `}
-                    >
-                    {link.name}
-                    </Link>
-                );
-              })}
+                        );
+                    })}
+                </div>
             </div>
 
-            <div className="hidden md:flex items-center space-x-4">
-              <ThemeToggle />
+            {/* Right Actions */}
+            <div className="flex items-center space-x-2 md:space-x-3 z-20">
+              <div className={`transition-all duration-300 ${isCompact ? 'scale-90' : 'scale-100'} hidden md:block`}>
+                  <ThemeToggle />
+              </div>
               <button 
                 onClick={() => setSearchOpen(true)}
-                className="p-2 text-gray-400 hover:text-apple-blue transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+                className={`
+                    p-2 text-gray-500 hover:text-apple-blue transition-all rounded-full hover:bg-gray-100 dark:hover:bg-gray-800
+                    ${isCompact ? 'scale-90' : 'scale-100'}
+                `}
               >
                 <Search className="h-5 w-5" />
               </button>
 
               {isLoggedIn && user ? (
-                 <div className="relative group cursor-pointer" onClick={() => navigate('/profile')} title="前往个人资料">
+                 <div className={`relative group cursor-pointer transition-all duration-300 ${isCompact ? 'scale-90' : 'scale-100'}`} onClick={() => navigate('/profile')} title="个人资料">
                    <Avatar src={user.avatar} alt={user.name} size="sm" />
                  </div>
               ) : (
-                <Button size="sm" onClick={() => setAuthModalOpen(true)}>
+                <Button size="sm" onClick={() => setAuthModalOpen(true)} className={`transition-all duration-300 ${isCompact ? 'px-3 py-1 text-xs h-8' : ''}`}>
                   登录
                 </Button>
               )}
-              {user?.role === 'admin' && (
-                  <button 
-                     onClick={() => setAdminModalOpen(true)}
-                     className="text-red-500 hover:text-red-600 transition-colors"
-                     title="系统管理"
-                  >
-                      <ShieldAlert size={20}/>
+              
+              {user?.role === 'admin' && !isCompact && (
+                  <button onClick={() => setAdminModalOpen(true)} className="text-red-500 hover:text-red-600 hidden md:block" title="系统管理">
+                      <ShieldAlert size={18}/>
                   </button>
               )}
-            </div>
 
-            <div className="md:hidden flex items-center space-x-4">
-              <ThemeToggle />
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-apple-text dark:text-apple-dark-text hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
-              >
-                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </button>
+              {/* Mobile Menu Toggle */}
+              <div className="md:hidden flex items-center">
+                  <button
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    className="inline-flex items-center justify-center p-2 rounded-full text-apple-text dark:text-apple-dark-text hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none transition-colors"
+                  >
+                    {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                  </button>
+              </div>
             </div>
-          </div>
         </div>
 
-        <div className={`md:hidden absolute w-full bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-[80vh] opacity-100 overflow-y-auto' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-          <div className="px-4 pt-2 pb-6 space-y-2">
+        {/* Mobile Menu Dropdown */}
+        <div className={`md:hidden absolute top-full left-0 w-full bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-[85vh] opacity-100 overflow-y-auto shadow-2xl' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+          <div className="px-4 pt-2 pb-8 space-y-1">
+            <div className="flex justify-between items-center px-3 pb-4 pt-2 border-b border-gray-100 dark:border-gray-800 mb-2">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Navigation</span>
+                <ThemeToggle />
+            </div>
             {navLinks.map((link) => {
               const isActive = location.pathname === link.path;
               const isExpanded = expandedMobileMenus.includes(link.name);
-
               return (
               <div key={link.name}>
                   {link.hasSubmenu ? (
-                      <div>
+                      <div className="rounded-xl overflow-hidden">
                            <button
                              onClick={() => toggleMobileSubmenu(link.name)}
-                             className={`
-                                w-full flex items-center justify-between px-3 py-3 rounded-xl text-base font-medium transition-all
-                                ${isActive ? 'text-apple-blue font-bold' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'}
-                             `}
+                             className={`w-full flex items-center justify-between px-4 py-3.5 text-base font-medium transition-all ${isActive ? 'text-apple-blue font-bold bg-blue-50 dark:bg-blue-900/10' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900'}`}
                            >
                                <span>{link.name}</span>
-                               <ChevronDown size={16} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                               <ChevronDown size={16} className={`transition-transform duration-300 text-gray-400 ${isExpanded ? 'rotate-180' : ''}`} />
                            </button>
-                           {/* 移动端子菜单 Accordion */}
-                           <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
-                               <div className="pl-4 space-y-1 mt-1 border-l-2 border-gray-100 dark:border-gray-800 ml-3">
+                           <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'}`}>
+                               <div className="bg-gray-50 dark:bg-gray-900/50 py-2 space-y-1">
                                    {link.subItems?.map(sub => (
-                                       <Link 
-                                            key={sub.name}
-                                            to={sub.path}
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                            className="block px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-apple-blue rounded-lg"
-                                        >
+                                       <Link key={sub.name} to={sub.path} onClick={() => setIsMobileMenuOpen(false)} className="block px-8 py-2.5 text-sm text-gray-500 dark:text-gray-400 hover:text-apple-blue dark:hover:text-white transition-colors">
                                             {sub.name}
                                         </Link>
                                    ))}
@@ -273,10 +334,7 @@ export const Navbar = () => {
                       <Link
                         to={link.path}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className={`
-                          block px-3 py-3 rounded-xl text-base font-medium transition-all
-                          ${isActive ? 'bg-gray-100 dark:bg-gray-800 text-apple-blue font-bold shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'}
-                        `}
+                        className={`block px-4 py-3.5 rounded-xl text-base font-medium transition-all ${isActive ? 'bg-blue-50 dark:bg-blue-900/10 text-apple-blue font-bold' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900'}`}
                       >
                         {link.name}
                       </Link>
@@ -284,24 +342,22 @@ export const Navbar = () => {
               </div>
             )})}
              {user?.role === 'admin' && (
-                  <button 
-                     onClick={() => { setIsMobileMenuOpen(false); setAdminModalOpen(true); }}
-                     className="block w-full text-left px-3 py-3 rounded-xl text-base font-medium text-red-500 hover:bg-red-50"
-                  >
-                      系统后台
-                  </button>
+                  <button onClick={() => { setIsMobileMenuOpen(false); setAdminModalOpen(true); }} className="block w-full text-left px-4 py-3.5 rounded-xl text-base font-medium text-red-500 hover:bg-red-50 mt-2">系统后台</button>
               )}
-            <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+            <div className="pt-6 mt-4 border-t border-gray-100 dark:border-gray-800">
               {isLoggedIn ? (
-                 <div className="flex items-center justify-between px-3">
+                 <div className="flex items-center justify-between px-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl p-4">
                     <div className="flex items-center space-x-3" onClick={() => {navigate('/profile'); setIsMobileMenuOpen(false);}}>
                        <Avatar src={user?.avatar || ''} alt="User" size="sm" />
-                       <span className="font-medium text-apple-text dark:text-apple-dark-text">{user?.name}</span>
+                       <div className="flex flex-col">
+                           <span className="font-bold text-sm text-apple-text dark:text-apple-dark-text">{user?.name}</span>
+                           <span className="text-xs text-gray-400">{user?.email || '已登录用户'}</span>
+                       </div>
                     </div>
-                    <span className="text-xs text-red-500 font-medium" onClick={() => {logout(); setIsMobileMenuOpen(false);}}>登出</span>
+                    <button className="text-xs text-red-500 font-medium px-3 py-1.5 bg-red-50 dark:bg-red-900/20 rounded-lg" onClick={() => {logout(); setIsMobileMenuOpen(false);}}>登出</button>
                  </div>
               ) : (
-                <Button className="w-full" onClick={() => { setAuthModalOpen(true); setIsMobileMenuOpen(false); }}>登录</Button>
+                <Button className="w-full h-12 text-base shadow-lg shadow-blue-500/20" onClick={() => { setAuthModalOpen(true); setIsMobileMenuOpen(false); }}>立即登录</Button>
               )}
             </div>
           </div>

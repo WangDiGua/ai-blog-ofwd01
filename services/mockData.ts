@@ -5,8 +5,8 @@ export const MOCK_USERS: User[] = [
     {
         id: 'u-admin',
         username: 'admin',
-        name: 'John Developer',
-        avatar: 'https://ui-avatars.com/api/?name=John+Dev&background=0071e3&color=fff',
+        name: '王地瓜',
+        avatar: 'https://ui-avatars.com/api/?name=Wang+Digua&background=0071e3&color=fff',
         bio: '全栈开发者，热爱极简设计与高性能代码。',
         role: 'admin',
         vipType: 'permanent',

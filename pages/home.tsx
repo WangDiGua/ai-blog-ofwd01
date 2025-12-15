@@ -93,13 +93,29 @@ const SignatureAnimation = ({ onClick }: { onClick: () => void }) => {
 
 // --- 重新排版的 Hero 组件 (自动视差 + 丰富文本 + 鼠标指示器) ---
 const InteractiveHero = () => {
+    const [showScrollIndicator, setShowScrollIndicator] = useState(true);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            // 当滚动超过 50px 时隐藏指示器
+            if (window.scrollY > 50) {
+                setShowScrollIndicator(false);
+            } else {
+                setShowScrollIndicator(true);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     const scrollToContent = () => {
         document.getElementById('content-start')?.scrollIntoView({ behavior: 'smooth' });
     };
 
     return (
-        // 调整 py padding，适配移动端显示，防止顶部过于拥挤
-        <div className="relative w-full pt-8 pb-16 md:pt-16 md:pb-28 lg:pt-20 lg:pb-32 overflow-hidden">
+        // 调整 padding：大幅减小顶部间距 (pt-2/md:pt-4/lg:pt-8) 让内容更贴近导航栏
+        <div className="relative w-full pt-2 pb-16 md:pt-4 md:pb-28 lg:pt-8 lg:pb-32 overflow-hidden">
             
             {/* CSS 自动视差动画定义 */}
             <style>{`
@@ -212,14 +228,18 @@ const InteractiveHero = () => {
                 </div>
             </div>
 
-            {/* 鼠标滚动指示器 */}
+            {/* 鼠标滚动指示器 - 动态显示/隐藏 */}
             <div 
-                className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity"
+                className={`
+                    absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center cursor-pointer 
+                    transition-all duration-500 ease-in-out
+                    ${showScrollIndicator ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}
+                `}
                 onClick={scrollToContent}
             >
-                <span className="text-[10px] text-gray-400 mb-2 tracking-widest uppercase animate-pulse">Scroll</span>
-                <div className="w-6 h-10 border-2 border-gray-400 dark:border-gray-600 rounded-full flex justify-center p-1">
-                    <div className="w-1 h-1.5 bg-gray-400 dark:bg-gray-600 rounded-full animate-scroll-wheel"></div>
+                <span className="text-[10px] text-gray-400 mb-2 tracking-widest uppercase animate-pulse hover:text-apple-blue transition-colors">Scroll</span>
+                <div className="w-6 h-10 border-2 border-gray-400 dark:border-gray-600 rounded-full flex justify-center p-1 group hover:border-apple-blue transition-colors">
+                    <div className="w-1 h-1.5 bg-gray-400 dark:bg-gray-600 rounded-full animate-scroll-wheel group-hover:bg-apple-blue transition-colors"></div>
                 </div>
             </div>
         </div>
@@ -287,6 +307,10 @@ export const Home = () => {
     fetchArticles();
   }, [page, currentCategory, currentTag]);
 
+  const scrollToArticleList = () => {
+      document.getElementById('content-start')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const updateParams = (key: string, value: string | null) => {
       const newParams = new URLSearchParams(location.search);
       if (value) {
@@ -301,6 +325,7 @@ export const Home = () => {
       startTransition(() => {
           updateParams('category', cat);
           setPage(1);
+          scrollToArticleList();
       });
   };
 
@@ -308,6 +333,7 @@ export const Home = () => {
       startTransition(() => {
           updateParams('tag', tag);
           setPage(1);
+          scrollToArticleList();
       });
   };
 
@@ -315,6 +341,7 @@ export const Home = () => {
       startTransition(() => {
           navigate({ search: '' });
           setPage(1);
+          scrollToArticleList();
       });
   };
 
@@ -416,7 +443,7 @@ export const Home = () => {
                         totalItems={totalItems} 
                         onPageChange={(p) => {
                             setPage(p);
-                            document.getElementById('content-start')?.scrollIntoView({ behavior: 'smooth' });
+                            scrollToArticleList();
                         }} 
                     />
                 )}
