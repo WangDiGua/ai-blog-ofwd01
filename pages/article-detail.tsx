@@ -1,11 +1,97 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '../context/store';
 import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, ImageViewer, Modal, RankBadge, Img, ReportModal } from '../components/ui';
 import { articleApi } from '../services/api';
 import { Article, Comment, CULTIVATION_LEVELS, CultivationLevel } from '../types';
 import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash, ShieldAlert, Share2, Download, ExternalLink, Hourglass, Lock, Flag, FileText, ChevronRight } from 'lucide-react';
 import { calculateReadingTime, generateHeadingId } from '../utils/lib';
+
+// 推荐文章轮播组件 (优化版：丝滑淡入淡出切换)
+const RecommendedCarousel = ({ currentId }: { currentId: string }) => {
+    const navigate = useNavigate();
+    const [recommends, setRecommends] = useState<Article[]>([]);
+    const [index, setIndex] = useState(0);
+    const [isHovered, setIsHovered] = useState(false);
+
+    useEffect(() => {
+        // Fetch recommendations (exclude current)
+        articleApi.getList({ limit: 6 }).then(res => {
+            setRecommends(res.items.filter(a => a.id !== currentId));
+        });
+    }, [currentId]);
+
+    useEffect(() => {
+        if (recommends.length <= 1 || isHovered) return;
+        const timer = setInterval(() => {
+            setIndex(prev => (prev + 1) % recommends.length);
+        }, 5000); // 增加切换间隔，让阅读更从容
+        return () => clearInterval(timer);
+    }, [recommends.length, isHovered]);
+
+    if (recommends.length === 0) return null;
+
+    return (
+        <div className="mt-8 border-t border-gray-100 dark:border-gray-800 pt-6 animate-in slide-in-from-bottom-4 duration-700 delay-300">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
+               <span className="w-1 h-4 bg-apple-blue rounded-full mr-2"></span> 推荐阅读
+            </h3>
+            
+            <div 
+                className="group relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 aspect-[16/10] bg-gray-100 dark:bg-gray-800 isolate"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+            >
+                {/* 渲染所有项并堆叠，通过透明度切换 */}
+                {recommends.map((article, idx) => {
+                    const isActive = idx === index;
+                    return (
+                        <div
+                            key={article.id}
+                            onClick={() => navigate(`/article/${article.id}`)}
+                            className={`
+                                absolute inset-0 w-full h-full cursor-pointer transition-opacity duration-1000 ease-in-out
+                                ${isActive ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'}
+                            `}
+                        >
+                            <Img 
+                                src={article.cover} 
+                                alt={article.title} 
+                                className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-110" 
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 transition-opacity duration-500" />
+                            
+                            {/* Content Overlay */}
+                            <div className="absolute bottom-0 left-0 right-0 p-4 transform transition-transform duration-500 translate-y-2 group-hover:translate-y-0">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-white/20 text-white backdrop-blur-md border border-white/10 mb-2">
+                                    {article.category}
+                                </span>
+                                <h4 className="text-white font-bold text-sm leading-snug line-clamp-2 mb-2 group-hover:text-blue-200 transition-colors">
+                                    {article.title}
+                                </h4>
+                                <div className="flex items-center justify-between text-white/60 text-[10px]">
+                                    <span>{article.authorName || '王地瓜'}</span>
+                                    <span>{article.date}</span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+
+                {/* Progress Indicators */}
+                <div className="absolute top-3 right-3 flex gap-1.5 z-20">
+                    {recommends.map((_, i) => (
+                        <div 
+                            key={i} 
+                            onClick={(e) => { e.stopPropagation(); setIndex(i); }}
+                            className={`h-1 rounded-full transition-all duration-500 cursor-pointer shadow-sm ${i === index ? 'w-6 bg-white' : 'w-2 bg-white/40 hover:bg-white/60'}`}
+                        />
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 // 免责声明组件
 const Disclaimer = () => (
@@ -115,6 +201,10 @@ export const ArticleDetail = () => {
       try {
         const data = await articleApi.getDetail(id);
         setArticle(data);
+        // Reset state for new article
+        setReadingSeconds(0);
+        setIsLiked(false);
+        setIsBookmarked(false);
       } catch (e) {
         console.error(e);
       } finally {
@@ -510,6 +600,9 @@ export const ArticleDetail = () => {
               ) : (
                   <p className="text-sm text-gray-400 italic">本文暂无目录</p>
               )}
+
+              {/* 推荐文章轮播 */}
+              <RecommendedCarousel currentId={id!} />
            </div>
         </div>
 
