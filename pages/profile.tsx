@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '../context/store';
 import { Button, Avatar, Card, FeedbackModal, Modal, Spinner, MarkdownEditor, RankBadge, ReportModal, BlackHoleBackground } from '../components/ui';
 import { userApi, articleApi } from '../services/api';
-import { Settings, Award, Edit3, Image as ImageIcon, Crown, LogOut, MessageSquare, Users, Heart, AlertTriangle, Zap, Calendar, CheckCircle, Gem, Flag } from 'lucide-react';
+import { Settings, Award, Edit3, Image as ImageIcon, Crown, LogOut, MessageSquare, Users, Heart, AlertTriangle, Zap, Calendar, CheckCircle, Gem, Flag, FileX, FolderOpen } from 'lucide-react';
 import { User, CULTIVATION_LEVELS, CultivationLevel } from '../types';
 import { validateImage } from '../utils/lib';
 
@@ -29,25 +29,32 @@ const UserListModal = ({ isOpen, onClose, title, type }: { isOpen: boolean, onCl
         <Modal isOpen={isOpen} onClose={onClose} title={title}>
             <div className="max-h-[60vh] overflow-y-auto">
                 {loading ? <div className="flex justify-center p-4"><Spinner /></div> : (
-                    <div className="space-y-4">
-                        {users.map(u => (
-                            <div key={u.id} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg">
-                                <div className="flex items-center space-x-3">
-                                    <Avatar src={u.avatar} alt={u.name} size="md" />
-                                    <div>
-                                        <div className="flex items-center space-x-2">
-                                            <div className="font-semibold text-sm text-apple-text dark:text-apple-dark-text">{u.name}</div>
-                                            <RankBadge level={u.level} />
+                    users.length > 0 ? (
+                        <div className="space-y-4">
+                            {users.map(u => (
+                                <div key={u.id} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg">
+                                    <div className="flex items-center space-x-3">
+                                        <Avatar src={u.avatar} alt={u.name} size="md" />
+                                        <div>
+                                            <div className="flex items-center space-x-2">
+                                                <div className="font-semibold text-sm text-apple-text dark:text-apple-dark-text">{u.name}</div>
+                                                <RankBadge level={u.level} />
+                                            </div>
+                                            <div className="text-xs text-gray-500 truncate max-w-[150px]">{u.bio}</div>
                                         </div>
-                                        <div className="text-xs text-gray-500 truncate max-w-[150px]">{u.bio}</div>
                                     </div>
+                                    <Button size="sm" variant={u.isFollowing ? "secondary" : "primary"} className="text-xs">
+                                        {u.isFollowing ? '已关注' : '关注'}
+                                    </Button>
                                 </div>
-                                <Button size="sm" variant={u.isFollowing ? "secondary" : "primary"} className="text-xs">
-                                    {u.isFollowing ? '已关注' : '关注'}
-                                </Button>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+                            <Users size={32} className="mb-2 opacity-50"/>
+                            <p className="text-sm">暂无{type === 'followers' ? '粉丝' : '关注'}用户</p>
+                        </div>
+                    )
                 )}
             </div>
         </Modal>
@@ -632,8 +639,14 @@ export const Profile = () => {
                 ) : (
                     <div className="grid gap-6">
                         {/* 其他标签的模拟列表 */}
-                        <div className="text-gray-500 text-center py-20 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
-                            {displayUser.name} 还没有 {activeTab === 'articles' ? '文章' : activeTab === 'favorites' ? '收藏' : '点赞'} (模拟数据)...
+                        <div className="flex flex-col items-center justify-center py-24 text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+                            {activeTab === 'articles' && <FileX size={48} className="mb-4 opacity-50"/>}
+                            {activeTab === 'favorites' && <FolderOpen size={48} className="mb-4 opacity-50"/>}
+                            {activeTab === 'likes' && <Heart size={48} className="mb-4 opacity-50"/>}
+                            <p className="text-lg">暂无内容</p>
+                            <p className="text-sm mt-1">
+                                {displayUser.name} 还没有 {activeTab === 'articles' ? '文章' : activeTab === 'favorites' ? '收藏' : '点赞'}记录
+                            </p>
                         </div>
                     </div>
                 )}

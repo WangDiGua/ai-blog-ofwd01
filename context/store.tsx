@@ -61,9 +61,29 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// --- 默认模拟用户 (用于免登录预览) ---
+const MOCK_DEFAULT_USER: User = {
+    id: 'u-mock-default',
+    name: '王地瓜',
+    username: 'wangdigua',
+    avatar: 'https://ui-avatars.com/api/?name=Wang+Digua&background=0071e3&color=fff',
+    bio: '这是默认登录的模拟账户，尽情探索吧！',
+    role: 'vip',
+    vipType: 'permanent',
+    level: '真仙/渡劫期',
+    aiUsage: 12,
+    points: 8888,
+    signInHistory: [],
+    followersCount: 128,
+    followingCount: 42,
+    totalLikes: 1024,
+    isFollowing: false
+};
+
 export const AppProvider = ({ children }: PropsWithChildren) => {
   // --- State: Auth ---
-  const [user, setUser] = useState<User | null>(null);
+  // 默认设置为模拟用户，实现“默认登录”
+  const [user, setUser] = useState<User | null>(MOCK_DEFAULT_USER);
   
   // --- State: Theme ---
   const [theme, setTheme] = useState<ThemeMode>('light');
@@ -118,6 +138,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         setPreviousTheme('dark');
     }
     
+    // 尝试从 localStorage 读取用户，如果有则覆盖默认模拟用户，如果没有则保持默认
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
         try {
@@ -175,6 +196,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
           if (currentUser) {
               callback();
           } else {
+              // 即使用户可以被设置为默认登录，为了安全逻辑，如果被登出了还是会触发这个
               showToast('请先登录', 'info');
               setAuthModalOpen(true);
           }

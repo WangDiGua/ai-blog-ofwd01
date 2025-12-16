@@ -10,11 +10,13 @@ import {
     MOCK_CATEGORIES,
     MOCK_FRIEND_LINKS,
     MOCK_DANMAKU,
-    MOCK_ALBUMS
+    MOCK_ALBUMS,
+    MOCK_TRENDING_TOPICS,
+    MOCK_PRODUCTS
 } from './mockData';
-import { User } from '../types';
+import { User, Product, CommunityPost } from '../types';
 
-// --- 类型定义 ---
+// ... (Previous Helper Classes like HttpClient remain unchanged) ...
 
 // 标准后端响应结构
 interface ApiResponse<T> {
@@ -30,148 +32,60 @@ const BASE_URL = '/api';
  * 真实 HTTP 客户端
  */
 class HttpClient {
-    // 模拟获取 CSRF Token (真实场景中应从 document.cookie 读取 XSRF-TOKEN)
+    // ... (Existing implementation of getCsrfToken, getHeaders, handleResponse) ...
     private getCsrfToken(): string | null {
-        // Example: return document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] || null;
         return 'mock-csrf-token-secure';
     }
 
-    /**
-     * 获取认证头
-     */
     private getHeaders(customHeaders: Record<string, string> = {}) {
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
-            // 安全头部
-            'X-Requested-With': 'XMLHttpRequest', // 防止 CSRF
+            'X-Requested-With': 'XMLHttpRequest', 
             ...customHeaders
         };
-        
-        // 从 localStorage 获取 Token
         const token = localStorage.getItem('token');
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
-
-        // 添加 CSRF Token
         const csrfToken = this.getCsrfToken();
         if (csrfToken) {
             headers['X-CSRF-Token'] = csrfToken;
         }
-        
         return headers;
     }
 
-    /**
-     * 统一响应处理
-     */
     private async handleResponse<T>(response: Response): Promise<T> {
         if (!response.ok) {
-            // 安全：统一拦截 401/403
             if (response.status === 401) {
                 console.warn('Unauthorized access. Redirecting to login.');
                 localStorage.removeItem('token');
-                window.dispatchEvent(new Event('auth-error')); // 触发全局事件
-                // window.location.href = '/login'; // 实际项目中通常重定向
+                window.dispatchEvent(new Event('auth-error')); 
             }
             if (response.status === 403) {
-                 console.error('Forbidden resource access.');
                  throw new Error('您没有权限执行此操作');
             }
             if (response.status === 429) {
                  throw new Error('请求过于频繁，请稍后再试');
             }
-            
             throw new Error(`HTTP Error: ${response.status}`);
         }
-
         const resData: ApiResponse<T> = await response.json();
-
-        // 处理业务错误 (根据后端约定的 code，假设 200 为成功)
         if (resData.code !== 200) {
             throw new Error(resData.message || '请求失败');
         }
-
         return resData.data;
     }
 
-    /**
-     * GET 请求
-     */
     async get<T>(endpoint: string, params: Record<string, any> = {}): Promise<T> {
-        // ----------------------------------------------------------------
-        // REAL API CODE (COMMENTED OUT FOR MOCK MODE)
-        // ----------------------------------------------------------------
-        /*
-        // 构建查询参数字符串
-        const url = new URL(endpoint, window.location.origin + BASE_URL);
-        Object.keys(params).forEach(key => {
-            if (params[key] !== undefined && params[key] !== null) {
-                // 安全：编码 URI 组件
-                url.searchParams.append(key, String(params[key]));
-            }
-        });
-
-        const response = await fetch(url.toString(), {
-            method: 'GET',
-            headers: this.getHeaders(),
-        });
-
-        return this.handleResponse<T>(response);
-        */
-        // ----------------------------------------------------------------
-
-        // MOCK MODE
-        // console.log(`[Mock GET] ${endpoint}`, params);
         return this.mockRouter('GET', endpoint, params);
     }
 
-    /**
-     * POST 请求
-     */
     async post<T>(endpoint: string, body: any = {}): Promise<T> {
-        // ----------------------------------------------------------------
-        // REAL API CODE (COMMENTED OUT FOR MOCK MODE)
-        // ----------------------------------------------------------------
-        /*
-        const response = await fetch(`${BASE_URL}${endpoint}`, {
-            method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify(body),
-        });
-
-        return this.handleResponse<T>(response);
-        */
-        // ----------------------------------------------------------------
-
-        // MOCK MODE
-        // console.log(`[Mock POST] ${endpoint}`, body);
         return this.mockRouter('POST', endpoint, body);
     }
 
-    /**
-     * 文件上传 (FormData)
-     */
     async upload<T>(endpoint: string, formData: FormData): Promise<T> {
-        // ----------------------------------------------------------------
-        // REAL API CODE (COMMENTED OUT FOR MOCK MODE)
-        // ----------------------------------------------------------------
-        /*
-        // 上传时不手动设置 Content-Type，浏览器会自动识别为 multipart/form-data
-        const headers = this.getHeaders();
-        delete headers['Content-Type']; // 关键：让浏览器自动设置 boundary
-
-        const response = await fetch(`${BASE_URL}${endpoint}`, {
-            method: 'POST',
-            headers: headers,
-            body: formData,
-        });
-
-        return this.handleResponse<T>(response);
-        */
-       // ----------------------------------------------------------------
-       
-       return new Promise(resolve => setTimeout(() => resolve({ url: 'https://picsum.photos/200' } as any), 1000));
+       return new Promise(resolve => setTimeout(() => resolve({ url: 'https://images.unsplash.com/photo-1621609764180-2ca554a9d6f2?auto=format&fit=crop&w=400&q=80' } as any), 1000));
     }
 
     // ---------------------------------------------------------------------------
@@ -184,7 +98,7 @@ class HttpClient {
                 if (method === 'GET') {
                     if (endpoint === '/articles') {
                         let items = [...MOCK_ARTICLES];
-                        // 简单过滤
+                        // 简单的搜索逻辑
                         if (data.q) {
                             const q = data.q.toLowerCase();
                             items = items.filter(i => i.title.toLowerCase().includes(q) || i.summary.toLowerCase().includes(q));
@@ -192,7 +106,7 @@ class HttpClient {
                         if (data.category && data.category !== 'All') {
                             items = items.filter(i => i.category === data.category);
                         }
-                        // 分页
+                        // 分页逻辑 (即使只有2条数据，也要处理)
                         const page = Number(data.page) || 1;
                         const limit = Number(data.limit) || 10;
                         const start = (page - 1) * limit;
@@ -208,30 +122,64 @@ class HttpClient {
 
                     if (endpoint.startsWith('/articles/')) {
                         const id = endpoint.split('/')[2];
-                        const article = MOCK_ARTICLES.find(a => a.id === id) || MOCK_ARTICLES[0];
-                        resolve(article);
+                        const article = MOCK_ARTICLES.find(a => a.id === id) || MOCK_ARTICLES[0]; // Fallback to first for smoother mock UX
+                        if (!article) {
+                            resolve(null);
+                        } else {
+                            resolve(article);
+                        }
                         return;
                     }
                     
                     if (endpoint.startsWith('/users/')) {
                         const id = endpoint.split('/')[2];
-                        // 模拟获取特定用户，如果没找到返回默认第一个
                         const user = MOCK_USERS.find(u => u.id === id) || MOCK_USERS[0];
                         resolve(user);
                         return;
                     }
                     
                     if (endpoint === '/user/followers' || endpoint === '/user/following') {
-                        // 返回简化的用户列表
-                        resolve(MOCK_USERS.map(u => ({...u, isFollowing: Math.random() > 0.5})));
+                        resolve(MOCK_USERS);
                         return;
                     }
 
                     if (endpoint === '/auth/captcha') {
-                        // 返回模拟验证码
                         resolve({
                             key: 'mock-captcha-uuid',
                             image: 'https://dummyimage.com/100x40/e0e0e0/000000.png&text=1234'
+                        });
+                        return;
+                    }
+
+                    // --- Store Logic ---
+                    if (endpoint === '/community/store') {
+                        let items = MOCK_PRODUCTS.filter(p => p.type === data.type);
+                        
+                        // Filters for guidance
+                        if (data.type === 'guidance') {
+                            if (data.name) {
+                                items = items.filter(p => p.title.toLowerCase().includes(data.name.toLowerCase()));
+                            }
+                            if (data.category && data.category !== 'all') {
+                                items = items.filter(p => p.serviceCategory === data.category);
+                            }
+                            if (data.minPrice) {
+                                items = items.filter(p => p.price >= Number(data.minPrice));
+                            }
+                            if (data.maxPrice) {
+                                items = items.filter(p => p.price <= Number(data.maxPrice));
+                            }
+                        }
+
+                        const page = Number(data.page) || 1;
+                        const limit = Number(data.limit) || 8;
+                        const start = (page - 1) * limit;
+                        const pagedItems = items.slice(start, start + limit);
+
+                        resolve({
+                            items: pagedItems,
+                            totalPages: Math.ceil(items.length / limit),
+                            total: items.length
                         });
                         return;
                     }
@@ -246,7 +194,8 @@ class HttpClient {
                         case '/categories': resolve(MOCK_CATEGORIES); break;
                         case '/friend-links': resolve(MOCK_FRIEND_LINKS); break;
                         case '/danmaku': resolve(MOCK_DANMAKU); break;
-                        case '/albums': resolve(MOCK_ALBUMS); break; // Add mock router support
+                        case '/albums': resolve(MOCK_ALBUMS); break;
+                        case '/community/trending': resolve(MOCK_TRENDING_TOPICS); break;
                         default: resolve({});
                     }
                     return;
@@ -255,49 +204,57 @@ class HttpClient {
                 // --- POST 请求 ---
                 if (method === 'POST') {
                     if (endpoint === '/auth/login' || endpoint === '/login') {
-                        // 模拟登录成功，返回第一个模拟用户
+                        // 使用第一个模拟用户登录
                         const user = MOCK_USERS[0];
                         resolve({ ...user, token: 'mock-jwt-token-123456' });
                         return;
                     }
+                    // Create Post
+                    if (endpoint === '/community/posts/create') {
+                        // 构建完整内容（文本 + 图片）
+                        let fullContent = data.content;
+                        if (data.images && data.images.length > 0) {
+                            fullContent += '\n\n';
+                            data.images.forEach((img: string) => {
+                                fullContent += `![image](${img})\n`;
+                            });
+                        }
 
+                        const newPost: CommunityPost = {
+                            id: `p-${Date.now()}`,
+                            author: MOCK_USERS[0],
+                            content: fullContent,
+                            likes: 0,
+                            comments: 0,
+                            timeAgo: '刚刚'
+                        };
+                        resolve(newPost);
+                        return;
+                    }
+
+                    // ... other existing post handlers ...
                     if (endpoint === '/auth/register') {
-                         const newUser = { ...MOCK_USERS[0], id: `u-${Date.now()}`, name: data.username };
+                         const newUser = { 
+                             id: `u-${Date.now()}`, 
+                             name: data.username,
+                             username: data.username,
+                             role: 'user',
+                             level: '炼气期',
+                             aiUsage: 0,
+                             points: 0,
+                             avatar: 'https://ui-avatars.com/api/?name=' + data.username
+                         };
                          resolve(newUser);
                          return;
                     }
-
-                    if (endpoint === '/auth/send-code') {
-                        resolve({ success: true });
-                        return;
-                    }
+                    if (endpoint === '/auth/send-code') { resolve({ success: true }); return; }
+                    if (endpoint === '/user/checkin') { resolve({ points: 10, total: 8898 }); return; }
+                    if (endpoint === '/user/follow') { resolve({ success: true, isFollowing: data.isFollowing }); return; }
+                    if (endpoint === '/ai/usage') { resolve({ usage: 1 }); return; }
+                    if (endpoint === '/articles/create') { resolve({ id: `art-${Date.now()}`, ...data }); return; }
+                    if (endpoint === '/user/donation') { resolve({ success: true }); return; }
+                    if (endpoint === '/user/report') { resolve({ success: true }); return; }
                     
-                    if (endpoint === '/user/checkin') {
-                        resolve({ points: 10, total: 1210 });
-                        return;
-                    }
-                    
-                    if (endpoint === '/user/follow') {
-                        resolve({ success: true, isFollowing: data.isFollowing });
-                        return;
-                    }
-
-                    if (endpoint === '/ai/usage') {
-                         resolve({ usage: (MOCK_USERS[0].aiUsage || 0) + 1 });
-                         return;
-                    }
-
-                    if (endpoint === '/articles/create') {
-                        resolve({ id: `art-${Date.now()}`, ...data });
-                        return;
-                    }
-
-                    if (endpoint === '/user/donation') {
-                        resolve({ success: true });
-                        return;
-                    }
-                    
-                    // 默认成功
                     resolve({ success: true });
                 }
             }, 600); // 模拟 600ms 延迟
@@ -305,5 +262,4 @@ class HttpClient {
     }
 }
 
-// 导出单例
 export const request = new HttpClient();

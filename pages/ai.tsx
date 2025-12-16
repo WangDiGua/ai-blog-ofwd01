@@ -14,13 +14,17 @@ export const AIAssistant = () => {
     const [showThinking, setShowThinking] = useState(false);
     const [history, setHistory] = useState<{id: string, title: string, date: string}[]>([]);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    
+    // Use container ref for scrolling to prevent whole page scroll
+    const chatContainerRef = useRef<HTMLDivElement>(null);
 
     const MAX_USAGE = user?.role === 'vip' ? 20 : 10;
     const remaining = MAX_USAGE - (user?.aiUsage || 0);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
     };
 
     useEffect(() => {
@@ -199,7 +203,10 @@ export const AIAssistant = () => {
                 </div>
 
                 {/* 消息 */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6 bg-gray-50/30 dark:bg-black/20">
+                <div 
+                    className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6 bg-gray-50/30 dark:bg-black/20" 
+                    ref={chatContainerRef}
+                >
                     {messages.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 opacity-50 animate-in fade-in duration-700">
                              <Bot size={48} className="mb-4 text-apple-blue" />
@@ -249,7 +256,6 @@ export const AIAssistant = () => {
                              </div>
                         </div>
                     )}
-                    <div ref={messagesEndRef} />
                 </div>
 
                 {/* 输入区域 */}

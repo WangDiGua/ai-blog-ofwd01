@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { musicApi } from '../services/api';
 import { Song } from '../types';
 import { useStore } from '../context/store';
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause, Music as MusicIcon } from 'lucide-react';
 import { Img } from '../components/ui';
 
 export const MusicPage = () => {
@@ -53,37 +53,44 @@ export const MusicPage = () => {
 
         <div className="space-y-3 md:space-y-4">
            <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-apple-text dark:text-apple-dark-text">热门金曲</h2>
-           {songs.map((song) => (
-             <div 
-                key={song.id}
-                onClick={() => playSong(song)}
-                className={`
-                  flex items-center p-2 md:p-3 rounded-xl cursor-pointer transition-all duration-200 group
-                  ${currentSong?.id === song.id ? 'bg-white dark:bg-gray-800 shadow-md scale-[1.02]' : 'hover:bg-white/50 dark:hover:bg-gray-800/50 hover:shadow-sm'}
-                `}
-             >
-                <div className="w-8 text-center text-sm font-medium text-gray-400 mr-2 md:mr-4">
-                   {currentSong?.id === song.id && isPlaying ? (
-                     <span className="flex space-x-0.5 justify-center h-3 items-end">
-                       <span className="w-0.5 bg-apple-blue h-full animate-pulse"/>
-                       <span className="w-0.5 bg-apple-blue h-2/3 animate-pulse delay-75"/>
-                       <span className="w-0.5 bg-apple-blue h-full animate-pulse delay-150"/>
-                     </span>
-                   ) : (
-                     <span className="group-hover:hidden">{song.id}</span>
-                   )}
-                   <Play size={12} className="hidden group-hover:inline text-apple-blue mx-auto" />
-                </div>
-                <Img src={song.cover} alt="art" className="w-10 h-10 rounded-md shadow-sm mr-3 md:mr-4" />
-                <div className="flex-1 min-w-0">
-                   <h4 className={`text-sm font-semibold truncate ${currentSong?.id === song.id ? 'text-apple-blue' : 'text-apple-text dark:text-apple-dark-text'}`}>{song.title}</h4>
-                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{song.artist}</p>
-                </div>
-                <div className="text-xs text-gray-400 font-medium ml-2">
-                  {formatTime(song.duration)}
-                </div>
-             </div>
-           ))}
+           {songs.length > 0 ? (
+               songs.map((song) => (
+                 <div 
+                    key={song.id}
+                    onClick={() => playSong(song)}
+                    className={`
+                      flex items-center p-2 md:p-3 rounded-xl cursor-pointer transition-all duration-200 group
+                      ${currentSong?.id === song.id ? 'bg-white dark:bg-gray-800 shadow-md scale-[1.02]' : 'hover:bg-white/50 dark:hover:bg-gray-800/50 hover:shadow-sm'}
+                    `}
+                 >
+                    <div className="w-8 text-center text-sm font-medium text-gray-400 mr-2 md:mr-4">
+                       {currentSong?.id === song.id && isPlaying ? (
+                         <span className="flex space-x-0.5 justify-center h-3 items-end">
+                           <span className="w-0.5 bg-apple-blue h-full animate-pulse"/>
+                           <span className="w-0.5 bg-apple-blue h-2/3 animate-pulse delay-75"/>
+                           <span className="w-0.5 bg-apple-blue h-full animate-pulse delay-150"/>
+                         </span>
+                       ) : (
+                         <span className="group-hover:hidden">{song.id}</span>
+                       )}
+                       <Play size={12} className="hidden group-hover:inline text-apple-blue mx-auto" />
+                    </div>
+                    <Img src={song.cover} alt="art" className="w-10 h-10 rounded-md shadow-sm mr-3 md:mr-4" />
+                    <div className="flex-1 min-w-0">
+                       <h4 className={`text-sm font-semibold truncate ${currentSong?.id === song.id ? 'text-apple-blue' : 'text-apple-text dark:text-apple-dark-text'}`}>{song.title}</h4>
+                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{song.artist}</p>
+                    </div>
+                    <div className="text-xs text-gray-400 font-medium ml-2">
+                      {formatTime(song.duration)}
+                    </div>
+                 </div>
+               ))
+           ) : (
+               <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+                   <MusicIcon size={32} className="mb-3 opacity-50"/>
+                   <span className="text-sm">暂无歌曲</span>
+               </div>
+           )}
         </div>
       </div>
     </div>

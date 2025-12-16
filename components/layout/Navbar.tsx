@@ -34,6 +34,8 @@ export const Navbar = () => {
           if (pathname === '/timeline') return '时光轴';
           if (pathname.startsWith('/user/') || pathname === '/profile') return '个人中心';
           if (pathname === '/community') return '社区互动';
+          if (pathname === '/today-topic') return '今日话题';
+          if (pathname === '/store') return '积分商城';
           if (pathname === '/music') return '聆听音乐';
           if (pathname === '/album') return '光影画廊';
           if (pathname === '/tools') return '开发者工具';
@@ -92,7 +94,16 @@ export const Navbar = () => {
         {name: '起始页', path: '/start'}
       ] 
     },
-    { name: '社区', path: '/community' },
+    { 
+      name: '社区', 
+      path: '/community',
+      hasSubmenu: true, 
+      subItems: [
+        {name: '社区首页', path: '/community'}, 
+        {name: '今日话题', path: '/today-topic'},
+        {name: '积分商城', path: '/store'}
+      ] 
+    },
     { name: '相册', path: '/album' },
     { name: '音乐', path: '/music' },
     { name: '工具', path: '/tools' },
@@ -247,7 +258,7 @@ export const Navbar = () => {
                                     <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 w-36 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
                                         <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 p-1.5 overflow-hidden ring-1 ring-black/5">
                                             {link.subItems?.map(sub => (
-                                                <Link key={sub.name} to={sub.path} className="block px-3 py-2 text-xs font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-apple-blue transition-colors text-center">{sub.name}</Link>
+                                                <Link key={sub.name} to={sub.path} className="block px-3 py-2 text-xs font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-apple-blue transition-colors text-center whitespace-nowrap">{sub.name}</Link>
                                             ))}
                                         </div>
                                     </div>

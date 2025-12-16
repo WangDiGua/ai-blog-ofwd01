@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { articleApi } from '../services/api';
 import { Article } from '../types';
 import { Card, Img, Spinner } from '../components/ui';
-import { ArrowLeft, BookOpen, Layers } from 'lucide-react';
+import { ArrowLeft, BookOpen, Layers, FolderOpen } from 'lucide-react';
 
 interface Category {
     id: string;
@@ -111,8 +111,10 @@ export const CategoryPage = () => {
                             </Card>
                         ))}
                         {articles.length === 0 && !loading && (
-                            <div className="col-span-full text-center py-20 text-gray-400">
-                                此分类下暂无文章
+                            <div className="col-span-full flex flex-col items-center justify-center py-24 text-gray-400 bg-white/50 dark:bg-gray-800/30 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
+                                <FolderOpen size={48} className="mb-4 opacity-50"/>
+                                <p className="text-lg font-medium">此分类下暂无文章</p>
+                                <p className="text-sm mt-1">请稍后再来看看</p>
                             </div>
                         )}
                     </div>

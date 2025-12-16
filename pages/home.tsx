@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, Pagination, Img } from '../components/ui';
 import { articleApi } from '../services/api';
 import { Article } from '../types';
-import { Eye, Clock, Hash, RotateCw, PenTool, Quote } from 'lucide-react';
+import { Eye, Clock, Hash, RotateCw, PenTool, Quote, Inbox } from 'lucide-react';
 import { calculateReadingTime } from '../utils/lib';
 import { CategoryCarousel, TagCarousel } from '../components/ui/Carousels';
 import { ArticleSkeleton, FlipAboutCard, Announcements, RecommendedAuthors } from '../components/HomeWidgets';
@@ -87,10 +87,6 @@ const InteractiveHero = () => {
         return () => clearTimeout(timeout);
     }, []);
 
-    const scrollToContent = () => {
-        document.getElementById('content-start')?.scrollIntoView({ behavior: 'smooth' });
-    };
-
     return (
         <div className="relative w-full min-h-[60vh] md:min-h-[70vh] flex flex-col items-center justify-center py-20 overflow-hidden select-none z-10">
             <style>{`
@@ -139,15 +135,6 @@ const InteractiveHero = () => {
                         </span>
                      </div>
                 </div>
-            </div>
-
-            {/* 滚动提示 */}
-            <div 
-                className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center animate-bounce duration-[2000ms] opacity-60 hover:opacity-100 transition-opacity cursor-pointer p-4 z-20" 
-                onClick={scrollToContent}
-            >
-                <span className="text-[10px] uppercase tracking-[0.3em] mb-2 text-gray-500">Scroll</span>
-                <div className="w-px h-12 bg-gradient-to-b from-transparent via-gray-400 to-transparent"></div>
             </div>
         </div>
     );
@@ -299,9 +286,13 @@ export const Home = () => {
                 ) : (
                     <>
                         {articles.length === 0 ? (
-                            <div className="text-center py-20 text-gray-500 bg-white/40 dark:bg-gray-800/40 rounded-3xl backdrop-blur-md">
-                                <p className="text-lg">暂无文章</p>
-                                <p className="text-sm mt-2">试试其他分类或标签吧</p>
+                            <div className="flex flex-col items-center justify-center py-24 text-gray-500 bg-white/40 dark:bg-gray-800/40 rounded-3xl backdrop-blur-md border border-dashed border-gray-200 dark:border-gray-700">
+                                <Inbox size={48} className="mb-4 text-gray-300 dark:text-gray-600" strokeWidth={1.5} />
+                                <p className="text-lg font-medium text-gray-600 dark:text-gray-400">暂无相关文章</p>
+                                <p className="text-sm mt-2 text-gray-400">当前分类或标签下没有内容</p>
+                                <button onClick={clearFilters} className="mt-6 px-6 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                                    查看全部
+                                </button>
                             </div>
                         ) : (
                             articles.map((article) => (
@@ -379,19 +370,23 @@ export const Home = () => {
                     {/* Trending Tags - More transparent */}
                     <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl p-4 rounded-2xl border border-white/30 dark:border-gray-700/30 shadow-sm">
                         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">热门话题</h3>
-                        <div className="space-y-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2 sm:gap-x-4 lg:gap-0 lg:space-y-2" key={trendingTags.join(',')}>
-                            {trendingTags.map((tag, i) => (
-                            <button 
-                                key={tag} 
-                                onClick={() => handleTagClick(tag)}
-                                className="w-full flex items-center justify-between p-3 bg-white/60 dark:bg-gray-800/60 rounded-xl border border-gray-100/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700 transition-colors animate-slide-up-fade text-left shadow-sm"
-                                style={{ animationDelay: `${i * 100}ms` }}
-                            >
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{tag}</span>
-                                <Hash size={14} className="text-gray-400"/>
-                            </button>
-                            ))}
-                        </div>
+                        {trendingTags.length > 0 ? (
+                            <div className="space-y-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2 sm:gap-x-4 lg:gap-0 lg:space-y-2" key={trendingTags.join(',')}>
+                                {trendingTags.map((tag, i) => (
+                                <button 
+                                    key={tag} 
+                                    onClick={() => handleTagClick(tag)}
+                                    className="w-full flex items-center justify-between p-3 bg-white/60 dark:bg-gray-800/60 rounded-xl border border-gray-100/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700 transition-colors animate-slide-up-fade text-left shadow-sm"
+                                    style={{ animationDelay: `${i * 100}ms` }}
+                                >
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{tag}</span>
+                                    <Hash size={14} className="text-gray-400"/>
+                                </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-4 text-xs text-gray-400">暂无热门话题</div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">

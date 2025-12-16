@@ -4,7 +4,7 @@ import { useStore } from '../context/store';
 import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, ImageViewer, Modal, RankBadge, Img, ReportModal } from '../components/ui';
 import { articleApi } from '../services/api';
 import { Article, Comment, CULTIVATION_LEVELS, CultivationLevel } from '../types';
-import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash, ShieldAlert, Share2, Download, ExternalLink, Hourglass, Lock, Flag, FileText, ChevronRight, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash, ShieldAlert, Share2, Download, ExternalLink, Hourglass, Lock, Flag, FileText, ChevronRight, ChevronLeft, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { calculateReadingTime, generateHeadingId } from '../utils/lib';
 
 // 推荐文章轮播组件 (优化版：丝滑淡入淡出切换)
@@ -28,6 +28,16 @@ const RecommendedCarousel = ({ currentId }: { currentId: string }) => {
         }, 5000); // 增加切换间隔，让阅读更从容
         return () => clearInterval(timer);
     }, [recommends.length, isHovered]);
+
+    const prev = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIndex((prev) => (prev - 1 + recommends.length) % recommends.length);
+    };
+
+    const next = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIndex((prev) => (prev + 1) % recommends.length);
+    };
 
     if (recommends.length === 0) return null;
 
@@ -77,6 +87,24 @@ const RecommendedCarousel = ({ currentId }: { currentId: string }) => {
                         </div>
                     );
                 })}
+
+                {/* Navigation Arrows */}
+                {recommends.length > 1 && (
+                    <>
+                        <button 
+                            onClick={prev}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 hover:scale-110 border border-white/10"
+                        >
+                            <ChevronLeft size={18} />
+                        </button>
+                        <button 
+                            onClick={next}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 hover:scale-110 border border-white/10"
+                        >
+                            <ChevronRight size={18} />
+                        </button>
+                    </>
+                )}
 
                 {/* Progress Indicators */}
                 <div className="absolute top-3 right-3 flex gap-1.5 z-20">

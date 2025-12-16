@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Skeleton, AnnouncementModal, Avatar, Button } from './ui';
-import { Bell, RefreshCw, Github, FileCode, Video, MessageCircle, MapPin, Navigation, UserPlus } from 'lucide-react';
+import { Bell, RefreshCw, Github, FileCode, Video, MessageCircle, MapPin, Navigation, UserPlus, Inbox } from 'lucide-react';
 import { systemApi, userApi } from '../services/api';
 import { Announcement, User } from '../types';
 import { useStore } from '../context/store';
@@ -29,29 +29,40 @@ export const ArticleSkeleton = () => (
 export const Announcements = () => {
     const [news, setNews] = useState<Announcement[]>([]);
     const [selected, setSelected] = useState<Announcement | null>(null);
+    const [loading, setLoading] = useState(true);
     
     useEffect(() => {
-        systemApi.getAnnouncements().then(setNews);
+        systemApi.getAnnouncements().then(data => {
+            setNews(data);
+            setLoading(false);
+        });
     }, []);
 
-    if (news.length === 0) return null;
+    if (loading) return <Skeleton className="h-40 w-full" />;
 
     return (
         <Card className="p-4 md:p-6">
              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
                  <Bell size={14} className="mr-2"/> 公告
              </h3>
-             <div className="space-y-3">
-                 {news.map(n => (
-                     <div 
-                         key={n.id} 
-                         onClick={() => setSelected(n)}
-                         className="text-sm p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                     >
-                         {n.summary}
-                     </div>
-                 ))}
-             </div>
+             {news.length > 0 ? (
+                 <div className="space-y-3">
+                     {news.map(n => (
+                         <div 
+                             key={n.id} 
+                             onClick={() => setSelected(n)}
+                             className="text-sm p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                         >
+                             {n.summary}
+                         </div>
+                     ))}
+                 </div>
+             ) : (
+                 <div className="flex flex-col items-center justify-center py-6 text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                     <Inbox size={24} className="mb-2 opacity-50"/>
+                     <span className="text-xs">暂无公告</span>
+                 </div>
+             )}
              <AnnouncementModal isOpen={!!selected} onClose={() => setSelected(null)} data={selected} />
         </Card>
     );
@@ -341,11 +352,20 @@ export const FlipAboutCard = () => {
 export const RecommendedAuthors = () => {
     const navigate = useNavigate();
     const { requireAuth, showToast } = useStore();
-    const [authors, setAuthors] = useState<(User & { articles: number })[]>([
-        { id: 'u-1', name: 'Alice Walker', avatar: 'https://ui-avatars.com/api/?name=Alice+Walker&background=FF5733&color=fff', articles: 42, role: 'user', aiUsage: 0, isFollowing: false, level: '元婴期' },
-        { id: 'u-2', name: 'David Chen', avatar: 'https://ui-avatars.com/api/?name=David+Chen&background=33FF57&color=fff', articles: 18, role: 'user', aiUsage: 0, isFollowing: false, level: '筑基期' },
-        { id: 'u-3', name: 'Elena G', avatar: 'https://ui-avatars.com/api/?name=Elena+G&background=3357FF&color=fff', articles: 35, role: 'vip', aiUsage: 0, isFollowing: false, level: '化神期' }
-    ]);
+    const [authors, setAuthors] = useState<(User & { articles: number })[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        // Mock loading
+        setTimeout(() => {
+            setAuthors([
+                { id: 'u-1', name: 'Alice Walker', avatar: 'https://ui-avatars.com/api/?name=Alice+Walker&background=FF5733&color=fff', articles: 42, role: 'user', aiUsage: 0, isFollowing: false, level: '元婴期' },
+                { id: 'u-2', name: 'David Chen', avatar: 'https://ui-avatars.com/api/?name=David+Chen&background=33FF57&color=fff', articles: 18, role: 'user', aiUsage: 0, isFollowing: false, level: '筑基期' },
+                { id: 'u-3', name: 'Elena G', avatar: 'https://ui-avatars.com/api/?name=Elena+G&background=3357FF&color=fff', articles: 35, role: 'vip', aiUsage: 0, isFollowing: false, level: '化神期' }
+            ]);
+            setLoading(false);
+        }, 500);
+    }, []);
 
     const handleFollow = (e: React.MouseEvent, index: number) => {
         e.stopPropagation();
@@ -361,36 +381,45 @@ export const RecommendedAuthors = () => {
         });
     };
 
+    if (loading) return <Skeleton className="h-40 w-full" />;
+
     return (
         <Card className="p-4 md:p-6">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
                 <UserPlus size={14} className="mr-2"/> 推荐作者
             </h3>
-            <div className="space-y-4">
-                {authors.map((author, idx) => (
-                    <div 
-                        key={author.id} 
-                        className="flex items-center justify-between group cursor-pointer"
-                        onClick={() => navigate(`/user/${author.id}`)}
-                    >
-                        <div className="flex items-center space-x-3">
-                            <Avatar src={author.avatar} alt={author.name} size="sm" />
-                            <div>
-                                <div className="text-sm font-semibold text-apple-text dark:text-apple-dark-text group-hover:text-apple-blue transition-colors">{author.name}</div>
-                                <div className="text-xs text-gray-500">{author.articles} 篇文章</div>
-                            </div>
-                        </div>
-                        <Button 
-                            size="sm" 
-                            variant={author.isFollowing ? "secondary" : "primary"} 
-                            className={`text-xs px-2 py-1 ${author.isFollowing ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
-                            onClick={(e) => handleFollow(e, idx)}
+            {authors.length > 0 ? (
+                <div className="space-y-4">
+                    {authors.map((author, idx) => (
+                        <div 
+                            key={author.id} 
+                            className="flex items-center justify-between group cursor-pointer"
+                            onClick={() => navigate(`/user/${author.id}`)}
                         >
-                            {author.isFollowing ? '已关注' : '关注'}
-                        </Button>
-                    </div>
-                ))}
-            </div>
+                            <div className="flex items-center space-x-3">
+                                <Avatar src={author.avatar} alt={author.name} size="sm" />
+                                <div>
+                                    <div className="text-sm font-semibold text-apple-text dark:text-apple-dark-text group-hover:text-apple-blue transition-colors">{author.name}</div>
+                                    <div className="text-xs text-gray-500">{author.articles} 篇文章</div>
+                                </div>
+                            </div>
+                            <Button 
+                                size="sm" 
+                                variant={author.isFollowing ? "secondary" : "primary"} 
+                                className={`text-xs px-2 py-1 ${author.isFollowing ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+                                onClick={(e) => handleFollow(e, idx)}
+                            >
+                                {author.isFollowing ? '已关注' : '关注'}
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center py-6 text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                    <UserPlus size={24} className="mb-2 opacity-50"/>
+                    <span className="text-xs">暂无推荐</span>
+                </div>
+            )}
         </Card>
     );
 };

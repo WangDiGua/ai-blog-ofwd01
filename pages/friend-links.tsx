@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Button, Avatar, Modal } from '../components/ui';
 import { useStore } from '../context/store';
 import { systemApi } from '../services/api';
-import { Copy, Mail, AtSign, Link as LinkIcon, Image as ImageIcon, PenTool, ExternalLink, AlertTriangle } from 'lucide-react';
+import { Copy, Mail, AtSign, Link as LinkIcon, Image as ImageIcon, PenTool, ExternalLink, AlertTriangle, Link2Off } from 'lucide-react';
 import { validateImage, isValidUrl } from '../utils/lib';
 
 const MY_SITE_INFO = {
@@ -153,11 +153,18 @@ export const FriendLinks = () => {
                     {/* 现有友链 */}
                     <div>
                         <h3 className="text-lg font-bold text-apple-text dark:text-apple-dark-text mb-6">小伙伴们</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {links.map((link, idx) => (
-                                <FriendLinkCard key={idx} {...link} onClick={handleLinkClick} />
-                            ))}
-                        </div>
+                        {links.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {links.map((link, idx) => (
+                                    <FriendLinkCard key={idx} {...link} onClick={handleLinkClick} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-10 text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center">
+                                <Link2Off size={32} className="mb-2 opacity-50"/>
+                                <p>暂时还没有友链，快来申请吧！</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

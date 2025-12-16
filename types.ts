@@ -143,3 +143,46 @@ export interface Feedback {
     content: string;
     type: 'bug' | 'suggestion';
 }
+
+// --- 今日话题 ---
+export interface TrendingItem {
+    rank: number;
+    title: string;
+    hot: string;
+    url?: string;
+}
+
+export interface TrendingPlatform {
+    id: 'douyin' | 'bilibili' | 'toutiao' | 'baidu';
+    name: string;
+    icon: string;
+    color: string;
+    list: TrendingItem[];
+}
+
+// --- 商城商品 ---
+export type ProductType = 'guidance' | 'frame' | 'background';
+
+export interface Product {
+    id: string;
+    title: string;
+    desc: string;
+    price: number; // 积分或价格
+    currency: 'points' | 'cny';
+    cover: string;
+    type: ProductType; // 商品类型
+    tags?: string[];
+    sales?: number;
+    // 针对指导服务的分类 (如: Java, Python, Frontend)
+    serviceCategory?: string; 
+}
+
+export interface ProductFilter {
+    type: ProductType;
+    page: number;
+    limit: number;
+    name?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    category?: string;
+}

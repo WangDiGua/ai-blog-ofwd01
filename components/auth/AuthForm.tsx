@@ -148,6 +148,9 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
 
         } else {
             // Validate Login
+            // --- TEMPORARY BYPASS START ---
+            // Commented out strict validation for test drive purposes
+            /*
             const result = loginSchema.safeParse({
                 username: formData.username,
                 password: formData.password,
@@ -160,13 +163,18 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
                 setLoading(false);
                 return;
             }
+            */
+            // --- TEMPORARY BYPASS END ---
 
-            const userData = await authApi.login({ 
-                username: formData.username, 
-                password: formData.password, 
-                captchaKey, 
-                captchaCode: formData.captchaCode 
-            });
+            // Use default test credentials if empty to simulate quick login
+            const loginPayload = { 
+                username: formData.username || 'admin', 
+                password: formData.password || '123456', 
+                captchaKey: captchaKey || 'mock-key', 
+                captchaCode: formData.captchaCode || '1234' 
+            };
+
+            const userData = await authApi.login(loginPayload);
             
             // 登录成功，将 Token 存入 localStorage
             if (userData.token) {
@@ -332,7 +340,7 @@ export const AuthForm = ({ onClose }: { onClose: () => void }) => {
                 maxLength={4}
                 autoComplete="off"
             />
-            <div className="rounded-xl overflow-hidden border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
+            <div className="rounded-xl overflow-hidden border-2 border-transparent hover:border-gray-200 dark:border-gray-700 transition-colors">
                 <Captcha onRefresh={(key) => setCaptchaKey(key)} />
             </div>
         </div>

@@ -24,6 +24,8 @@ const MessageBoard = React.lazy(() => import('./pages/views').then(module => ({ 
 const Album = React.lazy(() => import('./pages/views').then(module => ({ default: module.Album })));
 const Timeline = React.lazy(() => import('./pages/views').then(module => ({ default: module.Timeline })));
 const FriendLinks = React.lazy(() => import('./pages/views').then(module => ({ default: module.FriendLinks })));
+const TodayTopic = React.lazy(() => import('./pages/views').then(module => ({ default: module.TodayTopic })));
+const Store = React.lazy(() => import('./pages/views').then(module => ({ default: module.Store })));
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -113,6 +115,8 @@ const App = () => {
                 <Route path="/categories" element={<CategoryPage />} />
                 <Route path="/article/:id" element={<ArticleDetail />} />
                 <Route path="/community" element={<Community />} />
+                <Route path="/today-topic" element={<TodayTopic />} />
+                <Route path="/store" element={<Store />} />
                 <Route path="/music" element={<MusicPage />} />
                 <Route path="/tools" element={<Tools />} />
                 <Route path="/about" element={<About />} />

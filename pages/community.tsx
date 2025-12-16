@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button, Avatar, MarkdownRenderer, RankBadge, Pagination } from '../components/ui';
+import { Card, Button, Avatar, MarkdownRenderer, RankBadge, Pagination, Modal, MarkdownEditor } from '../components/ui';
 import { communityApi } from '../services/api';
 import { CommunityPost, CULTIVATION_LEVELS } from '../types';
 import { useStore } from '../context/store';
-import { Heart, MessageCircle, Share2, Send, Lock } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Send, Lock, Ghost, Image as ImageIcon, X } from 'lucide-react';
+import { validateImage } from '../utils/lib';
 
 interface CommentMock {
   id: number;
@@ -25,6 +26,12 @@ export const Community = () => {
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const [commentInput, setCommentInput] = useState('');
   const [commentsMap, setCommentsMap] = useState<Record<string, CommentMock[]>>({});
+
+  // Create Post State
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [postContent, setPostContent] = useState('');
+  const [postImages, setPostImages] = useState<string[]>([]);
+  const [isSubmittingPost, setIsSubmittingPost] = useState(false);
 
   useEffect(() => {
     communityApi.getPosts().then(data => {
@@ -148,14 +155,73 @@ export const Community = () => {
       });
   };
 
-  const handleNewPost = () => {
+  // --- Create Post Logic ---
+
+  const handleOpenPostModal = () => {
       requireAuth(() => {
           if (!canComment()) {
               showToast('境界不足！需达到【筑基期】方可发帖', 'error');
               return;
           }
-          showToast('发帖功能开发中...', 'info');
+          setIsPostModalOpen(true);
       });
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+          const file = e.target.files[0];
+          const validation = validateImage(file);
+          
+          if (!validation.valid) {
+              showToast(validation.error || '图片无效', 'error');
+              return;
+          }
+
+          if (postImages.length >= 3) {
+              showToast('最多上传 3 张图片', 'error');
+              return;
+          }
+
+          // Mock upload by creating local URL
+          const url = URL.createObjectURL(file);
+          setPostImages(prev => [...prev, url]);
+      }
+  };
+
+  const removeImage = (index: number) => {
+      setPostImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmitPost = async () => {
+      if (!postContent.trim()) {
+          showToast('内容不能为空', 'error');
+          return;
+      }
+      if (postContent.length > 1000) {
+          showToast('内容过长，请控制在1000字以内', 'error');
+          return;
+      }
+
+      setIsSubmittingPost(true);
+      try {
+          // In real implementation, images would be uploaded first to get URLs
+          const newPost = await communityApi.createPost({
+              content: postContent,
+              images: postImages
+          });
+          
+          // Prepend new post to list
+          setPosts(prev => [newPost, ...prev]);
+          
+          showToast('发布成功！', 'success');
+          setIsPostModalOpen(false);
+          setPostContent('');
+          setPostImages([]);
+      } catch (e) {
+          showToast('发布失败，请重试', 'error');
+      } finally {
+          setIsSubmittingPost(false);
+      }
   };
 
   // Pagination Logic
@@ -169,109 +235,117 @@ export const Community = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-apple-text dark:text-apple-dark-text">社区</h1>
           <p className="text-apple-subtext dark:text-apple-dark-subtext mt-1 text-sm md:text-base">加入修仙论道。</p>
         </div>
-        <Button onClick={handleNewPost}>
-          {isLoggedIn ? '发帖' : '登录'}
+        <Button onClick={handleOpenPostModal}>
+          {isLoggedIn ? '发帖' : '登录发帖'}
         </Button>
       </div>
 
       <div className="space-y-4 md:space-y-6">
-        {currentPosts.map((post) => (
-          <Card key={post.id} className="p-4 md:p-6 transition-all duration-300">
-            <div className="flex items-start space-x-3 md:space-x-4">
-              <Avatar src={post.author.avatar} alt={post.author.name} />
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-center mb-1">
-                  <div className="flex items-center space-x-2">
-                     <h4 className="font-semibold text-sm md:text-base text-apple-text dark:text-apple-dark-text truncate">{post.author.name}</h4>
-                     <RankBadge level={post.author.level} />
-                  </div>
-                  <span className="text-xs text-gray-400 flex-shrink-0 ml-2">{post.timeAgo}</span>
-                </div>
-                
-                {/* 使用 Markdown 渲染帖子内容 */}
-                <div className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-3 md:mb-4">
-                    <MarkdownRenderer content={post.content} />
-                </div>
-                
-                <div className="flex items-center space-x-6 border-t border-gray-100 dark:border-gray-800 pt-3">
-                  <button 
-                    onClick={() => handleLike(post.id)}
-                    className={`flex items-center space-x-1 transition-colors ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
-                  >
-                    <Heart size={18} className={likedPosts.has(post.id) ? 'fill-current' : ''} /> 
-                    <span className="text-xs font-medium">{post.likes}</span>
-                  </button>
-                  <button 
-                    onClick={() => toggleComments(post.id)}
-                    className={`flex items-center space-x-1 transition-colors ${activePostId === post.id ? 'text-apple-blue' : 'text-gray-400 hover:text-apple-blue'}`}
-                  >
-                    <MessageCircle size={18} className={activePostId === post.id ? 'fill-current' : ''}/> 
-                    <span className="text-xs font-medium">{post.comments}</span>
-                  </button>
-                  <button 
-                    onClick={() => handleShare(post)}
-                    className="flex items-center space-x-1 text-gray-400 hover:text-green-500 transition-colors"
-                  >
-                    <Share2 size={18} />
-                  </button>
-                </div>
+        {currentPosts.length > 0 ? (
+            currentPosts.map((post) => (
+            <Card key={post.id} className="p-4 md:p-6 transition-all duration-300">
+                <div className="flex items-start space-x-3 md:space-x-4">
+                <Avatar src={post.author.avatar} alt={post.author.name} />
+                <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center mb-1">
+                    <div className="flex items-center space-x-2">
+                        <h4 className="font-semibold text-sm md:text-base text-apple-text dark:text-apple-dark-text truncate">{post.author.name}</h4>
+                        <RankBadge level={post.author.level} />
+                    </div>
+                    <span className="text-xs text-gray-400 flex-shrink-0 ml-2">{post.timeAgo}</span>
+                    </div>
+                    
+                    {/* 使用 Markdown 渲染帖子内容 */}
+                    <div className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-3 md:mb-4">
+                        <MarkdownRenderer content={post.content} />
+                    </div>
+                    
+                    <div className="flex items-center space-x-6 border-t border-gray-100 dark:border-gray-800 pt-3">
+                    <button 
+                        onClick={() => handleLike(post.id)}
+                        className={`flex items-center space-x-1 transition-colors ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                    >
+                        <Heart size={18} className={likedPosts.has(post.id) ? 'fill-current' : ''} /> 
+                        <span className="text-xs font-medium">{post.likes}</span>
+                    </button>
+                    <button 
+                        onClick={() => toggleComments(post.id)}
+                        className={`flex items-center space-x-1 transition-colors ${activePostId === post.id ? 'text-apple-blue' : 'text-gray-400 hover:text-apple-blue'}`}
+                    >
+                        <MessageCircle size={18} className={activePostId === post.id ? 'fill-current' : ''}/> 
+                        <span className="text-xs font-medium">{post.comments}</span>
+                    </button>
+                    <button 
+                        onClick={() => handleShare(post)}
+                        className="flex items-center space-x-1 text-gray-400 hover:text-green-500 transition-colors"
+                    >
+                        <Share2 size={18} />
+                    </button>
+                    </div>
 
-                {activePostId === post.id && (
-                    <div className="mt-4 animate-in slide-in-from-top-2 fade-in">
-                        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 md:p-4 space-y-4">
-                            <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
-                                {commentsMap[post.id]?.map(comment => (
-                                    <div key={comment.id} className="flex space-x-2">
-                                        <Avatar src={comment.avatar} alt={comment.user} size="sm" />
-                                        <div className="flex-1 bg-white dark:bg-gray-800 p-2 rounded-lg rounded-tl-none shadow-sm text-sm">
-                                            <div className="flex justify-between items-center mb-1">
-                                                <span className="font-semibold text-apple-text dark:text-apple-dark-text text-xs">{comment.user}</span>
-                                                <span className="text-[10px] text-gray-400">{comment.time}</span>
-                                            </div>
-                                            {/* 使用 Markdown 渲染评论 */}
-                                            <div className="text-gray-600 dark:text-gray-300">
-                                                <MarkdownRenderer content={comment.content} />
+                    {activePostId === post.id && (
+                        <div className="mt-4 animate-in slide-in-from-top-2 fade-in">
+                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 md:p-4 space-y-4">
+                                <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                                    {commentsMap[post.id]?.map(comment => (
+                                        <div key={comment.id} className="flex space-x-2">
+                                            <Avatar src={comment.avatar} alt={comment.user} size="sm" />
+                                            <div className="flex-1 bg-white dark:bg-gray-800 p-2 rounded-lg rounded-tl-none shadow-sm text-sm">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="font-semibold text-apple-text dark:text-apple-dark-text text-xs">{comment.user}</span>
+                                                    <span className="text-[10px] text-gray-400">{comment.time}</span>
+                                                </div>
+                                                {/* 使用 Markdown 渲染评论 */}
+                                                <div className="text-gray-600 dark:text-gray-300">
+                                                    <MarkdownRenderer content={comment.content} />
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
-                                {(!commentsMap[post.id] || commentsMap[post.id].length === 0) && (
-                                    <p className="text-center text-gray-400 text-xs py-2">暂无评论，抢沙发！</p>
-                                )}
-                            </div>
-
-                            <div className="flex space-x-2 items-end relative" onClick={() => !user && requireAuth(() => {})}>
-                                {/* 仅当已登录但等级不足时显示遮罩；未登录时不显示遮罩，允许点击 textarea 触发 auth */}
-                                {user && !canComment() && (
-                                    <div className="absolute inset-0 z-10 bg-white/60 dark:bg-black/60 backdrop-blur-[1px] rounded-lg flex items-center justify-center cursor-not-allowed">
-                                        <span className="text-xs font-bold text-gray-600 flex items-center bg-white dark:bg-black px-2 py-1 rounded-full border border-gray-200">
-                                            <Lock size={10} className="mr-1"/> 筑基期方可回复
-                                        </span>
-                                    </div>
-                                )}
-                                <Avatar src={user?.avatar || 'https://ui-avatars.com/api/?name=Guest'} alt="Me" size="sm" />
-                                <div className="flex-1 relative">
-                                    <textarea 
-                                        className="w-full bg-white dark:bg-gray-800 border-none rounded-xl p-2 text-sm focus:ring-2 focus:ring-apple-blue outline-none resize-none text-apple-text dark:text-apple-dark-text placeholder-gray-400"
-                                        rows={1}
-                                        placeholder={user ? "写下你的评论..." : "登录后回复"}
-                                        value={commentInput}
-                                        onChange={(e) => setCommentInput(e.target.value)}
-                                        onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(post.id); }}}
-                                        disabled={user && !canComment()}
-                                    />
+                                    ))}
+                                    {(!commentsMap[post.id] || commentsMap[post.id].length === 0) && (
+                                        <p className="text-center text-gray-400 text-xs py-2">暂无评论，抢沙发！</p>
+                                    )}
                                 </div>
-                                <Button size="sm" onClick={() => submitComment(post.id)} disabled={!commentInput.trim() || (user && !canComment())}>
-                                    <Send size={14} />
-                                </Button>
+
+                                <div className="flex space-x-2 items-end relative" onClick={() => !user && requireAuth(() => {})}>
+                                    {/* 仅当已登录但等级不足时显示遮罩；未登录时不显示遮罩，允许点击 textarea 触发 auth */}
+                                    {user && !canComment() && (
+                                        <div className="absolute inset-0 z-10 bg-white/60 dark:bg-black/60 backdrop-blur-[1px] rounded-lg flex items-center justify-center cursor-not-allowed">
+                                            <span className="text-xs font-bold text-gray-600 flex items-center bg-white dark:bg-black px-2 py-1 rounded-full border border-gray-200">
+                                                <Lock size={10} className="mr-1"/> 筑基期方可回复
+                                            </span>
+                                        </div>
+                                    )}
+                                    <Avatar src={user?.avatar || 'https://ui-avatars.com/api/?name=Guest'} alt="Me" size="sm" />
+                                    <div className="flex-1 relative">
+                                        <textarea 
+                                            className="w-full bg-white dark:bg-gray-800 border-none rounded-xl p-2 text-sm focus:ring-2 focus:ring-apple-blue outline-none resize-none text-apple-text dark:text-apple-dark-text placeholder-gray-400"
+                                            rows={1}
+                                            placeholder={user ? "写下你的评论..." : "登录后回复"}
+                                            value={commentInput}
+                                            onChange={(e) => setCommentInput(e.target.value)}
+                                            onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(post.id); }}}
+                                            disabled={user && !canComment()}
+                                        />
+                                    </div>
+                                    <Button size="sm" onClick={() => submitComment(post.id)} disabled={!commentInput.trim() || (user && !canComment())}>
+                                        <Send size={14} />
+                                    </Button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
-              </div>
+                    )}
+                </div>
+                </div>
+            </Card>
+            ))
+        ) : (
+            <div className="text-center py-20 text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center">
+                <Ghost size={48} className="mb-4 text-gray-300 dark:text-gray-600" />
+                <p className="text-lg">这里空空如也</p>
+                <p className="text-sm text-gray-400 mt-2">快来发布第一条帖子吧！</p>
             </div>
-          </Card>
-        ))}
+        )}
       </div>
       
       {/* 分页器 */}
@@ -283,6 +357,52 @@ export const Community = () => {
               onPageChange={handlePageChange} 
           />
       )}
+
+      {/* 发帖模态框 */}
+      <Modal isOpen={isPostModalOpen} onClose={() => setIsPostModalOpen(false)} title="发布新帖" className="max-w-2xl">
+          <div className="space-y-4">
+              <MarkdownEditor
+                  value={postContent}
+                  onChange={setPostContent}
+                  placeholder="分享你的新鲜事..."
+                  height="250px"
+              />
+              
+              <div className="flex flex-wrap gap-3">
+                  {postImages.map((src, idx) => (
+                      <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 group">
+                          <img src={src} alt="Upload" className="w-full h-full object-cover" />
+                          <button 
+                              onClick={() => removeImage(idx)}
+                              className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 hover:bg-red-500 transition-colors"
+                          >
+                              <X size={12} />
+                          </button>
+                      </div>
+                  ))}
+                  
+                  {postImages.length < 3 && (
+                      <label className="w-20 h-20 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-apple-blue hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors text-gray-400 hover:text-apple-blue">
+                          <ImageIcon size={20} />
+                          <span className="text-[10px] mt-1">添加图片</span>
+                          <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                      </label>
+                  )}
+              </div>
+
+              <div className="flex justify-between items-center pt-2">
+                  <span className={`text-xs ${postContent.length > 1000 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
+                      {postContent.length} / 1000 字
+                  </span>
+                  <div className="flex space-x-3">
+                      <Button variant="secondary" onClick={() => setIsPostModalOpen(false)}>取消</Button>
+                      <Button onClick={handleSubmitPost} disabled={isSubmittingPost || !postContent.trim() || postContent.length > 1000}>
+                          {isSubmittingPost ? '发布中...' : '发布'}
+                      </Button>
+                  </div>
+              </div>
+          </div>
+      </Modal>
     </div>
   );
 };
