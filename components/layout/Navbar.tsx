@@ -51,19 +51,23 @@ export const Navbar = () => {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY.current;
       
       if (isMobileMenuOpen) {
           setIsCompact(false);
           return;
       }
 
-      // 只有当滚动超过一定阈值，并且向下滚动时才收缩
-      // 向上滚动时立即展开
+      // 1. 在顶部区域始终展开
       if (currentScrollY < 60) {
           setIsCompact(false);
-      } else if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+      } 
+      // 2. 向下滚动且不在顶部 -> 收缩
+      else if (delta > 0 && currentScrollY > 100) {
           setIsCompact(true);
-      } else if (currentScrollY < lastScrollY.current) {
+      } 
+      // 3. 向上滚动超过阈值 (防止微小抖动触发) -> 展开
+      else if (delta < -10) {
           setIsCompact(false);
       }
 
@@ -168,7 +172,14 @@ export const Navbar = () => {
         <div className={`mx-auto h-14 md:h-16 relative flex items-center justify-between transition-all duration-500 ${isCompact ? 'px-4' : 'px-4 sm:px-6 lg:px-8 w-full max-w-7xl'}`}>
             
             {/* Left: Logo */}
-            <div className="flex-shrink-0 flex items-center cursor-pointer z-20" onClick={() => navigate('/')}>
+            {/* 修复：移动端收缩模式下隐藏 Logo，防止与中间标题重叠 */}
+            <div 
+                className={`
+                    flex-shrink-0 flex items-center cursor-pointer z-20 transition-opacity duration-300
+                    ${isCompact ? 'opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto' : 'opacity-100'}
+                `} 
+                onClick={() => navigate('/')}
+            >
                 {/* 缩放 Logo 而不是改变其布局空间 */}
                 <div className={`transition-all duration-500 origin-left ${isCompact ? 'scale-75' : 'scale-100'}`}>
                     <LiquidLogo />
