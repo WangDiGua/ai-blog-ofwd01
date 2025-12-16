@@ -2,7 +2,7 @@ import React, { Suspense, useEffect, PropsWithChildren } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AppProvider, useStore } from './context/store';
 import { Navbar, Footer, MiniPlayer } from './components/layout';
-import { Spinner, ThemeTransitionOverlay, CustomScrollbar, ToastContainer, SearchModal, FloatingMenu, FullPlayerModal, FestiveWidget, Modal, PageLoader } from './components/ui';
+import { ThemeTransitionOverlay, CustomScrollbar, ToastContainer, SearchModal, FloatingMenu, FullPlayerModal, FestiveWidget, Modal, PageLoader } from './components/ui';
 import { AuthForm } from './components/auth/AuthForm';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
@@ -92,7 +92,11 @@ const App = () => {
     <AppProvider>
       <ThemeTransitionOverlay />
       <Router>
-        <div className="min-h-screen flex flex-col bg-apple-bg text-apple-text dark:bg-apple-dark-bg dark:text-apple-dark-text font-sans selection:bg-apple-blue selection:text-white transition-colors duration-500 ease-ios">
+        {/* 
+            Update: Added 'relative z-10' to ensure app content sits above the fixed background portal (z-0).
+            'bg-transparent' allows the underlying body background/parallax to show through.
+        */}
+        <div className="min-h-screen flex flex-col font-sans text-apple-text dark:text-apple-dark-text selection:bg-apple-blue selection:text-white transition-colors duration-500 ease-ios bg-transparent relative z-10">
           <ScrollToTop />
           {/* <CustomCursor /> removed per request */}
           <CustomScrollbar />
@@ -112,6 +116,7 @@ const App = () => {
                 <Route path="/music" element={<MusicPage />} />
                 <Route path="/tools" element={<Tools />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/user/:id" element={<Profile />} />
                 
                 {/* 受保护路由 */}
                 <Route path="/contact" element={
@@ -130,11 +135,10 @@ const App = () => {
                     </ProtectedRoute>
                 } />
                 
-                {/* 允许未登录访问他人主页，但在组件内部做权限控制 */}
-                <Route path="/user/:id" element={<Profile />} />
-                
                 {/* Fallback */}
-                <Route path="*" element={<div className="text-center py-20 text-gray-400">404 - Page Not Found</div>} />
+                <Route path="*" element={
+                    <div className="text-center py-20 text-gray-400">404 - Page Not Found</div>
+                } />
               </Routes>
             </Suspense>
           </LayoutWrapper>

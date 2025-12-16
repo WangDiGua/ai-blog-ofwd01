@@ -4,7 +4,7 @@ import { useStore } from '../context/store';
 import { Button, Spinner, Avatar, EmojiPicker, MarkdownRenderer, ImageViewer, Modal, RankBadge, Img, ReportModal } from '../components/ui';
 import { articleApi } from '../services/api';
 import { Article, Comment, CULTIVATION_LEVELS, CultivationLevel } from '../types';
-import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash, ShieldAlert, Share2, Download, ExternalLink, Hourglass, Lock, Flag, FileText, ChevronRight } from 'lucide-react';
+import { Heart, MessageCircle, Calendar, Bookmark, List, ThumbsUp, Smile, Clock, Hash, ShieldAlert, Share2, Download, ExternalLink, Hourglass, Lock, Flag, FileText, ChevronRight, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { calculateReadingTime, generateHeadingId } from '../utils/lib';
 
 // 推荐文章轮播组件 (优化版：丝滑淡入淡出切换)
@@ -180,6 +180,7 @@ export const ArticleDetail = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isTocOpen, setIsTocOpen] = useState(false); // Mobile TOC state
   const [commentText, setCommentText] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
   const [previewCover, setPreviewCover] = useState(false); // 封面预览状态
@@ -313,6 +314,8 @@ export const ArticleDetail = () => {
               top: offsetPosition,
               behavior: "smooth"
           });
+          // Close mobile toc if open
+          setIsTocOpen(false);
       } else {
           console.warn(`Element with id ${id} not found`);
       }
@@ -348,7 +351,7 @@ export const ArticleDetail = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-10 mb-20">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-10 mb-24 lg:mb-20 relative">
       
       <ReportModal 
           isOpen={!!reportCommentId}
@@ -359,7 +362,7 @@ export const ArticleDetail = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
         
-        {/* 左侧侧边栏 (互动) - 桌面端 */}
+        {/* 左侧侧边栏 (互动) - 仅桌面端显示 (hidden lg:block) */}
         <div className="hidden lg:block lg:col-span-1 space-y-6 sticky top-24 h-fit">
            <button 
              onClick={() => handleAction('like')} 
@@ -425,27 +428,7 @@ export const ArticleDetail = () => {
                         </div>
                      </div>
                   </div>
-                  {/* 移动端操作栏 */}
-                  <div className="flex lg:hidden justify-between items-center bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl">
-                     <div className="flex space-x-6">
-                        <button onClick={() => handleAction('like')} className="flex items-center space-x-1">
-                            <Heart className={isLiked ? 'fill-red-500 text-red-500' : 'text-gray-400'} size={20}/>
-                            <span className="text-xs text-gray-500">{article.likes + (isLiked ? 1 : 0)}</span>
-                        </button>
-                        <button onClick={() => document.getElementById('comments-section')?.scrollIntoView({ behavior: 'smooth' })} className="flex items-center space-x-1">
-                             <MessageCircle className="text-gray-400" size={20}/>
-                             <span className="text-xs text-gray-500">{article.comments?.length || 0}</span>
-                        </button>
-                     </div>
-                     <div className="flex space-x-4">
-                        <button onClick={() => handleAction('bookmark')}>
-                            <Bookmark className={isBookmarked ? 'fill-apple-blue text-apple-blue' : 'text-gray-400'} size={20}/>
-                        </button>
-                        <button onClick={() => setIsShareOpen(true)}>
-                            <Share2 className="text-gray-400" size={20}/>
-                        </button>
-                     </div>
-                  </div>
+                  {/* 移动端顶部不再显示操作栏，移至底部 Dock */}
                </div>
             </div>
 
@@ -563,7 +546,7 @@ export const ArticleDetail = () => {
             </div>
         </div>
 
-        {/* 右侧侧边栏 (目录) - 桌面端 */}
+        {/* 右侧侧边栏 (目录) - 仅桌面端显示 (hidden lg:block) */}
         <div className="hidden lg:block lg:col-span-3">
            <div className="sticky top-24">
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
@@ -606,6 +589,96 @@ export const ArticleDetail = () => {
            </div>
         </div>
 
+      </div>
+      
+      {/* 移动端固定底部操作栏 (Dock) */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-t border-gray-200 dark:border-gray-800 px-4 py-3 lg:hidden safe-area-bottom">
+          <div className="flex justify-between items-center max-w-md mx-auto">
+              <button 
+                  onClick={() => handleAction('like')} 
+                  className={`flex flex-col items-center space-y-1 ${isLiked ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`}
+              >
+                  <Heart size={20} className={isLiked ? 'fill-current' : ''}/>
+                  <span className="text-[10px]">{article.likes + (isLiked ? 1 : 0)}</span>
+              </button>
+              <button 
+                  onClick={() => document.getElementById('comments-section')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="flex flex-col items-center space-y-1 text-gray-500 dark:text-gray-400"
+              >
+                  <MessageCircle size={20}/>
+                  <span className="text-[10px]">{article.comments?.length || 0}</span>
+              </button>
+              <button 
+                  onClick={() => setIsTocOpen(true)}
+                  className="flex flex-col items-center space-y-1 text-gray-500 dark:text-gray-400"
+              >
+                  <List size={20}/>
+                  <span className="text-[10px]">目录</span>
+              </button>
+              <button 
+                  onClick={() => handleAction('bookmark')}
+                  className={`flex flex-col items-center space-y-1 ${isBookmarked ? 'text-apple-blue' : 'text-gray-500 dark:text-gray-400'}`}
+              >
+                  <Bookmark size={20} className={isBookmarked ? 'fill-current' : ''}/>
+                  <span className="text-[10px]">收藏</span>
+              </button>
+              <button 
+                  onClick={() => setIsShareOpen(true)}
+                  className="flex flex-col items-center space-y-1 text-gray-500 dark:text-gray-400"
+              >
+                  <Share2 size={20}/>
+                  <span className="text-[10px]">分享</span>
+              </button>
+          </div>
+      </div>
+
+      {/* 移动端目录抽屉 (Bottom Sheet) */}
+      <div 
+        className={`
+            fixed inset-0 z-50 transition-visibility duration-300 lg:hidden
+            ${isTocOpen ? 'visible' : 'invisible delay-300'}
+        `}
+      >
+          {/* Backdrop */}
+          <div 
+            className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${isTocOpen ? 'opacity-100' : 'opacity-0'}`}
+            onClick={() => setIsTocOpen(false)}
+          />
+          
+          {/* Sheet */}
+          <div 
+            className={`
+                absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-3xl p-6 max-h-[70vh] overflow-y-auto transition-transform duration-300 ease-out
+                ${isTocOpen ? 'translate-y-0' : 'translate-y-full'}
+            `}
+          >
+              <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-bold text-apple-text dark:text-apple-dark-text">文章目录</h3>
+                  <button onClick={() => setIsTocOpen(false)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full">
+                      <ChevronDown size={20} />
+                  </button>
+              </div>
+              <ul className="space-y-4">
+                 {toc.map((header, idx) => (
+                    <li key={`${header.id}-${idx}`} className={`pl-${(header.level - 1) * 3}`}>
+                       <a 
+                         href={`#${header.id}`} 
+                         className={`
+                            block text-sm py-1 border-b border-gray-100 dark:border-gray-800 pb-2
+                            ${header.level === 2 ? 'font-bold text-gray-800 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'}
+                         `}
+                         onClick={(e) => {
+                             e.preventDefault();
+                             scrollToHeading(header.id);
+                         }}
+                       >
+                         {header.text}
+                       </a>
+                    </li>
+                 ))}
+                 {toc.length === 0 && <p className="text-center text-gray-400">暂无目录</p>}
+              </ul>
+          </div>
       </div>
       
       {/* 封面图大图预览 */}

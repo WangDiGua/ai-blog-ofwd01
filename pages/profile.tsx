@@ -394,7 +394,7 @@ export const Profile = () => {
     if (!displayUser) return null;
 
     return (
-        <div className="max-w-5xl mx-auto px-4 py-10">
+        <div className="max-w-5xl mx-auto px-4 py-6 md:py-10">
             <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
             <UserListModal isOpen={showFollowers} onClose={() => setShowFollowers(false)} title="粉丝列表" type="followers" />
             <UserListModal isOpen={showFollowing} onClose={() => setShowFollowing(false)} title="关注列表" type="following" />
@@ -425,7 +425,7 @@ export const Profile = () => {
 
             {/* 头部 / 封面区域 */}
             <div className="relative mb-8 rounded-3xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-800 group/cover">
-                <div className="h-48 md:h-64 relative bg-gray-200 dark:bg-gray-700">
+                <div className="h-40 md:h-64 relative bg-gray-200 dark:bg-gray-700">
                     {/* 使用 BlackHoleBackground 替换静态图片 */}
                     <BlackHoleBackground />
                     
@@ -456,7 +456,8 @@ export const Profile = () => {
                     )}
                 </div>
 
-                <div className="px-8 pb-8 pt-0 relative flex flex-col md:flex-row items-center md:items-end">
+                {/* Mobile: Centered stack. Desktop: Row aligned bottom */}
+                <div className="px-6 md:px-8 pb-8 pt-0 relative flex flex-col md:flex-row items-center md:items-end">
                      <div className="relative -mt-16 mb-4 md:mb-0 md:mr-6 group z-10">
                          <div className="p-1 bg-white dark:bg-gray-800 rounded-full relative">
                             <Avatar src={displayUser.avatar} alt={displayUser.name} size="xl" />
@@ -468,17 +469,17 @@ export const Profile = () => {
                          </div>
                      </div>
                      
-                     <div className="flex-1 text-center md:text-left mb-4 md:mb-0 z-10">
+                     <div className="flex-1 text-center md:text-left mb-4 md:mb-0 z-10 w-full">
                         {isMe && isEditing ? (
-                            <div className="space-y-3 mt-4 max-w-md">
+                            <div className="space-y-3 mt-4 max-w-md mx-auto md:mx-0">
                                 <input className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900" value={name} onChange={e => setName(e.target.value)} placeholder="Name"/>
                                 <textarea className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900" value={bio} onChange={e => setBio(e.target.value)} placeholder="Bio" rows={2}/>
                             </div>
                         ) : (
                             <>
-                                <div className="flex flex-col md:flex-row items-center md:items-baseline space-x-0 md:space-x-3 space-y-2 md:space-y-0">
+                                <div className="flex flex-col md:flex-row items-center md:items-baseline space-x-0 md:space-x-3 space-y-2 md:space-y-0 justify-center md:justify-start">
                                     <div className="flex items-center space-x-2">
-                                        <h1 className="text-3xl font-bold text-apple-text dark:text-apple-dark-text">{displayUser.name}</h1>
+                                        <h1 className="text-2xl md:text-3xl font-bold text-apple-text dark:text-apple-dark-text">{displayUser.name}</h1>
                                         {/* 等级展示 */}
                                         <RankBadge level={displayUser.level || '炼气期'} />
                                     </div>
@@ -492,7 +493,7 @@ export const Profile = () => {
                                         )}
                                     </div>
                                 </div>
-                                <p className="text-gray-500 dark:text-gray-400 max-w-lg mb-3 mt-2">{displayUser.bio || "暂无简介。"}</p>
+                                <p className="text-gray-500 dark:text-gray-400 max-w-lg mb-4 mt-2 mx-auto md:mx-0 text-sm md:text-base">{displayUser.bio || "暂无简介。"}</p>
                                 
                                 {/* 统计数据行 */}
                                 <div className="flex justify-center md:justify-start space-x-6 text-sm">
@@ -518,7 +519,7 @@ export const Profile = () => {
                         )}
                      </div>
 
-                     <div className="flex flex-col space-y-2 items-center md:items-end mt-4 md:mt-0 z-10">
+                     <div className="flex flex-col space-y-2 items-center md:items-end mt-6 md:mt-0 z-10 w-full md:w-auto">
                         {isMe ? (
                             // 当前用户的操作按钮
                             <>
@@ -591,12 +592,12 @@ export const Profile = () => {
             </div>
 
             {/* 标签页 */}
-            <div className="flex space-x-1 mb-6 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-xl w-fit mx-auto md:mx-0 overflow-x-auto">
+            <div className="flex space-x-1 mb-6 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-xl w-full md:w-fit overflow-x-auto no-scrollbar">
                 {['articles', 'favorites', 'likes', ...(isMe ? ['write'] : [])].map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab ? 'bg-white dark:bg-gray-700 shadow-sm text-apple-blue' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                        className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab ? 'bg-white dark:bg-gray-700 shadow-sm text-apple-blue' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
                     >
                         {tab === 'write' ? '写文章' : tab === 'articles' ? '文章' : tab === 'favorites' ? '收藏' : '点赞'}
                     </button>
@@ -606,10 +607,10 @@ export const Profile = () => {
             {/* 内容区域 */}
             <div className="min-h-[400px]">
                 {activeTab === 'write' ? (
-                    <Card className="p-8">
+                    <Card className="p-4 md:p-8">
                         <div className="mb-6">
                             <input 
-                                className="w-full text-3xl font-bold border-none outline-none bg-transparent placeholder-gray-300 text-apple-text dark:text-apple-dark-text" 
+                                className="w-full text-2xl md:text-3xl font-bold border-none outline-none bg-transparent placeholder-gray-300 text-apple-text dark:text-apple-dark-text" 
                                 placeholder="文章标题..." 
                                 value={newArticleTitle}
                                 onChange={e => setNewArticleTitle(e.target.value)}
