@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useMemo, useCallback, PropsWithChildren } from 'react';
 import { User, ToastMessage, ToastType, Song, PlayMode } from '../types';
 import { aiApi, musicApi } from '../services/api';
 
@@ -61,7 +61,7 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider = ({ children }: { children: ReactNode }) => {
+export const AppProvider = ({ children }: PropsWithChildren) => {
   // --- State: Auth ---
   const [user, setUser] = useState<User | null>(null);
   

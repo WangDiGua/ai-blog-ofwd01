@@ -46,8 +46,14 @@
 
 #### 登录
 - **方法**: `POST`
-- **路径**: `/login`
-- **参数**: `{ username: string }`
+- **路径**: `/login` (或 `/auth/login`)
+- **参数**: `{ username: string, password: string, captchaCode: string }`
+- **返回**: `User` 对象
+
+#### 注册
+- **方法**: `POST`
+- **路径**: `/auth/register`
+- **参数**: `{ username: string, email: string, password: string, code: string }`
 - **返回**: `User` 对象
 
 #### 获取个人资料
@@ -78,6 +84,12 @@
 - **参数**: `{ userId?: string, nickname?: string, avatar?: string, screenshot: string }`
 - **返回**: `{ success: boolean }`
 
+#### 举报内容
+- **方法**: `POST`
+- **路径**: `/user/report`
+- **参数**: `{ targetId: string, type: string, reason: string, description: string }`
+- **返回**: `{ success: boolean }`
+
 ### 3. 社区 (Community)
 
 #### 获取帖子列表
@@ -89,6 +101,11 @@
 - **方法**: `GET`
 - **路径**: `/danmaku`
 - **返回**: `string[]`
+
+#### 获取相册列表
+- **方法**: `GET`
+- **路径**: `/albums`
+- **返回**: `Album[]`
 
 ### 4. 音乐 (Music)
 

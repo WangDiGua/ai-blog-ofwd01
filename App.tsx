@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect, PropsWithChildren } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AppProvider, useStore } from './context/store';
 import { Navbar, Footer, MiniPlayer } from './components/layout';
@@ -35,7 +35,7 @@ const ScrollToTop = () => {
 };
 
 // Wrapper to animate page transitions
-const PageTransitionWrapper = ({ children }: { children?: React.ReactNode }) => {
+const PageTransitionWrapper = ({ children }: PropsWithChildren) => {
   const location = useLocation();
   return (
     <div 
@@ -48,7 +48,7 @@ const PageTransitionWrapper = ({ children }: { children?: React.ReactNode }) => 
 };
 
 // Layout wrapper to conditionally hide Navbar/Footer for fullscreen pages like StartPage
-const LayoutWrapper = ({ children }: { children?: React.ReactNode }) => {
+const LayoutWrapper = ({ children }: PropsWithChildren) => {
     const location = useLocation();
     const { isAuthModalOpen, setAuthModalOpen } = useStore();
     const isFullScreenPage = location.pathname === '/start' || location.pathname === '/message-board';

@@ -70,7 +70,8 @@ export const Navbar = () => {
       lastScrollY.current = currentScrollY;
     };
 
-    const throttledScroll = throttle(handleScroll, 100);
+    // 使用较短的 throttle 时间保证响应速度
+    const throttledScroll = throttle(handleScroll, 50);
     window.addEventListener('scroll', throttledScroll);
     return () => window.removeEventListener('scroll', throttledScroll);
   }, [isMobileMenuOpen]);
@@ -151,18 +152,20 @@ export const Navbar = () => {
           Navbar Container 
           - 使用 fixed + transform: translate-x-1/2 居中，避免 width 变化时的布局抖动
           - 宽度过渡使用 cubic-bezier(0.32, 0.72, 0, 1) 实现 iOS 风格的平滑感
+          - 使用 transition-all 确保所有属性平滑过渡
+          - 移除 max-w 限制，直接使用 width 属性在不同断点切换
       */}
       <nav 
         className={`
           fixed z-50 left-1/2 -translate-x-1/2 
-          transition-[width,top,border-radius,background-color,shadow] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-[width,top]
+          transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
           ${isCompact 
-            ? 'top-4 w-[92%] max-w-[800px] rounded-full bg-white/90 dark:bg-gray-900/90 shadow-2xl border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-xl' 
+            ? 'top-4 w-[92%] md:w-[800px] rounded-full bg-white/90 dark:bg-gray-900/90 shadow-2xl border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-xl' 
             : 'top-0 w-full rounded-none bg-white/80 dark:bg-black/80 shadow-sm border-b border-gray-200/50 dark:border-gray-800/50 backdrop-blur-md'
           }
         `}
       >
-        <div className={`mx-auto h-14 md:h-16 relative flex items-center justify-between transition-all duration-500 ${isCompact ? 'px-4' : 'px-4 sm:px-6 lg:px-8 max-w-7xl'}`}>
+        <div className={`mx-auto h-14 md:h-16 relative flex items-center justify-between transition-all duration-500 ${isCompact ? 'px-4' : 'px-4 sm:px-6 lg:px-8 w-full max-w-7xl'}`}>
             
             {/* Left: Logo */}
             <div className="flex-shrink-0 flex items-center cursor-pointer z-20" onClick={() => navigate('/')}>

@@ -6,7 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 interface ParallaxProps {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     speed?: number; // 视差速度，负值反向，正值同向
     className?: string;
     id?: string;

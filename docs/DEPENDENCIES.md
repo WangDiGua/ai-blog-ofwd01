@@ -18,19 +18,21 @@ cd iblog
 
 以下是项目中实际运行所需的库。请按照指定的版本号安装，以确保兼容性。
 
-| 库名称 | 用途 | 对应版本 (Import Map) | 安装命令 |
+| 库名称 | 用途 | 推荐版本 | 安装命令 |
 | :--- | :--- | :--- | :--- |
-| **react** | UI 核心库 | ^19.2.0 | `npm install react@^19.0.0 react-dom@^19.0.0` |
-| **react-router-dom** | 路由管理 | ^7.10.0 | `npm install react-router-dom@^7.0.0` |
-| **lucide-react** | 图标库 | ^0.555.0 | `npm install lucide-react@^0.470.0` (注: 0.555可能为在线环境特有版本，本地建议使用最新稳定版) |
+| **react** | UI 核心库 | ^19.0.0 | `npm install react@^19.0.0 react-dom@^19.0.0` |
+| **react-router-dom** | 路由管理 | ^7.0.0 | `npm install react-router-dom@^7.0.0` |
+| **lucide-react** | 图标库 | ^0.470.0 | `npm install lucide-react` |
 | **@google/genai** | Google Gemini AI SDK | ^1.31.0 | `npm install @google/genai` |
+| **three** | 3D 渲染库 | ^0.160.0 | `npm install three @types/three` |
+| **gsap** | 高级动画库 | ^3.12.5 | `npm install gsap` |
+| **@uiw/react-md-editor** | Markdown 编辑与渲染 | ^4.0.0 | `npm install @uiw/react-md-editor` |
 
 **一键安装命令:**
 
 ```bash
-npm install react@^19.0.0 react-dom@^19.0.0 react-router-dom@^7.0.0 lucide-react @google/genai
+npm install react@^19.0.0 react-dom@^19.0.0 react-router-dom@^7.0.0 lucide-react @google/genai three gsap @uiw/react-md-editor
 ```
-*(注意：如果 React 19 正式版在 npm 源中尚未普及，可能需要使用 `next` 标签或降级到 React 18，但在本示例中我们尽量保持与在线环境一致)*
 
 ## 3. 开发依赖 (DevDependencies)
 
@@ -40,11 +42,12 @@ npm install react@^19.0.0 react-dom@^19.0.0 react-router-dom@^7.0.0 lucide-react
 | :--- | :--- | :--- |
 | **tailwindcss** | CSS 框架 | `npm install -D tailwindcss postcss autoprefixer` |
 | **@types/node** | Node类型定义(用于环境变量) | `npm install -D @types/node` |
+| **@types/three** | Three.js 类型定义 | `npm install -D @types/three` |
 
 **一键安装命令:**
 
 ```bash
-npm install -D tailwindcss postcss autoprefixer @types/node
+npm install -D tailwindcss postcss autoprefixer @types/node @types/three
 ```
 
 ## 4. Tailwind CSS 配置步骤
@@ -71,13 +74,12 @@ npm install -D tailwindcss postcss autoprefixer @types/node
         extend: {
           colors: {
             apple: {
-              bg: '#f5f5f7',
-              card: '#ffffff',
-              blue: '#0071e3',
-              text: '#1d1d1f',
-              subtext: '#86868b',
-              gray: '#6e6e73',
-              // Dark mode variants
+              bg: 'var(--apple-bg)',
+              card: 'var(--apple-card)',
+              blue: 'var(--apple-blue)',
+              text: 'var(--apple-text)',
+              subtext: 'var(--apple-subtext)',
+              gray: 'var(--apple-gray)',
               'dark-bg': '#000000',
               'dark-card': '#1c1c1e',
               'dark-text': '#f5f5f7',
@@ -87,13 +89,9 @@ npm install -D tailwindcss postcss autoprefixer @types/node
           animation: {
             'spin-slow': 'spin 12s linear infinite',
             'slide-up-fade': 'slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+            'modal-spring': 'modalSpring 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards',
           },
-          keyframes: {
-            slideUpFade: {
-              '0%': { opacity: 0, transform: 'translateY(10px)' },
-              '100%': { opacity: 1, transform: 'translateY(0)' },
-            }
-          }
+          // ... 其他 keyframes 配置
         },
       },
       plugins: [],
@@ -106,12 +104,13 @@ npm install -D tailwindcss postcss autoprefixer @types/node
     @tailwind components;
     @tailwind utilities;
 
-    /* 将 index.html 中的自定义 scrollbar 样式复制到这里 */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
+    :root {
+        --apple-bg: #f2f2f7;
+        --apple-card: #ffffff;
+        --apple-blue: #0071e3;
+        --apple-text: #1d1d1f;
+        /* ... 其他变量 ... */
     }
-    /* ...其余样式... */
     ```
 
 ## 5. 环境变量配置 (API Key)
